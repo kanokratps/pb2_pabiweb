@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.exp.dao.ExpUseDtlDAO">
+    <resultMap id="result" type="expUseDtlModel">
+        <result property="id" column="id"/>
+        <result property="masterId" column="master_id"/>
+        <result property="activity" column="activity"/>
+        <result property="actId" column="act_id"/>
+        <result property="actName" column="act_name"/>
+        <result property="actGrpId" column="act_grp_id"/>
+        <result property="actGrpName" column="act_grp_name"/>
+        <result property="assetRuleId" column="asset_rule_id"/>
+        <result property="assetName" column="asset_name"/>
+        <result property="condition1" column="condition_1"/>
+        <result property="condition2" column="condition_2"/>
+        <result property="position" column="position"/>
+        <result property="uom" column="uom"/>
+        <result property="amount" column="amount"/>
+        <result property="specialWorkflow" column="special_workflow"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+    
+    <select id="list" resultMap="result" parameterType="map">
+    
+        SELECT
+		    d.*, COUNT(*) OVER() totalRowCount,
+		    a.name act_name,
+		    ag.name act_grp_name,
+		    b.asset_name,
+		    a.special_workflow
+		FROM
+		    pb2_exp_use_dtl d
+		    left join pb2_ext_account_activity a on d.act_id=a.id 
+		    left join pb2_ext_account_activity_group ag on d.act_grp_id=ag.id 
+			LEFT JOIN pb2_ext_budget_asset_rule_line b on d.asset_rule_id = b.id
+		WHERE 1=1
+		<if test="masterId != null">
+			AND master_id=#{masterId}
+		</if>			
+		<if test="cond1 != null">
+			AND condition_1=#{cond1}
+		</if>			
+		<if test="cond2 != null">
+			AND condition_2=#{cond2}
+		</if>			
+		<if test="position != null">
+			AND position=#{position}
+		</if>			
+		<if test="uom != null">
+			AND uom=#{uom}
+		</if>			
+		ORDER BY id
+		
+    </select>
+    
+    <insert
+		id="add"
+		parameterType="expUseDtlModel"
+		flushCache="true"
+		statementType="PREPARED"
+		keyProperty="id"
+		useGeneratedKeys="true"
+		>
+	    INSERT INTO pb2_exp_use_dtl(
+	    	master_id
+	    	,activity
+	    	,act_id
+	    	,act_grp_id
+	    	,asset_rule_id
+	    	,condition_1
+	    	,condition_2
+	    	,position
+	    	,uom
+	    	,amount
+	    	,created_by,updated_by
+	    )VALUES( 
+    		#{masterId}
+    		,#{activity}
+    		,#{actId}
+    		,#{actGrpId}
+    		,#{assetRuleId}
+    		,#{condition1}
+    		,#{condition2}
+    		,#{position}
+    		,#{uom}
+    		,#{amount}
+    		,#{createdBy},#{updatedBy}
+    	)
+		
+	</insert>
+	
+	<select id="count"  resultType="long">
+        SELECT
+		    count(1)
+		FROM
+		    pb2_exp_use_dtl
+	
+    </select>
+	
+	<delete id="delete"
+    		parameterType="long"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		DELETE FROM pb2_exp_use_dtl WHERE id=#{id}
+	</delete>
+	
+	<delete id="deleteByMasterId"
+    		parameterType="string"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		DELETE FROM pb2_exp_use_dtl WHERE master_id=#{masterId}
+	</delete>
+	
+    <select id="get" parameterType="long" resultMap="result">
+        SELECT
+		    d.*,
+		    a.special_workflow
+		FROM
+		    pb2_exp_use_dtl
+		LEFT JOIN pb2_activity_view a on d.act_id=a.id
+		WHERE id=#{id}
+    </select>
+    
+    <select id="listForInf" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select 
+			d.activity,
+			d.act_id,
+			d.act_grp_id,
+			d.asset_rule_id,
+			d.amount,
+			u.id unit_id,
+			d.updated_time
+		from pb2_exp_use_dtl d 
+		left join pb2_ext_product_uom u on d.uom = u.name
+		left join pb2_exp_use r on r.id = d.master_id
+		where master_id = #{id}
+		ORDER BY d.id
+    </select>
+
+</mapper>

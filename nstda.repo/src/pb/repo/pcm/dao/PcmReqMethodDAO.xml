@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.pcm.dao.PcmReqMethodDAO">
+    <resultMap id="result" type="pcmReqMethodModel">
+        <result property="id" column="id"/>
+        <result property="obj" column="obj"/>
+        <result property="method" column="method"/>
+        <result property="docType" column="doc_type"/>
+        <result property="cond1" column="cond1"/>
+        <result property="cond2" column="cond2"/>
+        <result property="priceFrom" column="price_from"/>
+        <result property="priceTo" column="price_to"/>
+    </resultMap>
+
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select *,COUNT(*) OVER() totalRowCount
+		FROM
+		    pb2_pr_method_view
+		WHERE
+			type_id=#{typeId}
+		<if test="total != null">
+     		AND #{total}&gt;price_from
+     		AND #{total}&lt;=price_to
+		</if>
+		ORDER BY id
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_pr_method_view
+    </select>
+    
+    <select id="get" parameterType="string" resultMap="result">
+        SELECT
+		    *
+		FROM
+		    pb2_pr_method_view
+		WHERE id=#{id}
+    </select>
+    
+</mapper>

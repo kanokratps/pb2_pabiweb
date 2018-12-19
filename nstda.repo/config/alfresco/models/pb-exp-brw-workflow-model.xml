@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="expbrwwf:expBrwWorkflowModel" xmlns="http://www.alfresco.org/model/dictionary/1.0">
+
+	<!-- Optional meta-data about the model -->
+	<description>Exp Borrw Workflow Model</description>
+	<author>Thongchai Jiansampimon</author>
+	<version>1.0</version>
+
+	<!-- Imports are required to allow references to definitions in other models -->
+	<imports>
+		<import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+		<import uri="http://www.alfresco.org/model/bpm/1.0" prefix="bpm" />
+		<import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+		<import uri="http://www.alfresco.org/model/application/1.0" prefix="app" />
+	</imports>
+
+	<!-- Introduction of new namespaces defined by this model -->
+	<namespaces>
+		<namespace uri="http://www.nstda.or.th/model/workflow/expbrwwf/1.0" prefix="expbrwwf" />
+	</namespaces>
+
+	<types>
+		<type name="expbrwwf:submitStartTask">
+			<parent>bpm:startTask</parent>
+			<mandatory-aspects>
+				<aspect>expbrwwf:commonAspect</aspect>
+				<aspect>expbrwwf:specialAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+		<type name="expbrwwf:requesterResubmitTask">
+			<parent>bpm:activitiOutcomeTask</parent>
+			<mandatory-aspects>
+				<aspect>expbrwwf:commonAspect</aspect>
+				<aspect>expbrwwf:specialAspect</aspect>
+				<aspect>expbrwwf:counseleeAspect</aspect>
+				<aspect>expbrwwf:reSubmitAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+		<type name="expbrwwf:accepterAcceptTask">
+			<parent>bpm:activitiOutcomeTask</parent>
+			<mandatory-aspects>
+				<aspect>expbrwwf:commonAspect</aspect>
+				<aspect>expbrwwf:specialAspect</aspect>
+				<aspect>expbrwwf:acceptAspect</aspect>
+			</mandatory-aspects>
+		</type>
+		
+		<type name="expbrwwf:reviewerReviewTask">
+			<parent>bpm:activitiOutcomeTask</parent>
+			<mandatory-aspects>
+				<aspect>expbrwwf:commonAspect</aspect>
+				<aspect>expbrwwf:specialAspect</aspect>
+				<aspect>expbrwwf:counseleeAspect</aspect>
+				<aspect>expbrwwf:reviewAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+		<type name="expbrwwf:consultantConsultTask">
+			<parent>bpm:activitiOutcomeTask</parent>
+			<mandatory-aspects>
+				<aspect>expbrwwf:commonAspect</aspect>
+				<aspect>expbrwwf:specialAspect</aspect>
+				<aspect>expbrwwf:consultAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+	</types>
+
+	<aspects>
+		<aspect name="expbrwwf:commonAspect">
+			<title>PCM Common WorkFlow Properties</title>
+			<properties>
+				<property name="expbrwwf:id">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:requestedTime">
+					<type>d:datetime</type>
+				</property>
+				<property name="expbrwwf:remark">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:nextReviewers">
+					<type>d:text</type>
+					<mandatory>false</mandatory>
+				</property>
+				<property name="expbrwwf:folderRef">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:workflowStatus">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:taskHistory">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:currentTaskKey">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:lang">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:description">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:accepter">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:accept">
+					<type>d:text</type>
+				</property>
+			</properties>
+			
+			<associations>
+				<association name="expbrwwf:document">
+					<source>
+						<mandatory>false</mandatory>
+						<many>false</many>
+					</source>
+					<target>
+						<class>cm:content</class>
+						<mandatory>false</mandatory>
+						<many>true</many>
+					</target>
+				</association>
+
+				<association name="expbrwwf:attachDocument">
+					<source>
+						<mandatory>false</mandatory>
+						<many>false</many>
+					</source>
+					<target>
+						<class>cm:content</class>
+						<mandatory>false</mandatory>
+						<many>true</many>
+					</target>
+				</association>
+			</associations>			
+
+		</aspect>
+		
+		<aspect name="expbrwwf:reviewAspect">
+			<title>EXP WorkFlow Review Task Properties</title>
+			<properties>
+				<property name="expbrwwf:reviewOutcome">
+					<type>d:text</type>
+					<default>Approve</default>
+					<constraints>
+						<constraint name="expbrwwf:reviewOutcomeOptions" type="LIST">
+							<parameter name="allowedValues">
+								<list>
+									<value>Approve</value>
+									<value>Reject</value>
+									<value>Consult</value>
+								</list>
+							</parameter>
+						</constraint>
+					</constraints>
+				</property>
+			</properties>
+		</aspect>
+				
+		<aspect name="expbrwwf:consultAspect">
+			<title>EXP WorkFlow Consult Task Properties</title>
+			<properties>
+				<property name="expbrwwf:counselee">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:consultOutcome">
+					<type>d:text</type>
+					<default>Comment</default>
+					<constraints>
+						<constraint name="expbrwwf:consultOutcomeOptions" type="LIST">
+							<parameter name="allowedValues">
+								<list>
+									<value>Comment</value>
+								</list>
+							</parameter>
+						</constraint>
+					</constraints>
+				</property>
+			</properties>
+		</aspect>
+		
+		<aspect name="expbrwwf:counseleeAspect">
+			<title>EXP WorkFlow Consult Task Properties</title>
+			<properties>
+				<property name="expbrwwf:consultant">
+					<type>d:text</type>
+				</property>
+			</properties>
+		</aspect>
+				
+		<aspect name="expbrwwf:reSubmitAspect">
+			<title>EXP WorkFlow Resubmit Task Properties</title>
+			<properties>
+				<property name="expbrwwf:reSubmitOutcome">
+					<type>d:text</type>
+					<default>Resubmit</default>
+					<constraints>
+						<constraint name="expbrwwf:reSubmitOutcomeOptions" type="LIST">
+							<parameter name="allowedValues">
+								<list>
+									<value>Resubmit</value>
+									<value>Cancel</value>
+								</list>
+							</parameter>
+						</constraint>
+					</constraints>
+				</property>
+			</properties>
+		</aspect>
+		
+		<aspect name="expbrwwf:acceptAspect">
+			<title>EXP WorkFlow Accept Task Properties</title>
+			<properties>
+				<property name="expbrwwf:acceptOutcome">
+					<type>d:text</type>
+					<default>Approve</default>
+					<constraints>
+						<constraint name="expbrwwf:acceptOutcomeOptions" type="LIST">
+							<parameter name="allowedValues">
+								<list>
+									<value>Approve</value>
+									<value>Reject</value>
+								</list>
+							</parameter>
+						</constraint>
+					</constraints>
+				</property>
+			</properties>
+		</aspect>
+		
+		<aspect name="expbrwwf:specialAspect">
+			<title>EXP Request WorkFlow Properties</title>
+			<properties>
+				<property name="expbrwwf:objectiveType">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:objective">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:reason">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:budgetCc">
+					<type>d:text</type>
+				</property>
+				<property name="expbrwwf:total">
+					<type>d:double</type>
+				</property>
+			</properties>
+			
+		</aspect>
+		
+	</aspects>
+
+</model>
+
+
+

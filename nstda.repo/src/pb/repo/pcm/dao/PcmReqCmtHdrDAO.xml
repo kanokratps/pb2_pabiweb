@@ -6,6 +6,7 @@
         <result property="id" column="id"/>
         <result property="pcmReqId" column="pcm_req_id"/>
         <result property="committee" column="committee"/>
+        <result property="committeeId" column="committee_id"/>
         <result property="createdTime" column="created_time"/>
         <result property="createdBy" column="created_by"/>
         <result property="updatedTime" column="updated_time"/>
@@ -23,10 +24,12 @@
 	    INSERT INTO pb2_pcm_req_committee_hdr(
 	    	pcm_req_id
 	    	,committee
+	    	,committee_id
 	    	,created_by,updated_by
 	    )VALUES( 
     		#{pcmReqId}
     		,#{committee}
+    		,#{committeeId}
     		,#{createdBy},#{updatedBy}
     	)
 		
@@ -66,20 +69,93 @@
    		DELETE FROM pb2_pcm_req_committee_hdr WHERE pcm_req_id=#{masterId}
 	</delete>   
 	
-    <select id="listForInf" resultType="map" parameterType="map">
-		select	
-			r.id, 
-			(m.method || ' ' || m.cond1) method,
-			h.committee,
-			d.first_name,
-			d.last_name,
-			d.position
-			
-		from  pb2_pcm_req_committee_dtl d left join pb2_pcm_req_committee_hdr h on h.id = d.master_id
-		left join pb2_pcm_req r on r.id = h.pcm_req_id
-		left join pb2_ext_purchase_request_committee m on r.method = cast(m.id as text)			
-		where 	r.id = #{id}
-		order by	h.committee,d.id
-    </select>	 
+    <select id="listForInf" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		   select a.id, 
+			     committee,
+			     committee_id, 
+			     position,
+			     first_name,
+			     last_name,
+			     coalesce(title,'') title
+			from 
+			(
+			select r.id id,d.position,h.committee,h.committee_id,prweb_method_id,first_name,last_name
+			 ,coalesce(res.value,t.name) title 
+			from  pb2_pcm_req_committee_dtl d
+			left join pb2_pcm_req_committee_hdr h on h.id = d.master_id
+			left join pb2_pcm_req r on r.id = h.pcm_req_id
+			left join pb2_ext_res_partner_title t on coalesce(nullif(d.title,''),'0')::integer = t.id
+			left join (select res_id,value from pb2_ext_ir_translation
+			        where name = 'res.partner.title,name'
+			        and type = 'model' and lang='th_TH') res on res.res_id = t.id
+			where  r.id = #{id} and trim(employee_code) = ''  
+			union
+			select  r.id id,d.position,h.committee,h.committee_id,prweb_method_id,
+			     coalesce(irf.value, e.first_name) AS first_name,
+			     coalesce(irl.value, e.last_name) AS last_name ,
+			      coalesce(irt.value, t.name) AS title  
+			    from  pb2_pcm_req_committee_dtl d 
+			    left join pb2_pcm_req_committee_hdr h on h.id = d.master_id
+			    left join pb2_pcm_req r on r.id = h.pcm_req_id 
+			    left join pb2_ext_hr_employee e on d.employee_code = e.employee_code
+			    left join pb2_ext_res_partner_title t on e.title_id = t.id 
+			    left join  (SELECT res_id, value
+			           FROM pb2_ext_ir_translation
+			          WHERE name = 'hr.employee,first_name' AND type = 'model' AND lang = 'th_TH') irf ON e.id = irf.res_id
+			   left join ( SELECT res_id,
+			            value
+			           FROM pb2_ext_ir_translation
+			          WHERE name = 'hr.employee,last_name' AND type = 'model' AND lang = 'th_TH') irl ON e.id = irl.res_id
+			      LEFT JOIN ( SELECT res_id,
+			            value
+			           FROM pb2_ext_ir_translation
+			          WHERE name = 'res.partner.title,name' AND type = 'model' AND lang = 'th_TH') irt ON t.id = irt.res_id
+			    
+			where  r.id = #{id} and d.employee_code != ''
+			 ) a 
+    </select>
+    
+    <select id="_listForInf" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select 
+		   r.id, 
+		   h.committee,
+		   h.committee_id, 
+		   d.position,
+		   CASE WHEN d.employee_code='' 
+		   THEN 
+		   		coalesce((select value
+			     from pb2_ext_ir_translation
+			     where name = 'res.partner.title,name'
+			     and type = 'model' and lang='th_TH'
+			     and res_id = tt.name), '') 
+		   ELSE  
+			   coalesce((select value
+			     from pb2_ext_ir_translation
+			     where name = 'res.partner.title,name'
+			     and type = 'model' and lang='th_TH'
+			     and res_id = e.title_id), t.name) 
+		   END AS title ,
+		   case when d.employee_code='' then d.first_name  else  
+		   coalesce((select value
+		    from pb2_ext_ir_translation
+		    where name = 'hr.employee,first_name'
+		    and type = 'model' and lang='th_TH'
+		    and res_id = e.id), d.first_name) end as first_name ,
+		   case when d.employee_code='' then d.last_name  else 
+		    coalesce((select value
+		    from pb2_ext_ir_translation
+		    where name = 'hr.employee,last_name'
+		    and type = 'model' and lang='th_TH'
+		    and res_id = e.id), d.last_name) end as last_name
+		  from  pb2_pcm_req_committee_dtl d left join pb2_pcm_req_committee_hdr h on h.id = d.master_id
+		  left join pb2_pcm_req r on r.id = h.pcm_req_id
+		  left join pb2_pr_method_view m on r.prweb_method_id = m.id   
+		  left join pb2_ext_hr_employee e on d.employee_code = e.employee_code
+		  left join pb2_ext_res_partner_title t on e.title_id = t.id
+		  left join pb2_ext_res_partner_title tt on coalesce(nullif(d.title,''),'0')::integer = tt.id
+		  
+		  where  r.id = #{id}
+		  order by h.committee,d.id
+    </select>		 
     
 </mapper>

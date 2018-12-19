@@ -11,11 +11,14 @@ import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -37,6 +40,7 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.coci.CheckOutCheckInService;
 import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentService;
@@ -50,24 +54,34 @@ import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.cmr.workflow.WorkflowService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.ISO9075;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.extensions.surf.util.I18NUtil;
 import org.springframework.stereotype.Service;
 
+import pb.common.comparator.FileTimeComparator;
 import pb.common.constant.CommonConstant;
 import pb.common.constant.FileConstant;
+import pb.common.exception.FolderNoPermissionException;
 import pb.common.model.FileModel;
+import pb.common.util.CommonDateTimeUtil;
+import pb.common.util.CommonUtil;
 import pb.common.util.DocUtil;
-import pb.common.util.FileUtil;
 import pb.common.util.FolderUtil;
 import pb.common.util.ImageUtil;
 import pb.common.util.PersonUtil;
+import pb.common.util.StringUtil;
+import pb.repo.admin.constant.MainBudgetSrcConstant;
 import pb.repo.admin.constant.MainHrEmployeeConstant;
 import pb.repo.admin.constant.MainMasterConstant;
 import pb.repo.admin.constant.MainWorkflowConstant;
+import pb.repo.admin.constant.PcmReqConstant;
 import pb.repo.admin.dao.MainWorkflowDAO;
 import pb.repo.admin.dao.MainWorkflowHistoryDAO;
 import pb.repo.admin.dao.MainWorkflowNextActorDAO;
@@ -75,33 +89,40 @@ import pb.repo.admin.dao.MainWorkflowReviewerDAO;
 import pb.repo.admin.model.MainHrEmployeeModel;
 import pb.repo.admin.model.MainMasterModel;
 import pb.repo.admin.model.MainWorkflowHistoryModel;
-import pb.repo.admin.model.MainWorkflowModel;
 import pb.repo.admin.model.MainWorkflowNextActorModel;
 import pb.repo.admin.model.SubModuleModel;
+import pb.repo.admin.service.AdminAccountTaxService;
+import pb.repo.admin.service.AdminAssetService;
+import pb.repo.admin.service.AdminConstructionService;
+import pb.repo.admin.service.AdminCostControlService;
+import pb.repo.admin.service.AdminFundService;
 import pb.repo.admin.service.AdminHrEmployeeService;
 import pb.repo.admin.service.AdminMasterService;
+import pb.repo.admin.service.AdminPartnerTitleService;
+import pb.repo.admin.service.AdminProductUomService;
 import pb.repo.admin.service.AdminProjectService;
+import pb.repo.admin.service.AdminPrototypeService;
+import pb.repo.admin.service.AdminBudgetSrcService;
+import pb.repo.admin.service.AdminPurchaseTypeService;
 import pb.repo.admin.service.AdminSectionService;
 import pb.repo.admin.service.AdminUserGroupService;
 import pb.repo.admin.service.AdminWkfConfigService;
 import pb.repo.admin.service.AlfrescoService;
 import pb.repo.admin.service.MainSrcUrlService;
-import pb.repo.admin.service.MainWorkflowService;
 import pb.repo.admin.service.SubModuleService;
 import pb.repo.admin.util.MainUserGroupUtil;
 import pb.repo.common.mybatis.DbConnectionFactory;
-import pb.repo.pcm.constant.PcmOrdWorkflowConstant;
-import pb.repo.pcm.constant.PcmReqConstant;
 import pb.repo.pcm.constant.PcmReqWorkflowConstant;
-import pb.repo.pcm.dao.PcmReqCmtDAO;
 import pb.repo.pcm.dao.PcmReqCmtDtlDAO;
 import pb.repo.pcm.dao.PcmReqCmtHdrDAO;
 import pb.repo.pcm.dao.PcmReqDAO;
 import pb.repo.pcm.dao.PcmReqDtlDAO;
+import pb.repo.pcm.dao.PcmReqMethodCommitteeDAO;
+import pb.repo.pcm.dao.PcmReqMethodDAO;
 import pb.repo.pcm.model.PcmReqCmtDtlModel;
 import pb.repo.pcm.model.PcmReqCmtHdrModel;
-import pb.repo.pcm.model.PcmReqCmtModel;
 import pb.repo.pcm.model.PcmReqDtlModel;
+import pb.repo.pcm.model.PcmReqMethodModel;
 import pb.repo.pcm.model.PcmReqModel;
 import pb.repo.pcm.util.PcmReqCmtHdrUtil;
 import pb.repo.pcm.util.PcmReqDtlUtil;
@@ -159,7 +180,7 @@ public class PcmReqService implements SubModuleService {
 	MainSrcUrlService mainSrcUrlService;
 	
 	@Autowired
-	MainWorkflowService mainWorkflowService;
+	PcmReqWorkflowService mainWorkflowService;
 	
 	@Autowired
 	AdminHrEmployeeService adminHrEmployeeService;
@@ -173,12 +194,41 @@ public class PcmReqService implements SubModuleService {
 	@Autowired
 	AdminProjectService adminProjectService;
 	
+	@Autowired
+	AdminAssetService adminAssetService;
 	
-	public PcmReqModel save(PcmReqModel model, String dtls, String files, String cmts, boolean genDoc) throws Exception {
+	@Autowired
+	AdminConstructionService adminConstructionService;
+	
+	@Autowired
+	AdminFundService adminFundService;
+	
+	@Autowired
+	AdminCostControlService adminCostControlService;
+	
+	@Autowired
+	AdminAccountTaxService adminAccountTaxService;
+	
+	@Autowired
+	AdminPrototypeService adminPrototypeService;
+	
+	@Autowired
+	AlfrescoService alfrescoTaxService;
+	
+	@Autowired
+	AdminBudgetSrcService adminBudgetSrcService;
+	
+	@Autowired
+	AdminPartnerTitleService adminPartnerTitleService;
+
+	@Autowired
+	AdminProductUomService adminProductUomService;
+	
+	@Autowired
+	AdminPurchaseTypeService adminPurchaseTypeService;
+	
+	public PcmReqModel save(SqlSession session, PcmReqModel model, String items, String files, String cmts, boolean genDoc) throws Exception {
 		
-        SqlSession session = PcmUtil.openSession(dataSource);
-        
-        try {
             PcmReqDAO pcmReqDAO = session.getMapper(PcmReqDAO.class);
             PcmReqDtlDAO pcmReqDtlDAO = session.getMapper(PcmReqDtlDAO.class);
             PcmReqCmtHdrDAO pcmReqCmtHdrDAO = session.getMapper(PcmReqCmtHdrDAO.class);
@@ -189,13 +239,18 @@ public class PcmReqService implements SubModuleService {
     		model.setUpdatedBy(authService.getCurrentUserName());
     		model = lookupOtherFields(model);
     		
+			model.setDtlList(PcmReqDtlUtil.convertJsonToList(items, model.getId()));
+			model.setCmtList(PcmReqCmtHdrUtil.convertJsonToList(cmts, model.getId()));
+    		
+			log.info("saving "+model.getId()+", Status:"+model.getStatus());
+			
             if (model.getId() == null) {
         		model.setCreatedBy(model.getUpdatedBy());
         		
     			/*
     			 * Gen New ID
     			 */
-        		MainMasterModel masterModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_ID_FORMAT);
+        		MainMasterModel masterModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_ID_FORMAT,false);
         		String idFormat = masterModel.getFlag1();
 
             	Long id = pcmReqDAO.getNewRunningNo();
@@ -204,7 +259,7 @@ public class PcmReqService implements SubModuleService {
             	
         		model.setId(newId);
         		log.info("new id:"+newId);
-            	doCommonSaveProcess(model, genDoc, files);
+            	doCommonSaveProcess(session, model, genDoc, items, files, cmts);
             	
         		/*
         		 * Add DB
@@ -212,7 +267,7 @@ public class PcmReqService implements SubModuleService {
             	pcmReqDAO.add(model);
             }
             else {
-            	doCommonSaveProcess(model, genDoc, files);
+            	doCommonSaveProcess(session, model, genDoc, items, files, cmts);
             	
             	/*
             	 * Update DB
@@ -224,16 +279,18 @@ public class PcmReqService implements SubModuleService {
             	pcmReqCmtHdrDAO.deleteByMasterId(model.getId());
             }
             
-            List<PcmReqDtlModel> dtlList = PcmReqDtlUtil.convertJsonToList(dtls, model.getId());
+            List<PcmReqDtlModel> dtlList = model.getDtlList();
             for(PcmReqDtlModel dtlModel : dtlList) {
+            	dtlModel.setMasterId(model.getId());
 	        	dtlModel.setCreatedBy(model.getUpdatedBy());
 	        	dtlModel.setUpdatedBy(model.getUpdatedBy());
 	        	
             	pcmReqDtlDAO.add(dtlModel);
             }
             
-            List<PcmReqCmtHdrModel> cmtHdrList = PcmReqCmtHdrUtil.convertJsonToList(cmts, model.getId());
+            List<PcmReqCmtHdrModel> cmtHdrList = model.getCmtList();
             for(PcmReqCmtHdrModel cmtHdrModel : cmtHdrList) {
+            	cmtHdrModel.setPcmReqId(model.getId());
 	        	cmtHdrModel.setCreatedBy(model.getUpdatedBy());
 	        	cmtHdrModel.setUpdatedBy(model.getUpdatedBy());
 	        	
@@ -250,6 +307,16 @@ public class PcmReqService implements SubModuleService {
                 }
             }
             
+            
+        return model;
+	}
+	
+	public PcmReqModel _save(PcmReqModel model, String items, String files, String cmts, boolean genDoc) throws Exception {
+		
+        SqlSession session = PcmUtil.openSession(dataSource);
+        
+        try {
+        	model = save(session, model, items, files, cmts, genDoc);
             
             session.commit();
         } catch (Exception ex) {
@@ -283,8 +350,7 @@ public class PcmReqService implements SubModuleService {
             
     		model.setUpdatedBy(authService.getCurrentUserName());
     		
-    		NodeRef folderNodeRef = new NodeRef(model.getFolderRef());
-    		model = genDoc(model, folderNodeRef);
+    		model = genDoc(session, model);
         	
         	/*
         	 * Update DB
@@ -383,68 +449,118 @@ public class PcmReqService implements SubModuleService {
 
 	}
 	
-	public JSONObject validateAssignee(PcmReqModel model) throws Exception {
-		
-		JSONObject result = new JSONObject();
-		
-        try {
-            setUserGroupFields(model);
-            
-            Set<String> invalidUsers = new HashSet<String>();
-            Set<String> invalidGroups = new HashSet<String>();
-            
-//           	List<MainApprovalMatrixDtlModel> listDtl = adminApprovalMatrixService.listDtl(model.getApprovalMatrixId());
-//           	for (MainApprovalMatrixDtlModel dtlModel : listDtl) {
-//                invalidUsers.addAll(userGroupService.listInvalidUser(dtlModel.getReviewerUser()));
-//                invalidGroups.addAll(userGroupService.listInvalidGroup(dtlModel.getReviewerGroup()));
-//           	}
-            
-            log.info("invalidUsers:"+invalidUsers);
-            log.info("invalidGroups:"+invalidGroups);
-            
-        	if (invalidUsers.size()>0 || invalidGroups.size()>0) {
-				result.put("valid", false);
-        		result.put("users", invalidUsers);
-        		result.put("groups", invalidGroups);
-        	} else {
-        		result.put("valid", true);
-        	}
-        	
-        } catch (Exception ex) {
-			log.error("", ex);
-        	throw ex;
-        } finally {
-        }
-
-        return result;
-	}
+//	public JSONObject validateAssignee(PcmReqModel model) throws Exception {
+//		
+//		JSONObject result = new JSONObject();
+//		
+//        try {
+//            setUserGroupFields(model);
+//            
+//            Set<String> invalidUsers = new HashSet<String>();
+//            Set<String> invalidGroups = new HashSet<String>();
+//            
+////           	List<MainApprovalMatrixDtlModel> listDtl = adminApprovalMatrixService.listDtl(model.getApprovalMatrixId());
+////           	for (MainApprovalMatrixDtlModel dtlModel : listDtl) {
+////                invalidUsers.addAll(userGroupService.listInvalidUser(dtlModel.getReviewerUser()));
+////                invalidGroups.addAll(userGroupService.listInvalidGroup(dtlModel.getReviewerGroup()));
+////           	}
+//            
+//            log.info("invalidUsers:"+invalidUsers);
+//            log.info("invalidGroups:"+invalidGroups);
+//            
+//        	if (invalidUsers.size()>0 || invalidGroups.size()>0) {
+//				result.put("valid", false);
+//        		result.put("users", invalidUsers);
+//        		result.put("groups", invalidGroups);
+//        	} else {
+//        		result.put("valid", true);
+//        	}
+//        	
+//        } catch (Exception ex) {
+//			log.error("", ex);
+//        	throw ex;
+//        } finally {
+//        }
+//
+//        return result;
+//	}
 	
-	private PcmReqModel doCommonSaveProcess(PcmReqModel model, boolean genDoc, String files) throws Exception {
-		
-		/*
-		 * Find Pcm Section Id
-		 */
+//	public JSONObject validateWfPath(PcmReqModel model) throws Exception {
+//		
+//		JSONObject result = new JSONObject();
+//		
+//        try {
+//        	
+//        	Map<String, String> bossMap = mainWorkflowService.getBossMap(MainWkfConfigDocTypeConstant.DT_PR, model);
+//
+//        	if (bossMap==null || bossMap.size()==0) {
+//				result.put("valid", false);
+//				
+//				String msg = PcmReqUtil.getMessage("ERR_NOT_FOUND_WORKFLOW_PATH", I18NUtil.getLocale());
+//				result.put("msg",  msg.split(",")[1]);
+//        	} else {
+//        		result.put("valid", true);
+//        	}
+//        	
+//        } catch (Exception ex) {
+//        	result.put("valid", false);
+//			String msg = PcmReqUtil.getMessage("ERR_NOT_FOUND_WORKFLOW_PATH", I18NUtil.getLocale());
+//			result.put("msg",  msg.split(",")[1]);
+//			log.error("", ex);
+//        }
+//
+//        return result;
+//	}
+	
+	public PcmReqModel setPcmSectionInfo(PcmReqModel model) {
 		Integer pcmSectionId = null;
+		Integer pcmOrgId = null;
 		
 		Integer sectionId = null;
 		
-		if (model.getBudgetCcType().equals(PcmReqConstant.BCCT_PROJECT)) {
-			 List<Map<String, Object>> list = adminProjectService.listProjectManager(model.getBudgetCc());
-			 for(Map<String, Object> map : list) {
-				 sectionId = (Integer)map.get("section_id");
-			 }
-		} else {
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_PROJECT)) {
+//			 List<Map<String, Object>> list = adminProjectService.listProjectManager(model.getBudgetCc());
+//			 for(Map<String, Object> map : list) {
+//				 sectionId = (Integer)map.get("section_id");
+//			 }
+			 
+     		Map<String,Object> proj = adminProjectService.get(model.getBudgetCc());
+     		String pmCode = (String)proj.get("PM_CODE");
+     		MainHrEmployeeModel emp = adminHrEmployeeService.get(pmCode);
+     		sectionId = emp.getSectionId();
+		} else
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_UNIT)) {
 			sectionId = model.getBudgetCc();
+		} else
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_ASSET)) {
+			Map<String,Object> assetMap = adminAssetService.get(model.getBudgetCc());
+			sectionId = (Integer)assetMap.get("section_id");
+		} else
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_CONSTRUCTION)) {
+			Map<String,Object> conMap = adminConstructionService.get(model.getBudgetCc());
+			sectionId = (Integer)conMap.get("section_id");
 		}
 		
 		List<Map<String, Object>> pcmSectionList = adminWkfConfigService.listPurchasingUnit(sectionId);
 		if (pcmSectionList != null) {
 			for(Map<String, Object>  map : pcmSectionList) {
-				pcmSectionId = (Integer)map.get("id");
+				pcmSectionId = (Integer)map.get("purchasing_unit_id");
+				pcmOrgId = (Integer)map.get("org_id");
 			}
 		}
 		
 		model.setPcmSectionId(pcmSectionId);
+		model.setPcmOrgId(pcmOrgId);
+		
+		return model;
+	}
+	
+	private PcmReqModel doCommonSaveProcess(SqlSession session, PcmReqModel model, boolean genDoc, String dtls, String files, String cmts) throws Exception {
+		
+		/*
+		 * Find Pcm Section Id
+		 */
+		model = setPcmSectionInfo(model);
 		
     	/*
     	 * Create ECM Folder
@@ -454,10 +570,33 @@ public class PcmReqService implements SubModuleService {
 		NodeRef folderNodeRef = new NodeRef(model.getFolderRef());
 		
 		/*
+		 * Check Attached File Name is not as same as Doc ID
+		 */
+		if (files instanceof String) {
+			JSONArray jsArr = new JSONArray((String)files);
+			boolean found = false;
+			for(int i=0; i<jsArr.length(); i++) {
+	    		JSONObject jsObj = jsArr.getJSONObject(i);
+	    		String aname = jsObj.getString(FileConstant.JFN_NAME);
+	    		if (aname.equals(model.getId()+".pdf")) {
+	    			found = true;
+	    			break;
+	    		}
+			}
+			
+			if (found) {
+				throw new FolderNoPermissionException("PB_ERR:ERR_INVALID_ATTACHED_FILE_NAME: ("+model.getId()+".pdf)");
+			}
+		}
+		
+		/*
 		 * Gen Doc
 		 */
 		if (genDoc) {
-			model = genDoc(model, folderNodeRef);
+			model.setDtlList(PcmReqDtlUtil.convertJsonToList(dtls, model.getId()));
+			model.setCmtList(PcmReqCmtHdrUtil.convertJsonToList(cmts, model.getId()));
+			
+			model = genDoc(session, model);
 		}
     	
     	/*
@@ -467,7 +606,7 @@ public class PcmReqService implements SubModuleService {
 		String path;
 		
 		List<String> oldList = new ArrayList<String>();
-		Map<String, String> newMap = new HashMap<String, String>();
+		Map<String, JSONObject> newMap = new LinkedHashMap<String, JSONObject>();
 		
 		/*
 		 * Separate Old and New Files
@@ -476,12 +615,13 @@ public class PcmReqService implements SubModuleService {
     	for(int i=0; i<jsArr.length(); i++) {
     		JSONObject jsObj = jsArr.getJSONObject(i);
     		log.info("  file:"+jsObj.getString(FileConstant.JFN_NAME)
+					   			   +", "+jsObj.getString(FileConstant.JFN_DESC)
     							   +", "+jsObj.getString(FileConstant.JFN_PATH)
     							   +", "+jsObj.getString(FileConstant.JFN_NODE_REF));
     		
     		path = jsObj.getString(FileConstant.JFN_PATH);
     		if (path!=null && !path.equals("") && !path.equals("null")) {
-    			newMap.put(jsObj.getString(FileConstant.JFN_NAME), path);
+    			newMap.put(jsObj.getString(FileConstant.JFN_NAME), jsObj);
     		} else {
     			oldList.add(jsObj.getString(FileConstant.JFN_NODE_REF));
     		}
@@ -495,30 +635,10 @@ public class PcmReqService implements SubModuleService {
     	List<ChildAssociationRef> docs = nodeService.getChildAssocs(folderNodeRef, qnames);
     	for(ChildAssociationRef doc : docs) {
     		
-    		log.info("doc:"+doc.toString());
-    		log.info("   childRef:"+doc.getChildRef().toString());
-    		if (!doc.getQName().getLocalName().equals(model.getId()+".pdf")) { // not is memo.pdf
+    		log.info("doc:"+doc.getQName().getLocalName()+":"+doc.getChildRef().toString());
+    		if (!doc.getQName().getLocalName().equals(model.getId()+".pdf")) { // it is not main.pdf
 	    		if (oldList.indexOf(doc.getChildRef().toString()) < 0) {
-	    			
-			    	log.info("  is checked out:"+doc.getChildRef().toString());
-				    if (checkOutCheckInService.isCheckedOut(doc.getChildRef())) {
-				    	log.info("    true");
-				    	final NodeRef wNodeRef = alfrescoService.getWorkingCopyNodeRef(doc.getChildRef().toString());
-				    	log.info("    cancel check out:"+wNodeRef);
-						AuthenticationUtil.runAs(new RunAsWork<String>()
-						{
-							public String doWork() throws Exception
-							{
-
-						    	checkOutCheckInService.cancelCheckout(wNodeRef);
-								return null;
-							}
-						}, AuthenticationUtil.getAdminUserName());
-				    }
-				    else {
-				    	log.info("    false");
-				    }
-	    			
+	    			alfrescoService.cancelCheckout(doc.getChildRef());
 	    			alfrescoService.deleteFileFolder(doc.getChildRef().toString());
 	        		log.info("   delete");
 	    		}
@@ -531,11 +651,11 @@ public class PcmReqService implements SubModuleService {
     	/*
     	 * Create New Files
     	 */
-    	for(Entry<String, String> e : newMap.entrySet()) {
+    	for(Entry<String, JSONObject> e : newMap.entrySet()) {
     		log.info(e.getKey()+":"+e.getValue());
-    		file = new File(FolderUtil.getTmpDir()+File.separator+e.getValue()+File.separator+e.getKey());
+    		file = new File(FolderUtil.getTmpDir()+File.separator+e.getValue().getString(FileConstant.JFN_PATH)+File.separator+e.getKey());
 	    	if (file.exists()) {
-	    		NodeRef docRef = alfrescoService.createDoc(folderNodeRef, file, e.getKey());
+	    		NodeRef docRef = alfrescoService.createDoc(folderNodeRef, file, e.getKey(), e.getValue().getString(FileConstant.JFN_DESC));
 	    		file.delete();
 		    	model.setAttachDoc(docRef.toString());
 	    	}
@@ -544,45 +664,31 @@ public class PcmReqService implements SubModuleService {
     	return model;
 	}
 	
-	public PcmReqModel genDoc(PcmReqModel model, NodeRef folderNodeRef) throws Exception {
+	public PcmReqModel genDoc(SqlSession session, PcmReqModel model) throws Exception {
+		
+		NodeRef folderNodeRef = new NodeRef(model.getFolderRef());
+
 		/*
 		 * Gen Doc in tmp folder
 		 */
-    	String fileName =  doGenDoc("pr", model);
+    	String fileName =  doGenDoc(session, PcmReqConstant.JR_PR, model);
 		String tmpDir = FolderUtil.getTmpDir();
     	String fullName = tmpDir + File.separator + fileName+".pdf"; // real code
-//    	String fullName = tmpDir + File.separator + "PR_FORM.pdf"; // for Demo
     	File file = new File(fullName);
     	String ecmFileName = model.getId()+".pdf";
     	
     	log.info("Gen Doc : "+ecmFileName);
     	/*
-    	 * Put Memo Doc in ECM
+    	 * Put Main Doc in ECM
     	 */
-    	NodeRef oldDocRef = alfrescoService.searchSimple(folderNodeRef, ecmFileName);
-    	if (oldDocRef != null) {
-	    	log.info("  is checked out:"+oldDocRef.toString());
-		    if (checkOutCheckInService.isCheckedOut(oldDocRef)) {
-		    	log.info("    true");
-		    	final NodeRef wNodeRef = alfrescoService.getWorkingCopyNodeRef(oldDocRef.toString());
-		    	log.info("    cancel check out:"+wNodeRef);
-				AuthenticationUtil.runAs(new RunAsWork<String>()
-				{
-					public String doWork() throws Exception
-					{
-
-				    	checkOutCheckInService.cancelCheckout(wNodeRef);
-						return null;
-					}
-				}, AuthenticationUtil.getAdminUserName());
-		    }
-		    else {
-		    	log.info("    false");
-		    }
-
-    		alfrescoService.deleteFileFolder(oldDocRef.toString());
+    	NodeRef docRef = alfrescoService.searchSimple(folderNodeRef, ecmFileName);
+    	if (docRef != null) {
+    		alfrescoService.cancelCheckout(docRef);
+//    		alfrescoService.deleteFileFolder(oldDocRef.toString());
+    		alfrescoService.updateDoc(docRef, file);
+    	} else {
+        	docRef = alfrescoService.createDoc(folderNodeRef, file, ecmFileName, getDocDesc());
     	}
-    	NodeRef docRef = alfrescoService.createDoc(folderNodeRef, file, ecmFileName);
     	
     	/*
     	 * Delete File from tmp folder 
@@ -596,16 +702,180 @@ public class PcmReqService implements SubModuleService {
     	 */
     	model.setDocRef(docRef.toString());
     	
+    	if (model.getIsRefId()!=null && model.getIsRefId().equals(CommonConstant.V_ENABLE)) {
+    		final PcmReqModel refModel = get(model.getRefId(), null);
+    		
+    		Boolean createLink = false;
+    		if (model.getRefDocRef()!=null && !model.getRefDocRef().equals("")) {
+    			
+    			NodeRef oldRefDocRef = new NodeRef(model.getRefDocRef());
+    			
+    			String desc = (String)nodeService.getProperty(oldRefDocRef, ContentModel.PROP_DESCRIPTION);
+    			log.info("link desc:"+desc);
+    			if (!desc.equals("Link to "+refModel.getId())) {
+    				// delete
+    				nodeService.deleteNode(oldRefDocRef);
+    				
+    				createLink = true;
+    			}
+    		}
+    		else {
+    			createLink = true;
+    		}
+    		
+    		if (createLink) {
+	    		NodeRef nodeRef = new NodeRef(refModel.getDocRef());
+	        	NodeRef refDocRef = alfrescoService.createLink(folderNodeRef, nodeRef, "Link to "+refModel.getId());
+	        	
+	        	model.setRefDocRef(refDocRef.toString());
+    		}
+    	}
+    	
     	return model;
 	}
 	
-	public String doGenDoc(String name, PcmReqModel model) throws Exception {
+//	public void updateDoc(SqlSession session, PcmReqModel model) throws Exception {
+//		/*
+//		 * Gen Doc in tmp folder
+//		 */
+//    	String fileName =  doGenDoc(session, PcmReqConstant.JR_PR, model);
+//		String tmpDir = FolderUtil.getTmpDir();
+//    	String fullName = tmpDir + File.separator + fileName+".pdf"; 
+//    	File file = new File(fullName);
+//    	String ecmFileName = model.getId()+".pdf";
+//    	
+//    	log.info("Update Doc : "+ecmFileName);
+//    	/*
+//    	 * Put Main Doc in ECM
+//    	 */
+//    	NodeRef docRef = new NodeRef(model.getDocRef());
+//    	alfrescoService.cancelCheckout(docRef);
+//    	alfrescoService.updateDoc(docRef, file);
+//    	
+//    	/*
+//    	 * Delete File from tmp folder 
+//    	 */
+////    	if (file.exists()) {
+////    		file.delete();
+////    	}
+//	}
+	
+	public String doGenDoc(SqlSession session, String name, PcmReqModel model) throws Exception {
+		
+		DecimalFormat df = new DecimalFormat(CommonConstant.MONEY_FORMAT);
+		DecimalFormat vf = new DecimalFormat("0.00");
+		
+		Double gross = 0.0;
+		Double vat = model.getVat();
+		String vatDesc = "";
+        Map<String, Object> vatMap = adminAccountTaxService.get(model.getVatId());
+        if (vatMap!=null) {
+        	vatDesc = (String)vatMap.get("name");
+        } else {
+        	vatDesc = "ไม่มีภาษีมูลค่าเพิ่ม";
+        }
+		
+		List<Map<String, Object>> dtlList = new ArrayList<Map<String, Object>>();
+		Map<String, Object> dtlMap = null;
+		
+        List<PcmReqDtlModel> tmpDtlList = model.getDtlList();
+        for(PcmReqDtlModel tmpDtl : tmpDtlList) {
+			dtlMap = new HashMap<String, Object>();
+			
+			dtlMap.put("description", tmpDtl.getDescription() + (tmpDtl.getAssetName()!=null && !tmpDtl.getAssetName().equals("") ? " ("+tmpDtl.getAssetName()+")" : ""));
+			dtlMap.put("fy", (Integer)tmpDtl.getFiscalYear()==0 ? "" : tmpDtl.getFiscalYear().toString());
+			dtlMap.put("ac", tmpDtl.getActName());
+			dtlMap.put("ag", tmpDtl.getActGrpName());
+			dtlMap.put("qty", df.format(tmpDtl.getQuantity()));
+			
+			Map<String, Object> unit = adminProductUomService.get(tmpDtl.getUnitId());
+			
+			dtlMap.put("unit", unit.get("name_th"));
+			dtlMap.put("price", df.format(tmpDtl.getPrice()));
+			dtlMap.put("total", df.format(tmpDtl.getTotal()));
+			
+			dtlList.add(dtlMap);
+
+			gross += (Double)tmpDtl.getTotal();
+        }
+        
+		Collection<Map<String, ?>> dtlCol = new ArrayList<Map<String,?>>(dtlList);
+		JRMapCollectionDataSource dtl = new JRMapCollectionDataSource(dtlCol);
+		
+		List<PcmReqCmtHdrModel> tmpCmtList = model.getCmtList();
+		List<Map<String, Object>> cmtList = new ArrayList<Map<String, Object>>();
+		
+		Map<String, Object> cmtMap = null;
+		for(PcmReqCmtHdrModel cmtHdrModel:tmpCmtList) {
+            for(PcmReqCmtDtlModel cmtDtlModel : cmtHdrModel.getDtlList()) {
+            	
+				cmtMap = new HashMap<String, Object>();
+				
+				cmtMap.put("committee", cmtHdrModel.getCommittee());
+				if (cmtDtlModel.getEmployeeCode()!=null && !cmtDtlModel.getEmployeeCode().equals("")) {
+					Map<String,Object> empDtl = adminHrEmployeeService.getWithDtl(cmtDtlModel.getEmployeeCode(), null);
+					
+					String title = empDtl.get("title_th")!=null && !empDtl.get("title_th").equals("") ? (String)empDtl.get("title_th")+" " : "";
+					
+					cmtMap.put("title", title);
+					cmtMap.put("firstName", empDtl.get("first_name_th"));
+					cmtMap.put("lastName", empDtl.get("last_name_th"));
+					cmtMap.put("position", cmtDtlModel.getPosition());
+				} else {
+					Map<String, Object> titleModel = adminPartnerTitleService.get(Integer.parseInt(cmtDtlModel.getTitle()));
+					
+					String title = titleModel!=null ? (String)titleModel.get("name_th") : "";
+					title = title!=null && !title.equals("null") && !title.equals("") ? title+" " : "";
+					
+					cmtMap.put("title", title);
+					cmtMap.put("firstName", cmtDtlModel.getFirstName());
+					cmtMap.put("lastName", cmtDtlModel.getLastName());
+					cmtMap.put("position", cmtDtlModel.getPosition());
+				}
+				
+				cmtList.add(cmtMap);
+            }
+		}
+		
+		Collection<Map<String, ?>> cmtCol = new ArrayList<Map<String,?>>(cmtList);
+		JRMapCollectionDataSource cmt = new JRMapCollectionDataSource(cmtCol);
+		
+		
 		/*
 		 * Parameters
 		 */
 		Map parameters = new HashMap();
 		parameters.put("imgPath", CommonConstant.GP_REPORT_IMG_PATH);
-		  
+		parameters.put("DtlDataSource", dtl);
+		parameters.put("CmtDataSource", cmt);
+		parameters.put("Dtl2DataSource", dtl);
+		
+		Double vatAmt = 0.0;
+		Double netAmt = 0.0;
+		Double netAmtCnv = 0.0;
+		if (model.getPriceInclude()!=null && model.getPriceInclude()) {
+			vat = vat*100;
+			vatAmt = Math.round(gross * vat / (100+vat) * 100) / 100.0; // decimal 2 digits
+			vatAmt = Double.parseDouble(vf.format(vatAmt));
+			netAmt = Double.parseDouble(vf.format(gross));
+			gross = netAmt - vatAmt;
+		} else {
+			gross = Double.parseDouble(vf.format(gross));
+			vatAmt = Double.parseDouble(vf.format(gross * vat));
+			netAmt = gross + vatAmt;
+		}
+		netAmtCnv = netAmt * model.getCurrencyRate();
+		
+		parameters.put("gross", df.format(gross));
+		parameters.put("vatDesc", "("+(vatDesc!=null ? vatDesc : "")+")");
+		parameters.put("vat", df.format(vatAmt));
+		parameters.put("total", df.format(netAmt));
+		parameters.put("currency", "("+model.getCurrency()+")");
+		parameters.put("currency2", model.getCurrency().equals("THB") ? "" : model.getCurrency());
+		parameters.put("rate", df.format(model.getCurrencyRate()));
+		parameters.put("totalTh", df.format(model.getTotalCnv()));
+		parameters.put("acrBgt", model.getIsAcrossBudget().equals("1") ? "1" : "");
+		log.info("acrBgt:"+model.getIsAcrossBudget());
 		/*
 		 * Data
 		 */
@@ -613,32 +883,111 @@ public class PcmReqService implements SubModuleService {
 		
 		Map<String, Object> map = new HashMap<>();
 		map.put("id", model.getId() != null ? model.getId() : "");
-		map.put("reqBy", model.getReqBy());
-		map.put("reqOu", model.getReqSectionId());
 		
-		map.put("createdBy", model.getReqBy());
-		map.put("createdTime", model.getReqBy());
-		map.put("telNo", model.getReqBy());
+		PcmReqMethodModel methodModel = getMethod(model.getPrWebMethodId());
+		if (methodModel!=null) {
+//			log.info("getCond1():"+methodModel.getCond1());
+//			log.info("getMethodCond2Rule():"+model.getMethodCond2Rule());
+//			log.info("getMethodCond2():"+model.getMethodCond2());
+//			log.info("getMethodCond2Dtl():"+model.getMethodCond2Dtl());
+			parameters.put("method", methodModel.getMethod()+
+//			          		  (!methodModel.getCond1().equals("ไม่กำหนด") ? " "+methodModel.getCond1()+" "+model.getMethodCond2Rule()+" "+model.getMethodCond2()+" "+model.getMethodCond2Dtl() : "")
+					          (!methodModel.getCond1().equals("ไม่กำหนด") ? "" : "")
+						  );
+		} else {
+			parameters.put("method",  "-");
+		}
 		
-		map.put("objectiveType", model.getObjectiveType());
+		Map<String,Object> empDtl = adminHrEmployeeService.getWithDtl(model.getReqBy()!=null ? model.getReqBy() : authService.getCurrentUserName(), null);	
+		map.put("reqBy", empDtl.get("title_th")+" "+empDtl.get("first_name_th")+" "+empDtl.get("last_name_th"));
+		map.put("reqOrg", empDtl.get("org_desc_th"));
+		map.put("reqSection", StringUtil.replaceNBSP((String)empDtl.get("section_desc_th")));
+		String mphone = StringUtils.defaultIfEmpty((String)empDtl.get("mobile_phone"),"");
+		String wphone = StringUtils.defaultIfEmpty((String)empDtl.get("work_phone"),"");
+		String comma = (!mphone.equals("") && !wphone.equals("")) ? "," : "";
+		map.put("reqPhone", StringUtils.defaultIfBlank(wphone+comma+mphone,"-"));
+		log.info("reqBy:"+map.get("reqBy"));
+		
+		empDtl = adminHrEmployeeService.getWithDtl(model.getCreatedBy()!=null ? model.getCreatedBy() : authService.getCurrentUserName(), null);
+		map.put("createdBy", empDtl.get("title_th")+" "+empDtl.get("first_name_th")+" "+empDtl.get("last_name_th"));
+		map.put("createdTime", CommonDateTimeUtil.convertToGridDateTime(model.getCreatedTime()!=null?model.getCreatedTime():new Timestamp(Calendar.getInstance().getTimeInMillis())));
+		mphone = StringUtils.defaultIfEmpty((String)empDtl.get("mobile_phone"),"");
+		wphone = StringUtils.defaultIfEmpty((String)empDtl.get("work_phone"),"");
+		comma = (!mphone.equals("") && !wphone.equals("")) ? "," : "";
+		map.put("createdPhone", StringUtils.defaultIfBlank(wphone+comma+mphone,"-"));
+		log.info("createdBy:"+map.get("createdBy"));
+		map.put("requestedTime", CommonDateTimeUtil.convertToGridDateTime(model.getRequestedTime()!=null?model.getRequestedTime():new Timestamp(Calendar.getInstance().getTimeInMillis())));
+		
+		Map<String, Object> firstAppMap = getFirstApprover(session, model.getId());
+		log.info("firstAppMap:"+firstAppMap);
+		map.put("firstAppBy", firstAppMap != null ? firstAppMap.get("approver") : "");
+		map.put("firstAppTime", firstAppMap != null ? CommonDateTimeUtil.convertToGridDateTime((Timestamp)firstAppMap.get("time")) : "");
+		
+		Map<String, Object> lastAppMap = getLastApprover(session, model.getId());
+		log.info("lastAppMap:"+lastAppMap);
+		map.put("lastAppBy", lastAppMap != null ? lastAppMap.get("approver") : "");
+		map.put("lastAppTime", lastAppMap != null ? CommonDateTimeUtil.convertToGridDateTime((Timestamp)lastAppMap.get("time")) : "");
+		
+		Map<String,Object> pType = adminPurchaseTypeService.get(model.getObjectiveType());
+		
+		map.put("objectiveType", pType.get("name_th"));
 		map.put("objective", model.getObjective());
 		map.put("reason", model.getReason());
 		
 		map.put("currency", model.getCurrency());
 		map.put("currencyRate", String.valueOf(model.getCurrencyRate()));
-		map.put("budgetCc", model.getBudgetCc());
 		
-		map.put("stockOu", model.getStockSectionId());
-		map.put("prototype", model.getPrototype());
+		String budgetCcName = null;
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_PROJECT)) {
+			Map<String, Object> prjMap = adminProjectService.get(model.getBudgetCc());
+			budgetCcName = "["+prjMap.get("code")+ "] "+prjMap.get("name_th");
+		} else 
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_UNIT)) {
+			Map<String, Object> sectMap = adminSectionService.get(model.getBudgetCc());
+			budgetCcName = (String)sectMap.get("description_th");
+		} else 
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_ASSET)) {
+			Map<String, Object> assetMap = adminAssetService.get(model.getBudgetCc());
+			budgetCcName = (String)assetMap.get("asset_th");
+		} else 
+		if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_CONSTRUCTION)) {
+			Map<String, Object> conMap = adminConstructionService.get(model.getBudgetCc());
+			budgetCcName = (String)conMap.get("construction_th");
+		}
+		map.put("budgetCc", StringUtil.replaceNBSP(budgetCcName));
 		
-		map.put("event", String.valueOf(model.getCostControlId()));
-		map.put("pcmOu", model.getPcmSectionId());
-		map.put("location", model.getLocation());
+		Map<String, Object> fundMap = adminFundService.get(model.getFundId());
+		map.put("fund", fundMap.get("name"));
+
+		String pttName = "";
+		if (model.getIsPrototype().equals(CommonConstant.V_ENABLE)) {
+			List<MainMasterModel> pttTypeList = masterService.list(MainMasterConstant.TYPE_PROTOTYPE_TYPE, model.getPrototypeType());
+			MainMasterModel pttTypeModel = pttTypeList.get(0);
+			pttName = pttTypeModel.getName();
+			
+//			Map<String, Object> pttModel = adminPrototypeService.get(Integer.parseInt(model.getPrototypeNo()));
+//			pttName += " " + pttModel.get(MainPrototypeConstant.TFN_NAME);
+		}
+		map.put("prototype", pttName);
+		map.put("prototypeYes", (model.getIsPrototype().equals(CommonConstant.V_ENABLE) ? "/radio_on.png" : "/radio_off.png"));
+		map.put("prototypeNo", (!model.getIsPrototype().equals(CommonConstant.V_ENABLE) ? "/radio_on.png" : "/radio_off.png"));
 		
-		map.put("acrossBudget", String.valueOf(model.getAcrossBudget()));
-		map.put("refId", model.getRefId());
+		Map<String, Object> ccMap = adminCostControlService.get(model.getCostControlId());
+		String ccName = ccMap!=null ? (String)ccMap.get("name") : null;
 		
-		map.put("method", model.getMethod());
+		map.put("contractDate", model.getContractDate()!=null ? CommonDateTimeUtil.convertToGridDate(model.getContractDate()) : "");
+		
+		map.put("costControl", StringUtils.defaultIfBlank(ccName,"-"));
+		map.put("location", StringUtils.defaultIfBlank(model.getLocation(),"-"));
+		
+		map.put("isSmallAmount", (model.getIsSmallAmount().equals("1") ? "/checked.png" : "/unchecked.png"));
+		map.put("isSA", (model.getIsSmallAmount()));
+		
+		map.put("isAcrossBudget", (model.getIsAcrossBudget().equals("1") ? "/checked.png" : "/unchecked.png"));
+//		map.put("acrossBudget", (model.getIsAcrossBudget().equals("1") ? df.format(model.getAcrossBudget()) : ""));
+		
+		map.put("isRefId", (model.getIsRefId().equals("1") ? "/checked.png" : "/unchecked.png"));
+		map.put("refId", (model.getIsRefId().equals("1") ? model.getRefId() : ""));
 		
 		listData.add(map);
 
@@ -672,11 +1021,10 @@ public class PcmReqService implements SubModuleService {
 	
 	public List<FileModel> listFile(String id,final Boolean allFile) throws Exception {
 
-		final PcmReqModel model = get(id);
-		log.info("list file : id:"+model.getId());
+		final PcmReqModel model = get(id, null);
+		log.info("list file:"+model.getId()+", folderRef:"+model.getFolderRef());
 		
 		final NodeRef folderNodeRef = new NodeRef(model.getFolderRef());
-		log.info("            folderRef:"+model.getFolderRef());
 		
 		List<FileModel> files = AuthenticationUtil.runAs(new RunAsWork<List<FileModel>>()
 	    {
@@ -684,22 +1032,36 @@ public class PcmReqService implements SubModuleService {
 			{
 				List<FileModel> files = new ArrayList<FileModel>();
 				
+				DateFormat df = new SimpleDateFormat("YYYYMMddHHmmssSSS");
+				
 		    	Set<QName> qnames = new HashSet<QName>();
 		    	qnames.add(ContentModel.TYPE_CONTENT);
 		    	List<ChildAssociationRef> docs = nodeService.getChildAssocs(folderNodeRef, qnames);
 		    	for(ChildAssociationRef doc : docs) {
-		    		log.info("doc:"+doc.toString());
-		    		log.info("   childRef:"+doc.getChildRef().toString());
-		    		log.info("   qname:"+doc.getQName().getLocalName());
+		    		log.info("   "+doc.getQName().getLocalName()+", "+doc.getChildRef().toString());
 		    		
 		    		if (!doc.getQName().getLocalName().equals(model.getId()+".pdf") || allFile) {
 		    			FileModel fileModel = new FileModel();
 		    			fileModel.setName(doc.getQName().getLocalName());
+		    			String desc = (String)nodeService.getProperty(doc.getChildRef(), ContentModel.PROP_DESCRIPTION);
+		    			fileModel.setDesc(desc);
 		    			fileModel.setNodeRef(doc.getChildRef().toString());
 		    			fileModel.setAction("D");
+		    			
+			    		Serializable modifier = nodeService.getProperty(doc.getChildRef(),ContentModel.PROP_CREATOR);
+			    		fileModel.setBy(modifier.toString());
+		    			
+			    		Serializable time = nodeService.getProperty(doc.getChildRef(),ContentModel.PROP_CREATED);
+			    		fileModel.setTime(df.format(time));
+			    		log.info("  time:"+fileModel.getTime());
+			    		
 		    			files.add(fileModel);
 		    		}
 		    	}
+		    	
+		    	FileTimeComparator fileTimeComparator = new FileTimeComparator();
+		    	Collections.sort(files, fileTimeComparator);
+		    	
 		    	return files;
 			}
 	    }, AuthenticationUtil.getAdminUserName());
@@ -776,24 +1138,23 @@ public class PcmReqService implements SubModuleService {
 		
 		if (!exists) {
 			JSONObject map = PcmReqUtil.convertToJSONObject(model,false);
-			Calendar cal = Calendar.getInstance();
+			Calendar cal = Calendar.getInstance(Locale.US);
     		if (cal.get(Calendar.MONTH) >= 9) { // >= October (Thai Start Budget Year)
     			cal.add(Calendar.YEAR, 1);
     		}
     		Timestamp timestampValue = new Timestamp(cal.getTimeInMillis());
     		map.put(PcmReqConstant.JFN_FISCAL_YEAR, timestampValue);
 			
-			
-			Iterator it = map.keys();
-			while(it.hasNext()) {
-				Object obj = it.next();
-				log.info("--"+obj.toString());
-			}
+//			Iterator it = map.keys();
+//			while(it.hasNext()) {
+//				Object obj = it.next();
+//				log.info("--"+obj.toString());
+//			}
 	
 			Writer w = null;
 			TemplateProcessor pc = templateService.getTemplateProcessor("freemarker");
 			
-			MainMasterModel pathFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_PATH_FORMAT);
+			MainMasterModel pathFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_PATH_FORMAT,false);
 			String pathFormat = pathFormatModel.getFlag1();
 			
 			List<Object> paths = new ArrayList<Object>();
@@ -821,7 +1182,7 @@ public class PcmReqService implements SubModuleService {
 					int rpos2 = format.indexOf(CommonConstant.REPS_SUFFIX);
 					String fieldName = format.substring(rpos+CommonConstant.REPS_PREFIX.length(), rpos2);
 					
-					SimpleDateFormat df = new SimpleDateFormat(dFormat);
+					SimpleDateFormat df = new SimpleDateFormat(dFormat,Locale.US);
 					folderMap.put("name", df.format(map.get(fieldName)));
 				}	
 				else {
@@ -846,7 +1207,7 @@ public class PcmReqService implements SubModuleService {
 			} // for
 			
 			
-			MainMasterModel siteModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_SITE_ID);
+			MainMasterModel siteModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_SITE_ID,false);
 			String siteId = siteModel.getFlag1();
 			
 			log.info("site : "+siteId);
@@ -873,20 +1234,87 @@ public class PcmReqService implements SubModuleService {
 //		model.setRequesterGroup(apModel.getRequesterGroup());
 	}
 	
-	public List<PcmReqModel> list(Map<String, Object> params) {
+	public List<Map<String, Object>> list(Map<String, Object> params) {
 		
-		List<PcmReqModel> list = null;
+		List<Map<String, Object>> list = null;
+		
+		SqlSession session = PcmUtil.openSession(dataSource);
+        try {
+        	SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss:SSS");
+        	
+            PcmReqDAO dao = session.getMapper(PcmReqDAO.class);
+            log.info("pcm req list param:"+params);
+    		list = dao.list(params);
+    		
+    		String lang = ((String)params.get("lang")).toUpperCase();
+            
+    		for(Map<String, Object> map : list) {
+    			//log.info("model.getDocRef()="+model.getDocRef());
+    			if (map.get(PcmReqConstant.TFN_DOC_REF) != null) {
+    				try {
+			    		FileInfo fileInfo = fileFolderService.getFileInfo(new NodeRef((String)map.get(PcmReqConstant.TFN_DOC_REF)));
+			    		map.put(PcmReqConstant.JFN_FILE_NAME,fileInfo.getName());
+    				} catch (Exception ex) {
+    					log.error(ex);
+    				}
+    			}
+    			
+    			map.put(PcmReqConstant.JFN_WF_STATUS, 
+    					map.get(PcmReqConstant.TFN_WF_BY+lang)
+    					+"-"+
+    					map.get(PcmReqConstant.TFN_WF_STATUS+lang)
+    					+"-"+
+    					CommonDateTimeUtil.convertToGridDateTime((Timestamp)map.get(PcmReqConstant.TFN_WF_BY_TIME))
+    			);
+    			map.put(PcmReqConstant.JFN_BUDGET_CC_NAME,map.get(PcmReqConstant.TFN_BUDGET_CC_NAME+lang));
+    			map.put(PcmReqConstant.JFN_CREATED_BY,map.get(PcmReqConstant.TFN_CREATED_BY+lang));
+    			map.put(PcmReqConstant.JFN_REQ_BY,map.get(PcmReqConstant.TFN_REQ_BY+lang));
+    			map.put(PcmReqConstant.JFN_REQUESTED_TIME_SHOW, CommonDateTimeUtil.convertToGridDateTime((Timestamp)map.get(PcmReqConstant.TFN_REQUESTED_TIME)));
+    			map.put(PcmReqConstant.JFN_OBJECTIVE_TYPE,map.get(PcmReqConstant.TFN_OBJECTIVE_TYPE+lang));
+    			map.put(PcmReqConstant.JFN_OBJECTIVE_TYPE_NAME,map.get(PcmReqConstant.TFN_OBJECTIVE_TYPE_NAME+lang));
+    			
+    			map.put(PcmReqConstant.JFN_ACTION, PcmReqUtil.getAction(map));
+    			
+    			map.put("totalrowcount", map.get("totalrowcount"));
+
+    			map = CommonUtil.removeThElement(map);
+    		}
+    		
+        } catch (Exception ex) {
+			log.error("", ex);
+        	throw ex;
+        } finally {
+        	session.close();
+        }
+        
+        return list;
+	}
+	
+	public List<Map<String, Object>> listForSearch(Map<String, Object> params) {
+		
+		List<Map<String, Object>> list = null;
 		
 		SqlSession session = PcmUtil.openSession(dataSource);
         try {
             PcmReqDAO dao = session.getMapper(PcmReqDAO.class);
-            log.info("pcm req list param:"+params);
-    		list = dao.list(params);
+            log.info("pcm req list for search param:"+params);
+    		list = dao.listForSearch(params);
+    		
+    		String lang = ((String)params.get("lang")).toUpperCase();
             
-            session.commit();
+    		for(Map<String, Object> map : list) {
+    			map.put(PcmReqConstant.JFN_BUDGET_CC_NAME,map.get(PcmReqConstant.TFN_BUDGET_CC_NAME+lang));
+    			map.put(PcmReqConstant.JFN_CREATED_BY,map.get(PcmReqConstant.TFN_CREATED_BY+lang));
+    			map.put(PcmReqConstant.JFN_REQ_BY,map.get(PcmReqConstant.TFN_REQ_BY+lang));
+    			map.put(PcmReqConstant.JFN_CREATED_TIME_SHOW, CommonDateTimeUtil.convertToGridDateTime((Timestamp)map.get(PcmReqConstant.TFN_CREATED_TIME)));
+    			
+    			map.put("totalrowcount", map.get("totalrowcount"));
+
+    			map = CommonUtil.removeThElement(map);
+    		}    		
+            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -900,17 +1328,25 @@ public class PcmReqService implements SubModuleService {
 		SqlSession session = PcmUtil.openSession(dataSource);
         try {
             PcmReqDAO pcmReqDAO = session.getMapper(PcmReqDAO.class);
-            MainWorkflowReviewerDAO workflowReviewerDAO = session.getMapper(MainWorkflowReviewerDAO.class);
             PcmReqDtlDAO pcmReqDtlDAO = session.getMapper(PcmReqDtlDAO.class);
-            MainWorkflowDAO workflowDAO = session.getMapper(MainWorkflowDAO.class);
-            MainWorkflowHistoryDAO workflowHistoryDAO = session.getMapper(MainWorkflowHistoryDAO.class);
             PcmReqCmtHdrDAO pcmReqCmtHdrDAO = session.getMapper(PcmReqCmtHdrDAO.class);
             PcmReqCmtDtlDAO pcmReqCmtDtlDAO = session.getMapper(PcmReqCmtDtlDAO.class);
+            MainWorkflowDAO workflowDAO = session.getMapper(MainWorkflowDAO.class);
+            MainWorkflowHistoryDAO workflowHistoryDAO = session.getMapper(MainWorkflowHistoryDAO.class);
+            MainWorkflowReviewerDAO workflowReviewerDAO = session.getMapper(MainWorkflowReviewerDAO.class);
+            MainWorkflowNextActorDAO workflowNextActorDAO = session.getMapper(MainWorkflowNextActorDAO.class);
 
-    		PcmReqModel model = get(id);
-    		alfrescoService.deleteFileFolder(model.getFolderRef());
+    		PcmReqModel model = get(id, null);
+    		Map<String,Object> map = PcmReqUtil.convertToMap(model, false);
+    		backup(map);
 
-    		workflowHistoryDAO.deleteByPcmReqId(id);
+//    		boolean exists = (model.getFolderRef()!=null) && fileFolderService.exists(new NodeRef(model.getFolderRef()));    		
+//    		if(exists) {
+//    			alfrescoService.deleteFileFolder(model.getFolderRef());
+//        	}
+
+    		workflowNextActorDAO.deleteByMasterId(id);
+    		workflowHistoryDAO.deleteByMasterId(id);
     		workflowReviewerDAO.deleteByMasterId(id);
     		workflowDAO.deleteByMasterId(id);
     		pcmReqCmtDtlDAO.deleteByMasterId(id);
@@ -927,21 +1363,69 @@ public class PcmReqService implements SubModuleService {
         }
 	}
 	
-	public PcmReqModel get(String id) {
+	public PcmReqModel get(String id, String lang) {
 		
 		PcmReqModel model = null;
+		
+		lang = lang!=null && lang.startsWith("th") ? "_th" : "";
+		
+		SqlSession session = PcmUtil.openSession(dataSource);
+        try {
+            PcmReqDAO dao = session.getMapper(PcmReqDAO.class);
+
+            Map<String,Object> params = new HashMap<String,Object>();
+            
+            params.put("id", id);
+            params.put("lang", lang);
+            
+    		model = dao.get(params);
+    		if (model!=null) {
+	    		model.setTotalRowCount(1l);
+	    		
+	    		StringBuffer s = new StringBuffer();
+	    		List<Map<String, Object>> exavList = dao.listExAv(params);
+	    		for(Map<String, Object> exav:exavList) {
+	    			if (s.length()>0) {
+	    				s.append(",");
+	    			}
+	    			s.append((String)exav.get("id"));
+	    			s.append(":");
+	    			s.append((String)exav.get("status"));
+	    		}
+	    		model.setRid(s.toString());
+	    		
+	    		log.info("rid:"+model.getRid());
+    		} else {
+    			log.info("PR not found : "+id);
+    		}
+        } catch (Exception ex) {
+			log.error("", ex);
+        } finally {
+        	session.close();
+        }
+        
+        return model;
+	}
+	
+	public PcmReqModel getForWfPath(String id, String lang) {
+		
+		PcmReqModel model = null;
+		
+		lang = lang!=null && lang.startsWith("th") ? "_th" : "";
 		
 		SqlSession session = PcmUtil.openSession(dataSource);
         try {
             PcmReqDAO pcmReqDAO = session.getMapper(PcmReqDAO.class);
+
+            Map<String,Object> params = new HashMap<String,Object>();
             
-    		model = pcmReqDAO.get(id);
+            params.put("id", id);
+            params.put("lang", lang);
+            
+    		model = pcmReqDAO.getForWfPath(params);
     		model.setTotalRowCount(1l);
-            
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -961,11 +1445,8 @@ public class PcmReqService implements SubModuleService {
     		map.put("masterId", masterId);
 
     		list = dtlDAO.list(map);
-            
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -987,11 +1468,8 @@ public class PcmReqService implements SubModuleService {
     		map.put("fieldName", fieldName);
 
     		list = dtlDAO.list(map);
-            
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -1043,7 +1521,7 @@ public class PcmReqService implements SubModuleService {
 			id = dataMap.getString(PcmReqConstant.JFN_ID);
 			
 			if (!dataMap.has(PcmReqConstant.JFN_CREATED_BY)) {
-				PcmReqModel memoModel = get(id);
+				PcmReqModel memoModel = get(id, null);
 				reqUser = memoModel.getCreatedBy();
 			}
 			else {
@@ -1081,9 +1559,9 @@ public class PcmReqService implements SubModuleService {
 							String action = hModel.getAction().indexOf("ไม่") >= 0 ? "ไม่อนุมัติ" : "อนุมัติ";
 							String reason = hModel.getComment();
 							String sign = "${S_APP_SIGN_"+lvl+"}";
-							dataMap.put("S_APP_SIGN_"+lvl, hModel.getUser_());
+							dataMap.put("S_APP_SIGN_"+lvl, hModel.getBy());
 							imageMap.put("S_APP_SIGN_"+lvl,"S_APP_SIGN_"+lvl);
-							String name = personUtil.getFullName(PersonUtil.getPerson(hModel.getUser_(), personService));
+							String name = personUtil.getFullName(PersonUtil.getPerson(hModel.getBy(), personService));
 							String time = hModel.getTime().toString();
 							dateTimeMap.put("APP_TIME_"+lvl, hModel.getTime());
 							dataMap.put("S_APP_TIME_"+lvl, hModel.getTime());
@@ -1532,7 +2010,14 @@ public class PcmReqService implements SubModuleService {
 	}
 	
 	@Override
-	public void update(SubModuleModel subModuleModel) throws Exception {
+	public void update(SqlSession session, SubModuleModel subModuleModel) throws Exception {
+		PcmReqModel model = (PcmReqModel)subModuleModel;
+        PcmReqDAO dao = session.getMapper(PcmReqDAO.class);
+        model.setUpdatedTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
+    	dao.update(model);
+	}
+	
+	public void _update(SubModuleModel subModuleModel) throws Exception {
 		
 		PcmReqModel model = (PcmReqModel)subModuleModel;
 		
@@ -1559,20 +2044,33 @@ public class PcmReqService implements SubModuleService {
 
 	}
 	
-	public List<Map<String, Object>> listWorkflowPath(String id) {
+	public List<Map<String, Object>> listWorkflowPath(String id, String lang) {
 		
-		List<Map<String, Object>> list = mainWorkflowService.listWorkflowPath(id);
+		List<Map<String, Object>> list = mainWorkflowService.listWorkflowPath(id, lang);
+		
+		PcmReqModel model = getForWfPath(id, null);
+
+		/*
+		 * Add Preparer
+		 */
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("LEVEL", mainWorkflowService.getTaskCaption(MainWorkflowConstant.TN_PREPARER, lang, null));
+		map.put("U", model.getCreatedBy());
+		map.put("G", "");
+		map.put("IRA", false);
+		map.put("C", "0");
+		
+		list.add(0, map);
 		
 		/*
 		 * Add Requester
 		 */
-		PcmReqModel model = get(id);
-		
-		Map<String, Object> map = new HashMap<String, Object>();
-		map.put("LEVEL", "ผู้ขออนุมัติ");
-		map.put("U", model.getCreatedBy());
+		map = new HashMap<String, Object>();
+		map.put("LEVEL", mainWorkflowService.getTaskCaption(MainWorkflowConstant.TN_REQUESTER, lang, null));
+		map.put("U", model.getReqBy());
 		map.put("G", "");
 		map.put("IRA", false);
+		map.put("C", "0");
 		
 		list.add(0, map);
 		
@@ -1587,6 +2085,10 @@ public class PcmReqService implements SubModuleService {
 
     		actorList = dao.listWorkflowPath(id);
     		
+    		for(Map<String, Object> actor : actorList) {
+    			actor.put("LEVEL", mainWorkflowService.getTaskCaption((String)actor.get("LEVEL"),lang,null));
+    		}
+    		
     		list.addAll(actorList);
             
         } catch (Exception ex) {
@@ -1598,35 +2100,59 @@ public class PcmReqService implements SubModuleService {
         /*
          * Convert Employeee Code to Name
          */
+        lang = (lang!=null && lang.startsWith("th") ? "_th" : "");
+        
+        List<String> codes = new ArrayList<String>();
 		for(Map<String, Object> rec:list) {
-			String empCode = (String)rec.get("U");
-			MainHrEmployeeModel empModel = adminHrEmployeeService.get(empCode);
-			if (empModel!=null) {
-				rec.put("U", empCode + " - " + empModel.getFirstName());
+			codes.add((String)rec.get("U"));
+		}
+		if (codes.size()>0) {
+			List<Map<String, Object>> empList = adminHrEmployeeService.listInSet(codes);
+			for(Map<String, Object> rec:list) {
+				boolean found = false;
+				for (Map<String, Object> empModel : empList) {
+					if (empModel.get("code").equals(rec.get("U"))) {
+						rec.put("U", empModel.get("code") + " - " + empModel.get("first_name"+lang));
+						found = true;
+						break;
+					}
+				}
+				if(!found) {
+					rec.put("U", "");
+				}
 			}
 		}
 		
 		return list;
 	}
 
-	public List<PcmReqCmtModel> listCmt(String objType) throws Exception {
+	public List<Map<String, Object>> listCmt(Integer typeId, String total) throws Exception {
 		
-		List<PcmReqCmtModel> list = null;
+		List<Map<String, Object>> list = null;
 		
 		SqlSession session = PcmUtil.openSession(dataSource);
         try {
            
-            PcmReqCmtDAO dao = session.getMapper(PcmReqCmtDAO.class);
-
+            PcmReqMethodDAO dao = session.getMapper(PcmReqMethodDAO.class);
+            PcmReqMethodCommitteeDAO cmtDao = session.getMapper(PcmReqMethodCommitteeDAO.class);
+            
             Map<String, Object> params = new HashMap<String, Object>();
-            params.put("objType", objType);
+            params.put("typeId", typeId);
+            if (total != null) {
+            	params.put("total", Double.parseDouble(total));
+            }
             
     		list = dao.list(params);
+    		
+    		Map<String, Object> cmtParams = new HashMap<String, Object>();
+    		for(Map<String, Object> map:list) {
+        		cmtParams.put("id", map.get("id"));
+        		
+    			map.put("cmts", cmtDao.list(cmtParams));
+    		}
             
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -1634,7 +2160,7 @@ public class PcmReqService implements SubModuleService {
         return list;
 	}
 	
-	public List<Map<String,Object>> listCmtDtl(String id, String cmt) throws Exception {
+	public List<Map<String,Object>> listCmtDtl(String id, Integer cmt) throws Exception {
 		
 		List<Map<String,Object>> list = null;
 		
@@ -1648,11 +2174,17 @@ public class PcmReqService implements SubModuleService {
             params.put("cmt", cmt);
             
     		list = dao.list(params);
-            
-            session.commit();
+    		for(Map<String,Object> map:list) {
+    			map.put("title", map.get("title")!=null  && !map.get("title").equals("null") ? map.get("title") : "");
+    			map.put("etitle", map.get("etitle")!=null && !map.get("etitle").equals("null") ? map.get("etitle") : "");
+    			map.put("etitle_th", map.get("etitle_th")!=null && !map.get("etitle_th").equals("null") ? map.get("etitle_th") : "");
+    			if (map.get("employee_code")==null || map.get("employee_code").equals("null") || map.get("employee_code").equals("")) {
+    				map.put("tid", Integer.parseInt((String)map.get("title")));
+    				map.put("title", map.get("otitle"));
+    			}
+    		}
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -1674,10 +2206,8 @@ public class PcmReqService implements SubModuleService {
             
     		list = dao.listByMasterId(params);
             
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -1690,7 +2220,7 @@ public class PcmReqService implements SubModuleService {
 		
 		PcmReqModel pcmReqModel = (PcmReqModel)paramModel;
 		
-		MainMasterModel descFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_WF_DESC_FORMAT);
+		MainMasterModel descFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_WF_DESC_FORMAT,false);
 		String descFormat = descFormatModel.getFlag1();
 		
 		JSONObject map = PcmReqUtil.convertToJSONObject(pcmReqModel,false);
@@ -1733,15 +2263,17 @@ public class PcmReqService implements SubModuleService {
             /*
              * Get Old Pcm Req
              */
-            PcmReqModel oModel = get(id);
+            PcmReqModel oModel = get(id, null);
             
             /*
              * Prepare New Pcm Req
              */
             model.setStatus(PcmReqConstant.ST_DRAFT);
             
-        	model.setReqBy(oModel.getReqBy());
-        	model.setReqSectionId(oModel.getReqSectionId());
+            Map<String, Object> reqBy = adminHrEmployeeService.getWithDtl(authService.getCurrentUserName(), null);
+            
+        	model.setReqBy(authService.getCurrentUserName());
+        	model.setReqSectionId((Integer)reqBy.get("section_id"));
         	
         	model.setObjectiveType(oModel.getObjectiveType());
         	model.setObjective(oModel.getObjective());
@@ -1752,13 +2284,14 @@ public class PcmReqService implements SubModuleService {
 
         	model.setBudgetCcType(oModel.getBudgetCcType());
         	model.setBudgetCc(oModel.getBudgetCc());
+        	model.setFundId(oModel.getFundId());
         	
         	model.setIsStock(oModel.getIsStock());
         	model.setStockSectionId(oModel.getStockSectionId());
         	
         	model.setIsPrototype(oModel.getIsPrototype());
-        	model.setPrototype(oModel.getPrototype());
-        	model.setPrototypeContractNo(oModel.getPrototypeContractNo());
+        	model.setPrototypeType(oModel.getPrototypeType());
+        	model.setPrototypeNo(oModel.getPrototypeNo());
         	
         	model.setCostControlTypeId(oModel.getCostControlTypeId());
         	model.setCostControlId(oModel.getCostControlId());
@@ -1769,18 +2302,24 @@ public class PcmReqService implements SubModuleService {
         	model.setIsAcrossBudget(oModel.getIsAcrossBudget());
         	model.setAcrossBudget(oModel.getAcrossBudget());
         	
+        	model.setIsSmallAmount(oModel.getIsSmallAmount());
+        	
         	model.setIsRefId(oModel.getIsRefId());
         	model.setRefId(oModel.getRefId());
+        	
+        	model.setContractDate(oModel.getContractDate());
 
-        	model.setMethod(oModel.getMethod());
+        	model.setPrWebMethodId(oModel.getPrWebMethodId());
         	model.setMethodCond2Rule(oModel.getMethodCond2Rule());
         	model.setMethodCond2(oModel.getMethodCond2());
         	model.setMethodCond2Dtl(oModel.getMethodCond2Dtl());
         	
         	model.setVat(oModel.getVat());
         	model.setVatId(oModel.getVatId());
+        	model.setPriceInclude(oModel.getPriceInclude());
         	
         	model.setTotal(oModel.getTotal());
+        	model.setTotalCnv(oModel.getTotalCnv());
         	
         	model.setRewarning(oModel.getRewarning());
         	model.setWaitingDay(oModel.getWaitingDay());
@@ -1792,7 +2331,7 @@ public class PcmReqService implements SubModuleService {
 			/*
 			 * Gen New ID
 			 */
-    		MainMasterModel masterModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_ID_FORMAT);
+    		MainMasterModel masterModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_ID_FORMAT,false);
     		String idFormat = masterModel.getFlag1();
 
         	Long runningNo = pcmReqDAO.getNewRunningNo();
@@ -1827,10 +2366,10 @@ public class PcmReqService implements SubModuleService {
             /*
              * Create New Committee
              */
-            List<PcmReqCmtHdrModel> cmtHdrList = listCmtHdrByMasterId(oModel.getId());
+            List<PcmReqCmtHdrModel> cmtHdrList = listCmtHdrByMasterId(oModel.getId(), true);
             for(PcmReqCmtHdrModel cmtHdrModel : cmtHdrList) {
             	
-            	List<PcmReqCmtDtlModel> cmtDtlList = listCmtDtlByMasterId(cmtHdrModel.getId());
+            	List<PcmReqCmtDtlModel> cmtDtlList = cmtHdrModel.getDtlList();
             	
             	cmtHdrModel.setPcmReqId(model.getId());
 	        	cmtHdrModel.setCreatedBy(model.getUpdatedBy());
@@ -1866,7 +2405,7 @@ public class PcmReqService implements SubModuleService {
         return model.getId();
 	}	
 
-	public List<PcmReqCmtHdrModel> listCmtHdrByMasterId(String masterId) {
+	public List<PcmReqCmtHdrModel> listCmtHdrByMasterId(String masterId, Boolean fillDtl) {
 		
 		List<PcmReqCmtHdrModel> list = null;
 		
@@ -1878,11 +2417,19 @@ public class PcmReqService implements SubModuleService {
     		map.put("masterId", masterId);
 
     		list = dao.list(map);
+    		
+    		if (fillDtl) {
+    			PcmReqCmtDtlDAO dtlDao = session.getMapper(PcmReqCmtDtlDAO.class);
+    			
+    			Map<String, Object> params = new HashMap<String, Object>();
+    			for(PcmReqCmtHdrModel hdrModel : list) {
+    				params.put("id", hdrModel.getId());
+    				hdrModel.setDtlList(dtlDao.listByMasterId(params));
+    			}
+    		}
             
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -1904,7 +2451,7 @@ public class PcmReqService implements SubModuleService {
 
         parameters.put(PcmReqWorkflowConstant.PROP_DOCUMENT, (Serializable)docList);
         parameters.put(PcmReqWorkflowConstant.PROP_ATTACH_DOCUMENT, (Serializable)attachDocList);
-        parameters.put(PcmReqWorkflowConstant.PROP_COMMENT_HISTORY, "");
+//        parameters.put(PcmReqWorkflowConstant.PROP_COMMENT_HISTORY, "");
         
         parameters.put(PcmReqWorkflowConstant.PROP_TASK_HISTORY, "");
         
@@ -1914,40 +2461,31 @@ public class PcmReqService implements SubModuleService {
 		parameters.put(PcmReqWorkflowConstant.PROP_OBJECTIVE_TYPE, model.getObjectiveType());
 		parameters.put(PcmReqWorkflowConstant.PROP_OBJECTIVE, model.getObjective());
 		parameters.put(PcmReqWorkflowConstant.PROP_REASON, model.getReason());
-		parameters.put(PcmReqWorkflowConstant.PROP_TOTAL, model.getTotal());
+		parameters.put(PcmReqWorkflowConstant.PROP_TOTAL, model.getTotalCnv());
 		
-		Map<String, Object> map = null;
-		if (model.getBudgetCcType().equals(PcmReqConstant.BCCT_UNIT)) {
-			map = adminSectionService.get(model.getBudgetCc());
-			model.setBudgetCcName((String)map.get("description"));
-		} else {
-			map = adminProjectService.get(model.getBudgetCc());
-			model.setBudgetCcName((String)map.get("name")+" - "+(String)map.get("description"));
+		if (model.getIsRefId()!=null && model.getIsRefId().equals(CommonConstant.V_ENABLE)) {
+	        List<NodeRef> refDocList = new ArrayList<NodeRef>();
+	        
+    		PcmReqModel refModel = get(model.getRefId(), null);
+    		NodeRef refNodeRef = new NodeRef(refModel.getDocRef()); 
+	        refDocList.add(refNodeRef);
+			
+			parameters.put(PcmReqWorkflowConstant.PROP_REF_DOCUMENT, (Serializable)refDocList);
+			
 		}
 		
-		parameters.put(PcmReqWorkflowConstant.PROP_BUDGET_CC, model.getBudgetCcName());
+//		Map<String, Object> map = null;
+//		if (model.getBudgetCcType().equals(PcmReqConstant.BCCT_UNIT)) {
+//			map = adminSectionService.get(model.getBudgetCc());
+//			model.setBudgetCcName((String)map.get("name"));
+//		} else {
+//			map = adminProjectService.get(model.getBudgetCc());
+//			model.setBudgetCcName((String)map.get("code")+" - "+(String)map.get("name"));
+//		}
+//		
+//		parameters.put(PcmReqWorkflowConstant.PROP_BUDGET_CC, model.getBudgetCcName());
 		
-	}
-
-	@Override
-	public String getActionCaption(String action) {
-		
-		Map<String, String> WF_TASK_ACTIONS = new HashMap<String, String>();
-		
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_START, "ขออนุมัติ");
-		
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_APPROVE, "อนุมัติ");
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_REJECT, "ไม่อนุมัติ");
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_CONSULT, "ขอคำปรึกษา");
-    	
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_COMMENT, "ให้ความเห็น");
-    	
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_RESUBMIT, "ขออนุมัติใหม่");
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_CANCEL, "ยกเลิก");
-    	
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_COMPLETE, "ส่งงานให้พัสดุ");
-		
-		return WF_TASK_ACTIONS.get(action);
+		parameters.put(PcmReqWorkflowConstant.PROP_BUDGET_CC, model.getBudgetCcType() + "," + model.getBudgetCc());
 	}
 
 	@Override
@@ -1964,7 +2502,7 @@ public class PcmReqService implements SubModuleService {
 			
 			actorModel.setMasterId(model.getId());
 			actorModel.setLevel(1);
-			actorModel.setActor(PcmReqConstant.NA_BOSS);
+			actorModel.setActor(MainWorkflowConstant.TN_PROCUREMENT_SUPERVISOR);
 			actorModel.setActorUser(MainUserGroupUtil.code2login((String)map.get(MainHrEmployeeConstant.TFN_EMPLOYEE_CODE)));
 			actorModel.setCreatedBy(model.getUpdatedBy());
 			
@@ -1978,12 +2516,32 @@ public class PcmReqService implements SubModuleService {
 	public String getFirstComment(SubModuleModel model) {
 		PcmReqModel realModel = (PcmReqModel)model;
 		
-		return realModel.getObjectiveType() + " " + realModel.getObjective() + " " + realModel.getReason();
+		return realModel.getObjectiveTypeName() + " " + realModel.getObjective() + " " + realModel.getReason();
 	}
 
 	@Override
-	public String getNextActionInfo() {
-		return "ฝ่ายพัสดุ";
+	public String getNextActionInfo(Object obj, String lang) {
+		if (obj instanceof PcmReqModel) {
+			PcmReqModel prModel = (PcmReqModel)obj;
+			if (prModel!=null 
+					&& (prModel.getStatus().equals(PcmReqConstant.ST_CANCEL_BY_PCM) 
+					|| prModel.getStatus().equals(PcmReqConstant.ST_CANCEL_BY_REQ))
+				) {
+				return "";
+			} else {
+				return mainWorkflowService.getTaskCaption(MainWorkflowConstant.TN_PROCUREMENT,lang,null);
+			}
+		} else {
+			Map<String,Object> prMap = (Map<String,Object>)obj;
+			if (prMap!=null 
+					&& (prMap.get("status").equals(PcmReqConstant.ST_CANCEL_BY_PCM) 
+					|| prMap.get("status").equals(PcmReqConstant.ST_CANCEL_BY_REQ))
+				) {
+				return "";
+			} else {
+				return mainWorkflowService.getTaskCaption(MainWorkflowConstant.TN_PROCUREMENT,lang,null);
+			}
+		}
 	}
 	
 	public List<Map<String, Object>> listForInf(String id) {
@@ -1998,7 +2556,6 @@ public class PcmReqService implements SubModuleService {
     		map.put("id", id);
 
     		list = dao.listForInf(map);
-            
         } catch (Exception ex) {
 			log.error("", ex);
         	throw ex;
@@ -2073,5 +2630,774 @@ public class PcmReqService implements SubModuleService {
 	@Override
 	public String getModelPrefix() {
 		return PcmReqWorkflowConstant.MODEL_PREFIX;
+	}
+
+//	@Override
+//	public Map<String, String> getBossMap(String docType, SubModuleModel subModuleModel) throws Exception {
+//		
+//		PcmReqModel model = (PcmReqModel)subModuleModel;
+//		
+//		/*
+//		 * Search Original Boss List
+//		 */
+//		Map<String, String> tmpMap = new LinkedHashMap<String, String>();
+//		
+//		log.info("getBossMap()");
+//		log.info("  docType:'"+docType+"'");
+//		log.info("  budgetCcType:"+model.getBudgetCcType());
+//		log.info("  reqUser:"+model.getReqBy());
+////		log.info("  sectionId:'"+model.getReqSectionId()+"'");
+//		
+//        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+//        try {
+//        	MainBossDAO dao = session.getMapper(MainBossDAO.class);
+//        	
+//        	Map<String, Object> params = new HashMap<String, Object>();
+//        	params.put("docType", docType);
+//            if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_PROJECT)) {
+//        		// find project manager section id
+//        		List<Map<String, Object>> list = adminProjectService.listProjectManager(model.getBudgetCc());
+//        		Map<String, Object> pm = list.get(0);
+//        		params.put("sectionId", pm.get(MainHrEmployeeConstant.TFN_SECTION_ID));
+//        		
+//        		String pmCode = MainUserGroupUtil.code2login((String)pm.get("employee_code"));
+//        		if (!model.getReqBy().equals(pmCode)) {
+//        			tmpMap.put("00", pmCode);
+//        		}
+//        	} else
+//            if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_UNIT)) {
+//            	params.put("sectionId", model.getBudgetCc());
+//        	} else
+//            if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_ASSET)) {
+//    			Map<String,Object> assetMap = adminAssetService.get(model.getBudgetCc());
+//            	params.put("sectionId", assetMap.get("section_id"));
+//        	} else
+//            if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_CONSTRUCTION)) {
+//    			Map<String,Object> conMap = adminConstructionService.get(model.getBudgetCc());
+//            	params.put("sectionId", conMap.get("section_id"));
+//        	}
+//    		log.info("  sectionId:"+params.get("sectionId"));
+//            
+//            for(Entry<String,Object> p:params.entrySet()) {
+//            	log.info("p:"+p.getKey()+":"+p.getValue());
+//            }
+//        	
+//        	List<Map<String, Object>> bossList = dao.list(params);
+//        	log.info("  bossList"+bossList);
+//        	
+//        	if (model.getBudgetCcType().equals(MainBudgetSrcConstant.TYPE_PROJECT)) {
+//        		tmpMap = getProjectBossMap(model, bossList, tmpMap);
+//        	}
+//        	else {
+//        		tmpMap = getUnitBossMap(model, bossList, tmpMap);
+//        	}
+//        	
+//            log.info("  bossMap:"+tmpMap);
+////            if (tmpMap.size() == 0) {
+////            	throw new Exception("No Approval Matrix");
+////            }
+//            
+////        	- not exist in bossList -> start from first item -> find upper boundary by money
+////        	- exist in bossList
+////        		- 1 time -> find boss -> find upper boundary by money
+////        		- many times -> find boss -> find upper boundary by money
+//        	
+////        	- if top boss is requester -> find special user
+//            
+//        } catch (Exception ex) {
+//        	log.error(ex);
+//        	throw ex;
+//        } finally {
+//        	session.close();
+//        }
+//		
+//		return tmpMap;
+//	}
+	
+	public Map<String, String> getUnitBossMap(PcmReqModel model, List<Map<String, Object>> bossList,Map<String, String> tmpMap ) throws Exception {
+		
+//		String reqByCode = MainUserGroupUtil.login2code(model.getReqBy());
+    	
+    	Map<String, Object> reservedBoss = null;
+    	Map<String, Object> lastBossMap = null;
+    	
+    	/*
+    	 * Find Boss by level, if reqByCode exist in workflow path
+    	 */
+    	int start = 0;
+    	int i = 0;
+    	
+    	int len = bossList.size();
+    	if (len>0) {
+	    	for(int j=len-1;j>=0;j--) {
+	    		Map<String, Object> boss = bossList.get(j);
+	    		
+	    		log.info("  "+boss.get("lvl")+" "+boss.get("employee_code"));
+	    		
+	    		if (boss.get("employee_code").equals(model.getReqBy())) {
+	    			log.info(model.getReqBy()+" is in path");
+	    			start = j;
+	    			break;
+	    		}
+	    	}
+    	}
+    	
+    	/*
+    	 * Find Boss by money, if reqByCode not exist in workflow path
+    	 */
+    	Double total = model.getTotalCnv();
+    	if (model.getIsRefId().equals(CommonConstant.V_ENABLE)) {
+    		PcmReqModel oldModel = get(model.getRefId(), null);
+    		total += oldModel.getTotalCnv();
+    	}
+//    	if (model.getIsAcrossBudget().equals(CommonConstant.V_ENABLE)) {
+//    		if (model.getAcrossBudget() > 0) {
+//    			total = model.getAcrossBudget();
+//    		}
+//    	}
+    	log.info("total:"+total);
+    	
+    	i = 0;
+    	log.info("  start:"+start);
+    	for(Map<String, Object> boss : bossList) {
+    		
+    		log.info("  "+boss.get("lvl")+" "+boss.get("employee_code")+" (amt:"+boss.get("amount_max")+")");
+    		
+    		if (i>=start) {
+    			if (tmpMap.size()==0 || total > (Double)lastBossMap.get("amount_max")) {
+    				tmpMap.put((String)boss.get("lvl"), (String)boss.get("employee_code"));
+    				lastBossMap = boss;
+    			}
+    			else
+    			if (reservedBoss==null) {
+    				reservedBoss = boss;
+    				break;
+    			}
+    		}
+    		i++;
+    	}
+    	
+    	log.info("lastBoss:"+lastBossMap.get("employee_code")+", reqBy:"+model.getReqBy());
+    	/*
+    	 * Replace Last Boss if he is Requester
+    	 */
+    	if (lastBossMap.get("employee_code").equals(model.getReqBy())) {
+    		if (reservedBoss!=null) {
+        		tmpMap.remove(lastBossMap.get("lvl"));
+    			tmpMap.put((String)reservedBoss.get("lvl"), (String)reservedBoss.get("employee_code"));
+    		}
+    		else {
+    			// Waiting SA
+    			
+    		}
+    	}
+    	
+    	
+    	/*
+    	 * Remove Requester from first position
+    	 */
+    	if (tmpMap.size()>1) {
+    		i = 0;
+    		for(Entry<String, String> e : tmpMap.entrySet()) {
+    			if(i==0) {
+    				if (e.getValue().equals(model.getReqBy())) {
+    					tmpMap.remove(e.getKey());
+    					break;
+    				}
+    			}
+    			i++;
+    		}
+    	}
+    	
+    	
+//    	/*
+//    	 * Remove Requester from Boss List
+//    	 */
+//    	List<String> rmList = new ArrayList<String>();
+//    	int i = 1;
+//    	int size = tmpMap.size();
+//    	for(Entry<String, String> e : tmpMap.entrySet()) {
+//    		log.info("  e.key:"+e.getKey()+", value:"+e.getValue());
+//    		
+//    		if (i==size) {
+//    			break;
+//    		}
+//    		
+//    		if (e.getValue().equals(reqByCode)) {
+//    			rmList.add(e.getKey());
+//    		}
+//    		
+//    		i++;
+//    	}
+//
+//    	for(String k : rmList) {
+//    		tmpMap.remove(k);
+//    	}
+		
+		 /*
+         * Remove duplicated Boss
+         */
+		Map<String, String> map = removeDuplicatedBoss(tmpMap);
+		
+		return map;
+	}
+
+	public Map<String, String> getProjectBossMap(PcmReqModel model, List<Map<String, Object>> bossList,Map<String, String> tmpMap) throws Exception {
+		
+    	/*
+    	 * Find Boss by money, if reqByCode not exist in workflow path
+    	 */
+    	Double total = model.getTotalCnv();
+    	if (model.getIsRefId().equals(CommonConstant.V_ENABLE)) {
+    		PcmReqModel oldModel = get(model.getRefId(), null);
+    		total += oldModel.getTotalCnv();
+    	}
+    	if (model.getIsAcrossBudget().equals(CommonConstant.V_ENABLE)) {
+    		if (model.getAcrossBudget()!=null && model.getAcrossBudget() > 0) {
+    			total = model.getAcrossBudget();
+    		}
+    	}
+    	
+    	log.info("total:"+total);
+
+    	/*
+    	 * Case PM get special budget
+    	 */
+		String pm = tmpMap.get("00");
+    	log.info("pm:"+pm);
+    	
+		if (pm!=null && !pm.equals(model.getReqBy())) {
+			List<Map<String, Object>> list = adminProjectService.listPMSpecialBudget(model.getBudgetCc(),"PR");
+			if (list!=null && list.size()>0) {
+				Map<String, Object> map = list.get(0);
+				Double specialBudget = (Double)map.get("amount_max");
+				log.info("special budget:"+specialBudget);
+				if (total <= specialBudget) {
+					log.info("total<=specialBudget");
+					return tmpMap;
+				} else {
+					log.info("total>specialBudget");
+//					List<Map<String, Object>> tmpList = new ArrayList<Map<String,Object>>();
+//			    	for(Map<String, Object> boss : bossList) {
+//			    		log.info("  "+boss.get("lvl")+" "+boss.get("employee_code")+" (amt:"+boss.get("amount_max")+")");
+//			    		if (specialBudget < (Double)boss.get("amount_max")) {
+//				    		log.info("  added");
+//			    			tmpList.add(boss);
+//			    		}
+//			    	}
+//		    		bossList = tmpList;
+				}
+			}
+		}
+    	
+		/*
+		 * Other cases
+		 */
+    	
+    	/*
+    	 * Find Boss by level, if reqByCode exist in workflow path
+    	 */
+    	int start = 0;
+    	int i = 0;
+    	
+    	int len = bossList.size();
+    	if (len>0) {
+	    	for(int j=len-1;j>=0;j--) {
+	    		Map<String, Object> boss = bossList.get(j);
+	    		
+	    		log.info("  "+boss.get("lvl")+" "+boss.get("employee_code"));
+	    		
+	    		if (boss.get("employee_code").equals(pm)) {
+	    			log.info(pm+" is in path");
+	    			start = j;
+	    			break;
+	    		}
+	    	}
+    	} 	
+    	
+    	Map<String, Object> reservedBoss = null;
+    	Map<String, Object> lastBossMap = new HashMap<String, Object>();
+    	lastBossMap.put("amount_max", (Double)0.0);
+    	i = 0;
+    	log.info("  start:"+start);
+    	for(Map<String, Object> boss : bossList) {
+    		
+    		log.info("  "+boss.get("lvl")+" "+boss.get("employee_code")+" (amt:"+boss.get("amount_max")+")");
+    		
+    		if (i>=start) {
+    			if (total > (Double)lastBossMap.get("amount_max")) {
+    				log.info("   add");
+    				tmpMap.put((String)boss.get("lvl"), (String)boss.get("employee_code"));
+    				lastBossMap = boss;
+    			}
+    			else
+    			{
+    				log.info("   reserve");
+    				reservedBoss = boss;
+    				break;
+    			}
+    		}
+    		i++;
+    	}
+    	
+    	log.info("lastBoss:"+lastBossMap.get("employee_code")+", reqBy:"+model.getReqBy());
+    	
+    	/*
+    	 * Replace Last Boss if he is Requester
+    	 */
+    	if (lastBossMap.get("employee_code").equals(model.getReqBy())) {
+    		tmpMap.remove(lastBossMap.get("lvl"));
+    		if (reservedBoss!=null) {
+    			tmpMap.put((String)reservedBoss.get("lvl"), MainUserGroupUtil.code2login((String)reservedBoss.get("employee_code")));
+    		}
+    	}
+    	
+		/*
+         * Remove duplicated Boss
+         */
+		tmpMap = removeDuplicatedBoss(tmpMap);
+		
+    	/*
+    	 * Remove Requester
+    	 */
+		List<String> rmList = new ArrayList<String>();
+		
+		for(Entry<String, String> e : tmpMap.entrySet()) {
+			if (e.getValue().equals(model.getReqBy())) {
+				rmList.add(e.getKey());
+			}
+		}
+
+    	for(String k:rmList) {
+    		tmpMap.remove(k);
+    	}
+    	
+		return tmpMap;
+	}
+	
+	public Map<String, String> removeDuplicatedBoss(Map<String, String> tmpMap) {
+		
+		Map<String, String> map = new LinkedHashMap<String, String>();
+		
+		Entry<String, String> prevEntry = null;
+		for(Entry<String, String> e : tmpMap.entrySet()) {
+			
+//			log.info("  "+((prevEntry!=null) ? prevEntry.getValue() : "null")+":"+e.getValue());
+			
+			if (prevEntry==null || !e.getValue().equals(prevEntry.getValue())) {
+				map.put(e.getKey(), e.getValue());
+			}
+			
+			prevEntry = e;
+		}
+		
+//		if (prevEntry != null) {
+//			map.put((String)prevEntry.getKey(), (String)prevEntry.getValue());
+//		}
+		
+        log.info("  map="+map);
+
+        return map;
+	}
+	
+
+	private Map<String, Object> getFirstApprover(SqlSession session, String id) {
+		Map<String, Object> map = null;
+		
+        MainWorkflowDAO dao = session.getMapper(MainWorkflowDAO.class);
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("type", "PCM_REQ");
+		params.put("id", id);
+		
+		map = dao.getFirstApprover(params);
+        
+        return map;
+	}
+	
+	private Map<String, Object> getLastApprover(SqlSession session, String id) {
+		Map<String, Object> map = null;
+		
+        MainWorkflowDAO dao = session.getMapper(MainWorkflowDAO.class);
+		Map<String, Object> params = new HashMap<String, Object>();
+		params.put("type", "PCM_REQ");
+		params.put("id", id);
+		
+		map = dao.getLastApprover(params);
+        
+        return map;
+	}
+	
+	private PcmReqMethodModel getMethod(Long id) {
+		PcmReqMethodModel model = null;
+		
+		SqlSession session = PcmUtil.openSession(dataSource);
+        try {
+            PcmReqMethodDAO dao = session.getMapper(PcmReqMethodDAO.class);
+    		model = dao.get(id);
+            
+        } catch (Exception ex) {
+			log.error("", ex);
+        	throw ex;
+        } finally {
+        	session.close();
+        }
+        
+        return model;
+	}
+
+	@Override
+	public List<String> listRelatedUser(SubModuleModel subModuleModel) {
+		List<String> list = new ArrayList<String>();
+		
+		PcmReqModel model = (PcmReqModel)subModuleModel;
+		
+		list.add(model.getReqBy());
+		
+		return list;
+	}
+
+	@Override
+	public String getDocDesc() {
+		return "ใบขอซื้อ / ขอจ้าง";
+	}
+
+	@Override
+	public MainWorkflowHistoryModel getReqByWorkflowHistory(SubModuleModel subModuleModel) {
+		MainWorkflowHistoryModel hModel = new MainWorkflowHistoryModel();
+		
+		PcmReqModel model = (PcmReqModel)subModuleModel;
+		
+		hModel.setTime(model.getCreatedTime());
+		hModel.setLevel(0);
+		hModel.setComment("");
+		hModel.setAction("");
+		hModel.setActionTh("");
+		hModel.setTask(MainWorkflowConstant.WF_TASK_NAMES.get(MainWorkflowConstant.TN_REQUESTER));
+		hModel.setTaskTh(MainWorkflowConstant.WF_TASK_NAMES_TH.get(MainWorkflowConstant.TN_REQUESTER));
+		hModel.setBy(model.getReqBy());
+		
+		return hModel;
+	}
+	
+	@Override
+	public MainWorkflowHistoryModel getAppByWorkflowHistory(SubModuleModel subModuleModel) {
+		return null;
+	}
+
+	@Override
+	public List<String> getSpecialUserForAddPermission(SubModuleModel model) {
+		
+//		List<String> list = new ArrayList<String>();
+//		
+//		PcmReqModel prModel = (PcmReqModel)model;
+//		List<Map<String,Object>> tmpList = adminHrEmployeeService.listPcmMember(prModel.getPcmOrgId());
+//		
+//		for(Map<String,Object> map:tmpList) {
+//			list.add((String)map.get("employee_code"));
+//		}
+//		
+//		return list;
+		return null;
+	}
+
+	@Override
+	public String getFirstStatus() {
+		return PcmReqConstant.ST_WAITING;
+	}
+
+	@Override
+	public Boolean addPermissionToAttached() {
+		return false;
+	}
+
+	@Override
+	public List<String> getSpecialGroupForAddPermission() {
+		MainMasterModel topGroup = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_TOP_GROUP,false);
+		String[] tgs = topGroup!=null && topGroup.getFlag1()!=null ? topGroup.getFlag1().split(",") : null;
+		
+		return Arrays.asList(tgs);
+	}
+
+	@Override
+	public String getActionCaption(String action, String lang) {
+		StringBuffer sb = new StringBuffer();
+		if (lang!=null && lang.indexOf("th")>=0) {
+			sb.append(PcmReqConstant.WF_TASK_ACTIONS_TH.get(action));
+		} else {
+			sb.append(PcmReqConstant.WF_TASK_ACTIONS.get(action));
+		}
+		
+		return sb.toString();
+	}
+
+	@Override
+	public String getWorkflowDescriptionEn(SubModuleModel paramModel)
+			throws Exception {
+		
+		PcmReqModel model = (PcmReqModel)paramModel;
+
+		PcmReqModel enModel = new PcmReqModel();
+		enModel.setId(model.getId());
+		enModel.setObjective(model.getObjective());
+		enModel.setObjectiveType(model.getObjectiveType());
+		
+//		Map<String, Object> pType = adminPurchaseTypeService.get(model.getObjectiveType());
+//		enModel.setObjectiveTypeName((String)pType.get("name"));
+//		MainMasterModel objModel = masterService.getByTypeAndCode(MainMasterConstant.TYPE_PCM_REQ_PURCHASE_TYPE, model.getObjectiveType());
+//		enModel.setObjectiveType(objModel.getFlag2());
+		
+		MainMasterModel rsnModel = masterService.getByTypeAndCode(MainMasterConstant.TYPE_PCM_REQ_REASON, model.getReason());
+		if (rsnModel!=null) {
+			enModel.setReason(rsnModel.getFlag2());
+		} else {
+			enModel.setReason(model.getReason());
+		}
+		
+		enModel.setStatus("");
+		enModel.setReqBy(model.getReqBy());
+		enModel.setTotal(model.getTotal());
+		enModel.setCurrency(model.getCurrency());
+		enModel.setBudgetCcType(model.getBudgetCcType());
+		enModel.setBudgetCc(model.getBudgetCc());
+		
+		prepareModelForWfDesc(enModel, "");
+		
+		return getWorkflowDescription(enModel);
+	}
+
+	@Override
+	public QName getPropDescEn() {
+		return PcmReqWorkflowConstant.PROP_DESCRIPTION;
+	}
+
+	@Override
+	public void setFirstTaskAssignee(Map<QName, Serializable> parameters,
+			SubModuleModel model) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void prepareModelForWfDesc(SubModuleModel smModel, String lang) {
+		PcmReqModel model = (PcmReqModel)smModel;
+		
+		Map<String,Object> dtl = adminHrEmployeeService.getWithDtl(model.getReqBy(), null);
+		String langSuffix = lang!=null && lang.startsWith("th") ? "_th" : "";
+		String ename = dtl.get("title"+langSuffix) + " " + dtl.get("first_name"+langSuffix) + " " + dtl.get("last_name"+langSuffix);
+		model.setReqByName(ename);
+		
+		if (model.getBudgetCc()!=null) {
+			Map<String, Object> budgetMap = adminBudgetSrcService.get(model.getBudgetCcType(), String.valueOf(model.getBudgetCc()), lang);
+			model.setBudgetCcName((String)budgetMap.get("data2"));
+		}
+		
+		Map<String, Object> pType = adminPurchaseTypeService.get(model.getObjectiveType());
+		model.setObjectiveTypeName((String)pType.get("name"+langSuffix));
+	}
+	
+	public List<Map<String, Object>> listOld(Map<String, Object> params) {
+		
+		List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
+		
+		SqlSession session = PcmUtil.openSession(dataSource);
+        try {
+            PcmReqDAO dao = session.getMapper(PcmReqDAO.class);
+            log.info("old pcm req list param:"+params);
+    		list = dao.listOld(params);
+    		
+    		if (list!=null) {
+	    		int i = 1;
+	    		for(Map<String, Object> map : list) {
+	    			map.put("ord", i);
+	    			i++;
+	    		}
+    		}
+        } catch (Exception ex) {
+			log.error("", ex);
+        	throw ex;
+        } finally {
+        	session.close();
+        }
+        
+        return list;
 	}	
+
+	
+	public JSONArray listObjectiveType(Boolean all, String lang) throws Exception {
+		
+		JSONArray jsArr = new JSONArray();
+		JSONObject jsObj = null;
+		
+		if (all) {
+			String allLbl = null;
+			if (lang!=null && lang.startsWith("th")) {
+				allLbl = "ทั้งหมด";
+			} else {
+				allLbl = "All";
+			}
+			
+			jsObj = new JSONObject();
+			
+			jsObj.put("id", "");
+			jsObj.put("name", "== "+allLbl+" ==");
+			
+			jsArr.put(jsObj);
+		}
+		
+		List<Map<String, Object>> list = adminPurchaseTypeService.list();
+		
+		String name = "name" + (lang!=null && lang.startsWith("th") ? "_th" : "");
+		
+		for(Map<String,Object> map : list) {
+			jsObj = new JSONObject();
+			
+			jsObj.put("id", map.get("id"));
+			jsObj.put("name", map.get(name));
+			
+			jsArr.put(jsObj);
+		}
+		
+		return jsArr;
+	}	
+	
+	public String getWorkflowPath(SubModuleModel subModel, Map<String, String> bossMap) throws Exception {
+		PcmReqModel model = (PcmReqModel)subModel;
+		model = setPcmSectionInfo(model);
+		
+		StringBuffer json = new StringBuffer();
+		json.append("<table border=\"1\">");
+		json.append("<tr>");
+		json.append("<th>");
+		json.append("Level");
+		json.append("</th>");
+		json.append("<th>");
+		json.append("User");
+		json.append("</th>");
+		json.append("</tr>");
+		
+    	int level = 1;
+    	for(Entry e : bossMap.entrySet()) {
+    		String reviewerUser = (String)e.getValue();
+    		
+    		Map<String,Object> emp = adminHrEmployeeService.getWithDtl(reviewerUser, null);
+
+    		json.append("<tr>");
+    		json.append("<td>");
+    		json.append(level);
+    		json.append("</td>");
+    		json.append("<td>");
+    		json.append(reviewerUser
+    				+(emp!=null 
+    				? " "+(String)emp.get("first_name_th")
+    				+ "/"+(String)emp.get("first_name")
+    				+ " ("+((Boolean)emp.get("active") ? "A" : "I")+")" 
+    				: "")
+    		);
+    		json.append("</td>");
+    		json.append("</tr>");
+    		
+    		level++;
+    	}
+    	
+    	List<MainWorkflowNextActorModel> list = listNextActor(model);
+    	for(MainWorkflowNextActorModel actorModel : list) {
+    		json.append("<tr>");
+    		json.append("<td>");
+    		json.append("Next Actor");
+    		json.append("</td>");
+    		json.append("<td>");
+    		json.append(actorModel.getActor());
+    		json.append("</td>");
+    		json.append("</tr>");
+    	}
+    	
+    	json.append("</table>");
+    	
+		return json.toString();
+	}
+	
+	public Map<String,Object> getWorkflowPathParamters(SubModuleModel subModuleModel) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		
+		PcmReqModel model = (PcmReqModel)subModuleModel;
+		
+		map.put(MainWorkflowConstant.WPP_BGT_SRC_TYPE, model.getBudgetCcType());
+		map.put(MainWorkflowConstant.WPP_BGT_SRC, model.getBudgetCc());
+		map.put(MainWorkflowConstant.WPP_REQ_BY, model.getReqBy());
+
+		return map;
+	}
+	
+	public Double getWorkflowPathParamterTotalForProject(SubModuleModel subModuleModel) {
+		PcmReqModel model = (PcmReqModel)subModuleModel;
+		
+    	Double total = model.getTotalCnv();
+    	if (model.getIsRefId().equals(CommonConstant.V_ENABLE)) {
+    		PcmReqModel oldModel = get(model.getRefId(), null);
+    		total += oldModel.getTotalCnv();
+    	}
+    	if (model.getIsAcrossBudget().equals(CommonConstant.V_ENABLE)) {
+    		if (model.getAcrossBudget()!=null && model.getAcrossBudget() > 0) {
+    			total = model.getAcrossBudget();
+    		}
+    	}
+    	
+		return total;
+	}
+	
+	public Double getWorkflowPathParamterTotalForSection(SubModuleModel subModuleModel) {
+		PcmReqModel model = (PcmReqModel)subModuleModel;
+		
+    	Double total = model.getTotalCnv();
+    	if (model.getIsRefId().equals(CommonConstant.V_ENABLE)) {
+    		PcmReqModel oldModel = get(model.getRefId(), null);
+    		total += oldModel.getTotalCnv();
+    	}
+    	
+		return total;
+	}
+	
+	public String getMessage(String key) {
+		return PcmReqUtil.getMessage(key, I18NUtil.getLocale());
+	}
+	
+	private void backup(Map<String, Object> map) throws Exception {
+		
+		map.remove(PcmReqConstant.JFN_ACTION);		
+		
+		/*
+		 * Move Folder to Backup Folder
+		 */
+		FolderUtil folderUtil = new FolderUtil();
+		folderUtil.setSearchService(searchService);
+		folderUtil.setFileFolderService(fileFolderService);
+		
+		NodeRef folderRef = new NodeRef((String)map.get("folder_ref"));
+		
+		PcmReqModel model = get((String)map.get("id"),"_th");
+		String id = model.getId();
+		
+		MainMasterModel siteModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_REQ_SITE_ID,false);
+		String siteId = siteModel.getFlag1();
+		
+		String startPath = folderUtil.getSitePath(siteId);
+		if (folderRef==null) {
+			folderRef = folderUtil.createInBackupFolder(startPath, ISO9075.encode("PR"), id+folderUtil.getBackupFileSuffix());
+		} else {
+			folderUtil.moveToDeletedFolder(startPath, folderRef, ISO9075.encode("PR"));
+		}
+		
+		/*
+		 * Save Data to File
+		 */
+		map.put("id", id);
+		
+		map.put("dtl", PcmReqDtlUtil.convertToJSONArray(listDtlByMasterId(id)));
+		map.put("cmtHdr", PcmReqCmtHdrUtil.convertToJSONArray(listCmtHdrByMasterId(id,true)));
+		
+		JSONObject jsObj = new JSONObject(map);
+		
+		InputStream file = IOUtils.toInputStream(jsObj.toString(),"UTF-8");
+		alfrescoService.createDoc(folderRef, null, file, id+".log", "Deleted Data",null);
+	}
 }

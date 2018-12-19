@@ -1,6 +1,5 @@
 package pb.repo.admin.wscript;
 
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,12 +47,12 @@ public class AdminMainAccountTaxWebScript {
 		try {
 			List<Map<String, Object>> list = taxService.list();
 			
-			Map<String, Object> noVatMap = new HashMap<String, Object>();
-			noVatMap.put(JsonConstant.COMBOBOX_NAME, "No VAT");
-			noVatMap.put(JsonConstant.COMBOBOX_ID, 0);
-			noVatMap.put(JsonConstant.COMBOBOX_DATA, new HashMap<String, Object>());
-			
-			list.add(0, noVatMap);
+//			Map<String, Object> noVatMap = new HashMap<String, Object>();
+//			noVatMap.put(JsonConstant.COMBOBOX_NAME, "ไม่มีภาษีมูลค่าเพิ่ม");
+//			noVatMap.put(JsonConstant.COMBOBOX_ID, 0);
+//			noVatMap.put(JsonConstant.COMBOBOX_DATA, new HashMap<String, Object>());
+//			
+//			list.add(0, noVatMap);
 			
 			json = CommonUtil.jsonSuccess(list);
 			

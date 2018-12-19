@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="expusewf:expUseWorkflowModel" xmlns="http://www.alfresco.org/model/dictionary/1.0">
+
+	<!-- Optional meta-data about the model -->
+	<description>Exp Borrw Workflow Model</description>
+	<author>Thongchai Jiansampimon</author>
+	<version>1.0</version>
+
+	<!-- Imports are required to allow references to definitions in other models -->
+	<imports>
+		<import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+		<import uri="http://www.alfresco.org/model/bpm/1.0" prefix="bpm" />
+		<import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+		<import uri="http://www.alfresco.org/model/application/1.0" prefix="app" />
+	</imports>
+
+	<!-- Introduction of new namespaces defined by this model -->
+	<namespaces>
+		<namespace uri="http://www.nstda.or.th/model/workflow/expusewf/1.0" prefix="expusewf" />
+	</namespaces>
+
+	<types>
+		<type name="expusewf:submitStartTask">
+			<parent>bpm:startTask</parent>
+			<mandatory-aspects>
+				<aspect>expusewf:commonAspect</aspect>
+				<aspect>expusewf:specialAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+		<type name="expusewf:requesterResubmitTask">
+			<parent>bpm:activitiOutcomeTask</parent>
+			<mandatory-aspects>
+				<aspect>expusewf:commonAspect</aspect>
+				<aspect>expusewf:specialAspect</aspect>
+				<aspect>expusewf:counseleeAspect</aspect>
+				<aspect>expusewf:reSubmitAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+		<type name="expusewf:reviewerReviewTask">
+			<parent>bpm:activitiOutcomeTask</parent>
+			<mandatory-aspects>
+				<aspect>expusewf:commonAspect</aspect>
+				<aspect>expusewf:specialAspect</aspect>
+				<aspect>expusewf:counseleeAspect</aspect>
+				<aspect>expusewf:reviewAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+		<type name="expusewf:consultantConsultTask">
+			<parent>bpm:activitiOutcomeTask</parent>
+			<mandatory-aspects>
+				<aspect>expusewf:commonAspect</aspect>
+				<aspect>expusewf:specialAspect</aspect>
+				<aspect>expusewf:consultAspect</aspect>
+			</mandatory-aspects>
+		</type>
+
+	</types>
+
+	<aspects>
+		<aspect name="expusewf:commonAspect">
+			<title>PCM Common WorkFlow Properties</title>
+			<properties>
+				<property name="expusewf:id">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:requestedTime">
+					<type>d:datetime</type>
+				</property>
+				<property name="expusewf:remark">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:nextReviewers">
+					<type>d:text</type>
+					<mandatory>false</mandatory>
+				</property>
+				<property name="expusewf:folderRef">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:workflowStatus">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:taskHistory">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:currentTaskKey">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:lang">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:description">
+					<type>d:text</type>
+				</property>
+			</properties>
+			
+			<associations>
+				<association name="expusewf:document">
+					<source>
+						<mandatory>false</mandatory>
+						<many>false</many>
+					</source>
+					<target>
+						<class>cm:content</class>
+						<mandatory>false</mandatory>
+						<many>true</many>
+					</target>
+				</association>
+
+				<association name="expusewf:attachDocument">
+					<source>
+						<mandatory>false</mandatory>
+						<many>false</many>
+					</source>
+					<target>
+						<class>cm:content</class>
+						<mandatory>false</mandatory>
+						<many>true</many>
+					</target>
+				</association>
+			</associations>			
+
+		</aspect>
+		
+		<aspect name="expusewf:reviewAspect">
+			<title>EXP WorkFlow Review Task Properties</title>
+			<properties>
+				<property name="expusewf:reviewOutcome">
+					<type>d:text</type>
+					<default>Approve</default>
+					<constraints>
+						<constraint name="expusewf:reviewOutcomeOptions" type="LIST">
+							<parameter name="allowedValues">
+								<list>
+									<value>Approve</value>
+									<value>Reject</value>
+									<value>Consult</value>
+								</list>
+							</parameter>
+						</constraint>
+					</constraints>
+				</property>
+			</properties>
+		</aspect>
+				
+		<aspect name="expusewf:consultAspect">
+			<title>EXP WorkFlow Consult Task Properties</title>
+			<properties>
+				<property name="expusewf:counselee">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:consultOutcome">
+					<type>d:text</type>
+					<default>Comment</default>
+					<constraints>
+						<constraint name="expusewf:consultOutcomeOptions" type="LIST">
+							<parameter name="allowedValues">
+								<list>
+									<value>Comment</value>
+								</list>
+							</parameter>
+						</constraint>
+					</constraints>
+				</property>
+			</properties>
+		</aspect>
+		
+		<aspect name="expusewf:counseleeAspect">
+			<title>EXP WorkFlow Consult Task Properties</title>
+			<properties>
+				<property name="expusewf:consultant">
+					<type>d:text</type>
+				</property>
+			</properties>
+		</aspect>
+				
+		<aspect name="expusewf:reSubmitAspect">
+			<title>EXP WorkFlow Resubmit Task Properties</title>
+			<properties>
+				<property name="expusewf:reSubmitOutcome">
+					<type>d:text</type>
+					<default>Resubmit</default>
+					<constraints>
+						<constraint name="expusewf:reSubmitOutcomeOptions" type="LIST">
+							<parameter name="allowedValues">
+								<list>
+									<value>Resubmit</value>
+									<value>Cancel</value>
+								</list>
+							</parameter>
+						</constraint>
+					</constraints>
+				</property>
+			</properties>
+		</aspect>
+		
+		<aspect name="expusewf:specialAspect">
+			<title>EXP Request WorkFlow Properties</title>
+			<properties>
+				<property name="expusewf:objectiveType">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:objective">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:reason">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:budgetCc">
+					<type>d:text</type>
+				</property>
+				<property name="expusewf:total">
+					<type>d:double</type>
+				</property>
+				<property name="expusewf:payType">
+					<type>d:text</type>
+				</property>
+			</properties>
+			
+		</aspect>
+		
+	</aspects>
+
+</model>
+
+
+

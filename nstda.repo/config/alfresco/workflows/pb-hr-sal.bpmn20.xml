@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.nstda.or.th/hrsalwf">
+  <process id="NSTDAHrSal" name="NSTDA Human Resource Salary" isExecutable="true">
+    <userTask id="Reviewer" name="Reviewer" activiti:assignee="${hrsalwf_nextReviewers}" activiti:formKey="hrsalwf:reviewerReviewTask">
+      <extensionElements>
+        <activiti:taskListener event="create" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateTaskListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.hr.workflow.sal.reviewer.CreateTask]]></activiti:string>
+          </activiti:field>
+        </activiti:taskListener>
+        <activiti:taskListener event="complete" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateTaskListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.hr.workflow.sal.reviewer.CompleteTask]]></activiti:string>
+          </activiti:field>
+        </activiti:taskListener>
+      </extensionElements>
+    </userTask>
+    <exclusiveGateway id="reviewGateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow53" sourceRef="Reviewer" targetRef="reviewGateway1"></sequenceFlow>
+    <endEvent id="endevent2" name="End"></endEvent>
+    <startEvent id="startevent" name="Start" activiti:formKey="hrsalwf:submitStartTask">
+      <extensionElements>
+        <activiti:executionListener event="start" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateExecutionListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.hr.workflow.sal.start.CompleteTask]]></activiti:string>
+          </activiti:field>
+        </activiti:executionListener>
+      </extensionElements>
+    </startEvent>
+    <sequenceFlow id="flow89" sourceRef="startevent" targetRef="Reviewer"></sequenceFlow>
+    <exclusiveGateway id="nextReviewerGateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flowNoNextReviewer" name="No next reviewer" sourceRef="nextReviewerGateway1" targetRef="endevent2">
+      <extensionElements>
+        <activiti:executionListener event="take" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateExecutionListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.hr.workflow.sal.reviewer.EndTask]]></activiti:string>
+          </activiti:field>
+        </activiti:executionListener>
+      </extensionElements>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${hrsalwf_nextReviewers == ''}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flowApprove" name="Approve" sourceRef="reviewGateway1" targetRef="nextReviewerGateway1">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${hrsalwf_reviewOutcome == 'Approve'}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="Consultant" name="Consultant" activiti:assignee="${hrsalwf_nextReviewers}" activiti:formKey="hrsalwf:consultantConsultTask">
+      <extensionElements>
+        <activiti:taskListener event="create" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateTaskListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.hr.workflow.sal.consultant.CreateTask]]></activiti:string>
+          </activiti:field>
+        </activiti:taskListener>
+        <activiti:taskListener event="complete" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateTaskListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.hr.workflow.sal.consultant.CompleteTask]]></activiti:string>
+          </activiti:field>
+        </activiti:taskListener>
+      </extensionElements>
+    </userTask>
+    <sequenceFlow id="flowConsult" name="Consult" sourceRef="reviewGateway1" targetRef="Consultant">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${hrsalwf_reviewOutcome == 'Consult'}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flowReturnToReviewer" sourceRef="Consultant" targetRef="Reviewer"></sequenceFlow>
+    <sequenceFlow id="flowNextReviewer" name="Next Reviewer" sourceRef="nextReviewerGateway1" targetRef="Reviewer">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${hrsalwf_nextReviewers != ''}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flowReject" name="Reject" sourceRef="reviewGateway1" targetRef="endevent2">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${hrsalwf_reviewOutcome == 'Reject'}]]></conditionExpression>
+    </sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_NSTDAHrSal">
+    <bpmndi:BPMNPlane bpmnElement="NSTDAHrSal" id="BPMNPlane_NSTDAHrSal">
+      <bpmndi:BPMNShape bpmnElement="Reviewer" id="BPMNShape_Reviewer">
+        <omgdc:Bounds height="55.0" width="105.0" x="78.0" y="142.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="reviewGateway1" id="BPMNShape_reviewGateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="253.0" y="149.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
+        <omgdc:Bounds height="35.0" width="35.0" x="500.0" y="152.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="startevent" id="BPMNShape_startevent">
+        <omgdc:Bounds height="35.0" width="35.0" x="11.0" y="152.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="nextReviewerGateway1" id="BPMNShape_nextReviewerGateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="360.0" y="149.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Consultant" id="BPMNShape_Consultant">
+        <omgdc:Bounds height="55.0" width="105.0" x="221.0" y="240.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow53" id="BPMNEdge_flow53">
+        <omgdi:waypoint x="183.0" y="169.0"></omgdi:waypoint>
+        <omgdi:waypoint x="253.0" y="169.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow89" id="BPMNEdge_flow89">
+        <omgdi:waypoint x="46.0" y="169.0"></omgdi:waypoint>
+        <omgdi:waypoint x="78.0" y="169.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flowNoNextReviewer" id="BPMNEdge_flowNoNextReviewer">
+        <omgdi:waypoint x="400.0" y="169.0"></omgdi:waypoint>
+        <omgdi:waypoint x="500.0" y="169.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="81.0" x="399.0" y="150.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flowApprove" id="BPMNEdge_flowApprove">
+        <omgdi:waypoint x="293.0" y="169.0"></omgdi:waypoint>
+        <omgdi:waypoint x="360.0" y="169.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="292.0" y="150.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flowConsult" id="BPMNEdge_flowConsult">
+        <omgdi:waypoint x="273.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="273.0" y="240.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="283.0" y="195.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flowReturnToReviewer" id="BPMNEdge_flowReturnToReviewer">
+        <omgdi:waypoint x="221.0" y="267.0"></omgdi:waypoint>
+        <omgdi:waypoint x="130.0" y="267.0"></omgdi:waypoint>
+        <omgdi:waypoint x="130.0" y="197.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flowNextReviewer" id="BPMNEdge_flowNextReviewer">
+        <omgdi:waypoint x="380.0" y="189.0"></omgdi:waypoint>
+        <omgdi:waypoint x="379.0" y="318.0"></omgdi:waypoint>
+        <omgdi:waypoint x="130.0" y="318.0"></omgdi:waypoint>
+        <omgdi:waypoint x="130.0" y="254.0"></omgdi:waypoint>
+        <omgdi:waypoint x="130.0" y="197.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="70.0" x="383.0" y="207.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flowReject" id="BPMNEdge_flowReject">
+        <omgdi:waypoint x="273.0" y="149.0"></omgdi:waypoint>
+        <omgdi:waypoint x="272.0" y="81.0"></omgdi:waypoint>
+        <omgdi:waypoint x="520.0" y="81.0"></omgdi:waypoint>
+        <omgdi:waypoint x="517.0" y="152.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="100.0" x="332.0" y="91.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

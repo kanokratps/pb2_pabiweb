@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainFundDAO">
+    <resultMap id="result" type="mainFundModel">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		SELECT * FROM (
+			select f.id,name, 
+			coalesce((select value
+			 from pb2_ext_ir_translation
+			 where name = 'res.fund,name'
+			 and type = 'model' and lang='th_TH'
+			 and res_id = f.id),name) as name_th
+			from pb2_ext_res_fund f
+			order by id
+		) qry
+		WHERE 1=1
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    			concat(name, ' ', name_th) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>
+		ORDER BY ${orderBy}
+	</select>
+	
+	<select id="listForSection" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select f.id,f.name,coalesce(value,name) name_th
+		from pb2_ext_res_fund f inner join pb2_ext_res_fund_section_rel r on (f.id = r.fund_id and f.active = true)
+			left join (
+			select res_id,value
+			from pb2_ext_ir_translation
+			where name = 'res.fund,name'
+			and type = 'model' and lang='th_TH'
+			) ir on f.id = ir.res_id
+		where section_id = #{id}
+		ORDER BY ${orderBy}
+	</select>
+	
+	<select id="listForProject" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select f.id,f.name,coalesce(value,name) name_th
+		from pb2_ext_res_fund f inner join pb2_ext_res_fund_project_rel r on (f.id = r.fund_id and f.active = true)
+			left join (
+			select res_id,value
+			from pb2_ext_ir_translation
+			where name = 'res.fund,name'
+			and type = 'model' and lang='th_TH'
+			) ir on f.id = ir.res_id
+		where project_id = #{id}
+		ORDER BY ${orderBy}
+	</select>
+	
+	<select id="listForAsset" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select f.id,f.name,coalesce(value,name) name_th
+		from pb2_ext_res_fund f inner join pb2_ext_res_fund_invest_asset_rel r on (f.id = r.fund_id and f.active = true)
+			left join (
+			select res_id,value
+			from pb2_ext_ir_translation
+			where name = 'res.fund,name'
+			and type = 'model' and lang='th_TH'
+			) ir on f.id = ir.res_id
+		where invest_asset_id = #{id}
+		ORDER BY ${orderBy}
+	</select>
+
+	<select id="listForConstruction" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select f.id,f.name,coalesce(value,name) name_th
+		from pb2_ext_res_fund f inner join pb2_ext_res_fund_invest_construction_phase_rel r on (f.id = r.fund_id and f.active = true)
+			left join (
+			select res_id,value
+			from pb2_ext_ir_translation
+			where name = 'res.fund,name'
+			and type = 'model' and lang='th_TH'
+			) ir on f.id = ir.res_id
+		where invest_construction_phase_id = #{id}
+		ORDER BY ${orderBy}
+	</select>
+
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_ext_res_fund
+    </select>
+    
+    <select id="get" parameterType="int" resultType="org.apache.commons.collections.map.CaseInsensitiveMap">
+        select
+		    *
+		from
+		    pb2_ext_res_fund
+		where id=#{id}
+    </select>  
+	
+</mapper>

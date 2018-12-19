@@ -38,10 +38,6 @@ public class AdminCurrencyRateService {
         	Map<String, Object> params = new HashMap<String,Object>();
         	
             list = dao.list(name);
-            
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }

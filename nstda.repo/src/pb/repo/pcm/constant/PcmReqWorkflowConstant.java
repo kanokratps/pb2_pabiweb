@@ -21,9 +21,11 @@ public class PcmReqWorkflowConstant extends MainWorkflowConstant {
     public static final QName PROP_FOLDER_REF = QName.createQName(MODEL_URI, "folderRef");
     public static final QName PROP_REQUESTED_TIME = QName.createQName(MODEL_URI, "requestedTime");
     
+    public static final QName PROP_DESCRIPTION = QName.createQName(MODEL_URI, "description");
+    
     public static final QName PROP_DOCUMENT = QName.createQName(MODEL_URI, "document");
     public static final QName PROP_ATTACH_DOCUMENT = QName.createQName(MODEL_URI, "attachDocument");
-    public static final QName PROP_COMMENT_HISTORY = QName.createQName(MODEL_URI, "commentHistory");
+//    public static final QName PROP_COMMENT_HISTORY = QName.createQName(MODEL_URI, "commentHistory");
     
     public static final QName PROP_REMARK = QName.createQName(MODEL_URI, "remark");
     public static final QName PROP_TASK_HISTORY = QName.createQName(MODEL_URI, "taskHistory");
@@ -42,5 +44,6 @@ public class PcmReqWorkflowConstant extends MainWorkflowConstant {
     public static final QName PROP_REASON = QName.createQName(MODEL_URI, "reason");
     public static final QName PROP_BUDGET_CC = QName.createQName(MODEL_URI, "budgetCc");
     public static final QName PROP_TOTAL = QName.createQName(MODEL_URI, "total");
+    public static final QName PROP_REF_DOCUMENT = QName.createQName(MODEL_URI, "refDocument");
     
 }

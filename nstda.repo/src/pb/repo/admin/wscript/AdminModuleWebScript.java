@@ -14,6 +14,7 @@ import pb.common.util.CommonUtil;
 import pb.repo.admin.constant.MainMasterConstant;
 import pb.repo.admin.model.MainMasterModel;
 import pb.repo.admin.service.AdminMasterService;
+import pb.repo.admin.service.AdminModuleService;
 
 import com.github.dynamicextensionsalfresco.webscripts.annotations.Authentication;
 import com.github.dynamicextensionsalfresco.webscripts.annotations.AuthenticationType;
@@ -32,6 +33,8 @@ public class AdminModuleWebScript {
 	@Autowired
 	private AdminMasterService masterService;
 
+	@Autowired
+	private AdminModuleService moduleService;
 
   /**
    * Handles the "list" request. Note the use of Spring MVC-style annotations to map the Web Script URI configuration
@@ -71,11 +74,11 @@ public class AdminModuleWebScript {
 				}
 				else
 				if (key.equals("pcm")) {
-				  	modules.add(getModulePcm());
+//				  	modules.add(getModulePcm());
 				}
 				else
 				if (key.equals("exp")) {
-				  	modules.add(getModuleExp());
+//				  	modules.add(getModuleExp());
 				}
 			}
 		}
@@ -113,9 +116,12 @@ public class AdminModuleWebScript {
 	  	item.put("store", "main.SettingsGridStore");
 	  	
 	  	items.add(item);
+	  	
+	  	MainMasterModel systemModel = masterService.getSystemConfig(MainMasterConstant.SCC_MAIN_SHOW_SYSTEM_VALUE,false);
+	  	item.put("showSystem",  systemModel!=null && systemModel.getFlag1().equals("1"));
 
-	  	MainMasterModel sysConfModel = masterService.getSystemConfig(MainMasterConstant.SCC_MAIN_ADMIN_AM);
-	  	if (sysConfModel!=null && sysConfModel.getFlag1().equals("1")) {
+//	  	MainMasterModel sysConfModel = masterService.getSystemConfig(MainMasterConstant.SCC_MAIN_ADMIN_AM);
+//	  	if (sysConfModel!=null && sysConfModel.getFlag1().equals("1")) {
 //		  	item = new JSONObject();
 //		  	
 //		  	item.put("title", "Approval Matrix Form");
@@ -124,7 +130,7 @@ public class AdminModuleWebScript {
 //		  	item.put("store", "main.ApprovalMatrixFormatGridStore");
 //		  	
 //		  	items.add(item);
-	  	}
+//	  	}
 	  	
 //	  	item = new JSONObject();
 //	  	
@@ -136,7 +142,34 @@ public class AdminModuleWebScript {
 	  	
 	  	item = new JSONObject();
 	  	
-	  	item.put("title", "Test System");
+	  	item.put("title", "Utility");
+	  	item.put("title_th", "Utility");
+	  	item.put("xtype", "adminMainUtilMain");
+	  	
+	  	items.add(item);
+	  	
+	  	
+	  	item = new JSONObject();
+	  	
+	  	item.put("title", "Workflow");
+	  	item.put("title_th", "Workflow");
+	  	item.put("xtype", "adminMainWorkflowMain");
+	  	
+	  	items.add(item);
+	  	
+	  	
+//	  	item = new JSONObject();
+//	  	
+//	  	item.put("title", "Log");
+//	  	item.put("title_th", "Log");
+//	  	item.put("xtype", "adminMainLogMain");
+//	  	
+//	  	items.add(item);
+	  	
+	  	
+	  	item = new JSONObject();
+	  	
+	  	item.put("title", "System");
 	  	item.put("title_th", "ทดสอบระบบ");
 	  	item.put("xtype", "adminMainTestSystemMain");
 	  	
@@ -260,4 +293,5 @@ public class AdminModuleWebScript {
 		}
     
   }
+  
 }

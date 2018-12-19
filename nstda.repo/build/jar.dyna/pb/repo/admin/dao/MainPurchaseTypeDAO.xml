@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainPurchaseTypeDAO">
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select id,name,sequence,coalesce(ir.value,t.name) AS name_th 
+		from pb2_ext_purchase_type t left join
+ 		( select res_id, value
+           from pb2_ext_ir_translation
+           where  name = 'purchase_type,name' and type = 'model' and lang = 'th_TH') ir ON t.id = ir.res_id
+		order by sequence
+	</select>
+	
+	<select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+		select id,name,sequence,coalesce(ir.value,t.name) AS name_th 
+		from pb2_ext_purchase_type t left join
+ 		( select res_id, value
+           from pb2_ext_ir_translation
+           where  name = 'purchase_type,name' and type = 'model' and lang = 'th_TH') ir ON t.id = ir.res_id
+        where t.id=#{id}
+    </select>    
+	
+</mapper>

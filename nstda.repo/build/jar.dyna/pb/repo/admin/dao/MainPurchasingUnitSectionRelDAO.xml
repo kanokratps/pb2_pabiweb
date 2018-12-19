@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainPurchasingUnitSectionRelDAO">
+    <resultMap id="result" type="mainPurchasingUnitSectionRelModel">
+        <result property="purchasingUnitId" column="purchasing_unit_id"/>
+        <result property="sectionId" column="section_id"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+
+	<select id="list" resultMap="result">
+		select * from pb2_ext_purchasingunit_section_rel order by name
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_ext_purchasingunit_section_rel
+    </select>
+	
+</mapper>

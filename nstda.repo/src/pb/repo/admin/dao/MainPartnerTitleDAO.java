@@ -1,13 +1,15 @@
 package pb.repo.admin.dao;
 
 import java.util.List;
-
-import pb.repo.admin.model.MainPartnerTitleModel;
+import java.util.Map;
 
 public interface MainPartnerTitleDAO {
 
-	public List<MainPartnerTitleModel> list();
+	public List<Map<String, Object>> list(Map<String,Object> params);
 	
 	public Long count();
 	
+	public Map<String, Object> getByName(String name);
+	public Map<String, Object> get(Integer id);
+
 }

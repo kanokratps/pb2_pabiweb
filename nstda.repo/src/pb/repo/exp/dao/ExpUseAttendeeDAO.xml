@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.exp.dao.ExpUseAttendeeDAO">
+    <resultMap id="result" type="expUseAttendeeModel">
+        <result property="id" column="id"/>
+        <result property="masterId" column="master_id"/>
+        <result property="type" column="type"/>
+        <result property="code" column="code"/>
+        <result property="title" column="title"/>
+        <result property="fname" column="fname"/>
+        <result property="lname" column="lname"/>
+        <result property="unitType" column="unit_type"/>
+        <result property="position" column="position"/>
+        <result property="positionId" column="position_id"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="updatedBy" column="updated_by"/>
+    </resultMap>
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+    
+        SELECT
+		    a.*, COUNT(*) OVER() totalRowCount,
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'res.partner.title,name'
+				and type = 'model' and lang='th_TH'
+				and res_id = tt.id), tt.name) as title_th,
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'res.partner.title,name'
+				and type = 'model' and lang='en_US'
+				and res_id = tt.id), tt.name) as otitle,
+		    t.name etitle,
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'res.partner.title,name'
+				and type = 'model' and lang='th_TH'
+				and res_id = e.title_id), t.name) as etitle_th,
+		    e.first_name efirst_name,
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'hr.employee,first_name'
+				and type = 'model' and lang='th_TH'
+				and res_id = e.id), e.first_name) as efirst_name_th,
+		    e.last_name elast_name,
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'hr.employee,last_name'
+				and type = 'model' and lang='th_TH'
+				and res_id = e.id), e.last_name) as elast_name_th,
+		    po.name "eposition",
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'hr.position,name'
+				and type = 'model' and lang='th_TH'
+				and res_id = e.position_id), po.name) as eposition_th,
+			s.name esection,
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'res.section,name'
+				and type = 'model' and lang='th_TH'
+				and res_id = e.section_id), s.name) as esection_th,
+			trim(s.code) scode
+		FROM
+		    pb2_exp_use_attendee a
+		    
+		left join pb2_ext_hr_employee e on lpad(e.employee_code, 6 ,'0')=lpad(a.code, 6 ,'0')
+		left join pb2_ext_res_partner_title t on e.title_id= t.id
+		left join pb2_ext_res_partner_title tt on coalesce(nullif(a.title,''),'0')::integer=tt.id
+		left join pb2_ext_hr_position po on e.position_id = po.id
+		left join pb2_ext_res_section s on e.section_id = s.id
+		    
+		WHERE 1=1
+		<if test="masterId != null">
+			AND master_id=#{masterId}
+		</if>			
+		<if test="type != null">
+			AND type=#{type}
+		</if>			
+		ORDER BY id
+		
+    </select>
+    
+    <select id="listByMasterId" resultMap="result" parameterType="map">
+        SELECT
+		    *, COUNT(*) OVER() totalRowCount
+		FROM
+		    pb2_exp_use_attendee
+		WHERE 1=1
+		<if test="masterId != null">
+			AND master_id=#{masterId}
+		</if>			
+		ORDER BY id
+    </select>
+    
+    <insert
+		id="add"
+		parameterType="expUseAttendeeModel"
+		flushCache="true"
+		statementType="PREPARED"
+		keyProperty="id"
+		useGeneratedKeys="true"
+		>
+	    INSERT INTO pb2_exp_use_attendee(
+	    	master_id
+	    	,type
+	    	,code
+	    	,title
+	    	,fname
+	    	,lname
+	    	,unit_type
+	    	,position
+	    	,position_id
+	    	,created_by,updated_by
+	    )VALUES( 
+    		#{masterId}
+    		,#{type}
+    		,#{code}
+    		,#{title}
+    		,#{fname}
+    		,#{lname}
+    		,#{unitType}
+    		,#{position}
+    		,#{positionId}
+    		,#{createdBy},#{updatedBy}
+    	)
+		
+	</insert>
+	
+	<select id="count"  resultType="long">
+        SELECT
+		    count(1)
+		FROM
+		    pb2_exp_use_attendee
+	
+    </select>
+	
+	<delete id="delete"
+    		parameterType="long"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		DELETE FROM pb2_exp_use_attendee WHERE id=#{id}
+	</delete>
+	
+	<delete id="deleteByMasterId"
+    		parameterType="string"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		DELETE FROM pb2_exp_use_attendee WHERE master_id=#{masterId}
+	</delete>
+	
+    <select id="get" parameterType="long" resultMap="result">
+        SELECT
+		    *
+		FROM
+		    pb2_exp_use_attendee
+		WHERE id=#{id}
+    </select>
+    
+    <select id="listForInf" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select 
+			d.description, 
+			d.quantity, 
+			u.id unit_id,
+			r.budget_cc,
+			r.cost_control_id,
+			t.name vat_name,
+			price_cnv,
+			d.updated_time
+		from pb2_exp_use_attendee d left join pb2_ext_product_uom u on d.unit = u.name
+		left join pb2_exp_use r on r.id = d.master_id
+		left join pb2_ext_account_tax t on r.vat_id = t.id
+		where master_id = #{id}
+		ORDER BY d.id
+    </select>
+
+</mapper>

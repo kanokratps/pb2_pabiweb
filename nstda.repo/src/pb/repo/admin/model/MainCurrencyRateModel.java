@@ -32,7 +32,7 @@ public class MainCurrencyRateModel {
 	public void setRate(Double rate) {
 		this.rate = rate;
 	}
-
+	
 	public Long getTotalRowCount() {
 		return totalRowCount;
 	}

@@ -20,18 +20,14 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import pb.repo.admin.constant.MainWorkflowConstant;
 import pb.repo.admin.service.AdminCompleteNotificationService;
 import pb.repo.admin.service.AdminMasterService;
 import pb.repo.admin.service.AdminViewerService;
 import pb.repo.admin.service.AlfrescoService;
-import pb.repo.admin.service.MainWorkflowService;
-import pb.repo.admin.util.MainWorkflowUtil;
-import pb.repo.pcm.constant.PcmReqConstant;
 import pb.repo.pcm.constant.PcmReqWorkflowConstant;
 import pb.repo.pcm.model.PcmReqModel;
 import pb.repo.pcm.service.PcmReqService;
-import pb.repo.pcm.service.PcmSignatureService;
+import pb.repo.pcm.service.PcmReqWorkflowService;
 
 @Component("pb.pcm.workflow.pr.start.CompleteTask")
 public class CompleteTask implements ExecutionListener {
@@ -67,11 +63,8 @@ public class CompleteTask implements ExecutionListener {
 	PcmReqService pcmReqService;
 	
 	@Autowired
-	MainWorkflowService mainWorkflowService;
+	PcmReqWorkflowService mainWorkflowService;
 
-	@Autowired
-	PcmSignatureService signatureService;
-	
 	@Autowired
 	AdminMasterService adminMasterService;
 	
@@ -176,15 +169,16 @@ public class CompleteTask implements ExecutionListener {
 //					Object id = ObjectUtils.defaultIfNull(task.getVariable(WF_PREFIX+"id"), "");
 					Object id = ObjectUtils.defaultIfNull(execution.getVariable(WF_PREFIX+"id"), "");
 					
-					log.info("  id :: " + id.toString());
-					PcmReqModel model = pcmReqService.get(id.toString());
-					Integer level = model.getWaitingLevel();
+					log.info("  id:" + id.toString());
+//					PcmReqModel model = pcmReqService.get(id.toString(), null);
+//					Integer level = model.getWaitingLevel();
 //					Integer lastLevel = mainWorkflowService.getLastReviewerLevel(model.getId());
 //					ExecutionEntity executionEntity = ((ExecutionEntity)task.getExecution()).getProcessInstance();
 					
-					String curUser = authenticationService.getCurrentUserName();
-					String taskKey = "ผู้ขออนุมัติ";
-					String finalAction = MainWorkflowConstant.TA_START;
+//					String curUser = authenticationService.getCurrentUserName();
+//					String taskKey = MainWorkflowConstant.WF_TASK_NAMES.get(MainWorkflowConstant.TN_PREPARER);
+//					String finalAction = MainWorkflowConstant.TA_START;
+					
 					
 //					log.info("  level:"+level);
 //					log.info("  last level:"+lastLevel);
@@ -208,10 +202,12 @@ public class CompleteTask implements ExecutionListener {
 //					log.info("  status : "+model.getStatus()+", waitingLevel:"+model.getWaitingLevel());
 //					pcmReqService.updateStatus(model);
 					
-					String taskComment = model.getObjectiveType() + " " + model.getObjective() + " " + model.getReason();
+//					String taskComment = model.getObjectiveType() + " " + model.getObjective() + " " + model.getReason();
+//					
+//					mainWorkflowService.setModuleService(pcmReqService);
+//					finalAction = mainWorkflowService.saveWorkflowHistory(execution, curUser, taskKey, taskComment, finalAction, null,  model.getId(), level, PcmReqConstant.ST_WAITING);
 					
-					mainWorkflowService.setModuleService(pcmReqService);
-					finalAction = mainWorkflowService.saveWorkflowHistory(execution, curUser, taskKey, taskComment, finalAction, null,  model.getId(), level);
+					execution.setVariable("LEVEL", 1);
 				}
 				catch (Exception ex) {
 					log.error(ex);

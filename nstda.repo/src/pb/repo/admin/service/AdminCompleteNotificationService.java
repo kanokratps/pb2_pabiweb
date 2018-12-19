@@ -59,10 +59,7 @@ public class AdminCompleteNotificationService {
 
     		list = dao.list(map);
             
-            session.commit();
         } catch (Exception ex) {
-        	session.rollback();
-        } finally {
         	session.close();
         }
         
@@ -96,10 +93,7 @@ public class AdminCompleteNotificationService {
     		model = dao.get(id);
     		model.setTotalRowCount(1l);
             
-            session.commit();
         } catch (Exception ex) {
-        	session.rollback();
-        } finally {
         	session.close();
         }
         

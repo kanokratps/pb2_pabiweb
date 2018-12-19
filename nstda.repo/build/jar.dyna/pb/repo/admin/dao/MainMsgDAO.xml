@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainMsgDAO">
+    <resultMap id="result" type="mainMsgModel">
+        <result property="user" column="user_"/>
+        <result property="msg" column="msg"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+    
+    <insert
+		id="add"
+		parameterType="mainMsgModel"
+		flushCache="true"
+		statementType="PREPARED"
+		keyProperty="user"
+		useGeneratedKeys="true"
+		>
+	    insert into pb2_main_msg(user_,msg)
+    	values (#{user},#{msg})
+		
+	</insert>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_main_msg
+	
+    </select>
+	
+	<delete id="delete"
+    		parameterType="string"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		delete from pb2_main_msg where user_=#{user}
+	</delete>
+	
+    <select id="listByUser" parameterType="string" resultMap="result">
+        select
+		    *
+		from
+		    pb2_main_msg
+		where user_=#{user}
+		order by user_
+    </select>
+    
+</mapper>

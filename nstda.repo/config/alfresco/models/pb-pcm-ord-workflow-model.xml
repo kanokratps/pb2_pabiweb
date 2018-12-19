@@ -11,6 +11,7 @@
 		<import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
 		<import uri="http://www.alfresco.org/model/bpm/1.0" prefix="bpm" />
 		<import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+		<import uri="http://www.alfresco.org/model/application/1.0" prefix="app" />
 	</imports>
 
 	<!-- Introduction of new namespaces defined by this model -->
@@ -32,6 +33,7 @@
 			<mandatory-aspects>
 				<aspect>pcmordwf:commonAspect</aspect>
 				<aspect>pcmordwf:specialAspect</aspect>
+				<aspect>pcmordwf:counseleeAspect</aspect>
 				<aspect>pcmordwf:reSubmitAspect</aspect>
 			</mandatory-aspects>
 		</type>
@@ -41,6 +43,7 @@
 			<mandatory-aspects>
 				<aspect>pcmordwf:commonAspect</aspect>
 				<aspect>pcmordwf:specialAspect</aspect>
+				<aspect>pcmordwf:counseleeAspect</aspect>
 				<aspect>pcmordwf:reviewAspect</aspect>
 			</mandatory-aspects>
 		</type>
@@ -69,10 +72,6 @@
 				<property name="pcmordwf:remark">
 					<type>d:text</type>
 				</property>
-				<property name="pcmordwf:commentHistory">
-					<type>d:text</type>
-					<mandatory>false</mandatory>
-				</property>
 				<property name="pcmordwf:nextReviewers">
 					<type>d:text</type>
 					<mandatory>false</mandatory>
@@ -89,7 +88,12 @@
 				<property name="pcmordwf:currentTaskKey">
 					<type>d:text</type>
 				</property>
-
+				<property name="pcmordwf:lang">
+					<type>d:text</type>
+				</property>
+				<property name="pcmordwf:description">
+					<type>d:text</type>
+				</property>
 				
 			</properties>
 			
@@ -145,6 +149,9 @@
 		<aspect name="pcmordwf:consultAspect">
 			<title>PCM WorkFlow Consult Task Properties</title>
 			<properties>
+				<property name="pcmordwf:counselee">
+					<type>d:text</type>
+				</property>
 				<property name="pcmordwf:consultOutcome">
 					<type>d:text</type>
 					<default>Comment</default>
@@ -157,6 +164,15 @@
 							</parameter>
 						</constraint>
 					</constraints>
+				</property>
+			</properties>
+		</aspect>
+				
+		<aspect name="pcmordwf:counseleeAspect">
+			<title>PCM WorkFlow Consult Task Properties</title>
+			<properties>
+				<property name="pcmordwf:consultant">
+					<type>d:text</type>
 				</property>
 			</properties>
 		</aspect>

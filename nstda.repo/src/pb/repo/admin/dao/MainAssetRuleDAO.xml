@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainAssetRuleDAO">
+    <resultMap id="result" type="mainAssetRuleModel">
+        <result property="id" column="id"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+        SELECT l.* FROM
+	    pb2_ext_budget_asset_rule_line l
+	    JOIN pb2_ext_budget_fund_rule r 
+	    ON r.id = l.fund_rule_id
+	    WHERE r.state = 'confirmed'
+	    <if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    		concat(l.asset_name,' ') ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>  
+	    <if test="fundRuleId != null">
+	    	AND l.fund_rule_id=#{fundRuleId}
+   		</if>  
+	    <if test="fundId != null">
+	    	AND l.fund_id=#{fundId}
+   		</if>  
+	    <if test="projectId != null">
+	    	AND l.project_id=#{projectId}
+   		</if>
+   		
+	    ORDER BY ${orderBy}
+    </select>
+    
+    <select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+        select * from pb2_ext_budget_asset_rule_line
+        where id=#{id}
+    </select>    
+    	
+</mapper>

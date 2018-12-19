@@ -45,7 +45,7 @@ public class MainXmlRpcWebScript {
 	
 	private static Logger log = Logger.getLogger(MainXmlRpcWebScript.class);
 	
-	private static final String URI_PREFIX = CommonConstant.GLOBAL_URI_PREFIX + "/inf";
+	private static final String URI_PREFIX = CommonConstant.GLOBAL_URI_PREFIX + "/iii";
 	
 	@Autowired
 	AlfrescoService alfrescoService;
@@ -64,12 +64,12 @@ public class MainXmlRpcWebScript {
 //		XmlRpcParser.setDriver("org.apache.xerces.parsers.SAXParser");
 //		XmlRpc.setDriver("org.apache.xerces.parsers.SAXParser");
 
-		final XmlRpcClient client = new XmlRpcClient(new URL("http://128.199.255.252:8069/xmlrpc/2/common"), true);
+		final XmlRpcClient client = new XmlRpcClient(new URL("http://10.226.202.133:8069/xmlrpc/2/common"), true);
 		
 		List arguments = new ArrayList();
-		arguments.add("PABI");
-		arguments.add("admin");
-		arguments.add("admin");
+		arguments.add("PABI2_v3");
+		arguments.add("001509");
+		arguments.add("password");
 		arguments.add(new ArrayList());
 		
 		Object uid = client.invoke("authenticate", arguments);
@@ -99,7 +99,7 @@ public class MainXmlRpcWebScript {
 
 		String host = "http://localhost:8069";
 		
-		final XmlRpcClient client = new XmlRpcClient(new URL(host+"/xmlrpc/2/object"),true);
+		final XmlRpcClient client = new XmlRpcClient(new URL(host+CommonConstant.EXT_XMLRPC_URL),true);
 
 		if (t==null) t = "res.partner";
 		
@@ -242,7 +242,7 @@ public class MainXmlRpcWebScript {
 		String host = "http://pabi2.3roots.info";
 		String db = "tr_mockup_280316";
 		
-		final XmlRpcClient client = new XmlRpcClient(new URL(host+"/xmlrpc/2/object"), true);
+		final XmlRpcClient client = new XmlRpcClient(new URL(host+CommonConstant.EXT_XMLRPC_URL), true);
 		
 		if (t==null) t = "purchase.request";
 		
@@ -393,7 +393,7 @@ public class MainXmlRpcWebScript {
 		String host = "http://pabi2.3roots.info";
 		String db = "tr_mockup_280316";
 		
-		final XmlRpcClient client = new XmlRpcClient(new URL(host+"/xmlrpc/2/object"), true);
+		final XmlRpcClient client = new XmlRpcClient(new URL(host+CommonConstant.EXT_XMLRPC_URL), true);
 		
 		if (t==null) t = "purchase.request";
 		
@@ -470,7 +470,7 @@ public class MainXmlRpcWebScript {
 		String host = "http://10.226.202.133:8069";
 		String db = "odoo";
 		
-		final XmlRpcClient client = new XmlRpcClient(new URL(host+"/xmlrpc/2/object"), true);
+		final XmlRpcClient client = new XmlRpcClient(new URL(host+CommonConstant.EXT_XMLRPC_URL), true);
 		
 		t = (t!=null) ? t : "purchase.request";
 		

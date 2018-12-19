@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import pb.repo.admin.dao.MainWkfConfigDocTypeDAO;
 import pb.repo.admin.dao.MainWkfConfigPurchaseUnitDAO;
 import pb.repo.admin.dao.MainWkfConfigPurchaseUnitResponsibleDAO;
+import pb.repo.admin.model.MainWkfConfigDocTypeModel;
 import pb.repo.common.mybatis.DbConnectionFactory;
 
 @Service
@@ -37,10 +38,6 @@ public class AdminWkfConfigService {
             
     		list = dao.listSupervisor(id);
             
-            session.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -58,10 +55,6 @@ public class AdminWkfConfigService {
             
     		list = dao.listPurchasingUnitBySectionId(sectionId);
             
-            session.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -78,10 +71,6 @@ public class AdminWkfConfigService {
             
     		map = dao.getByName(name);
             
-            session.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -89,5 +78,20 @@ public class AdminWkfConfigService {
         return map;
 	}
 	
-
+	public List<MainWkfConfigDocTypeModel> listDocType(Map<String, Object> params) {
+		
+		List<MainWkfConfigDocTypeModel> list = null;
+		
+        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+        try {
+        	MainWkfConfigDocTypeDAO dao = session.getMapper(MainWkfConfigDocTypeDAO.class);
+            
+    		list = dao.list(params);
+            
+        } finally {
+        	session.close();
+        }
+        
+        return list;
+	}
 }

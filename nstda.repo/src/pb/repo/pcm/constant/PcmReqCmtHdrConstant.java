@@ -10,6 +10,7 @@ public class PcmReqCmtHdrConstant {
 	public static final String TFN_ID = "ID";
 	public static final String TFN_PCM_REQ_ID = "PCM_REQ_ID";
 	public static final String TFN_COMMITTEE = "COMMITTEE";
+	public static final String TFN_COMMITTEE_ID = "COMMITTEE_ID";
 	
 	public static final String TFN_CREATED_TIME = "CREATED_TIME";
 	public static final String TFN_CREATED_BY = "CREATED_BY";
@@ -22,6 +23,7 @@ public class PcmReqCmtHdrConstant {
 	public static final String JFN_ID = "id";
 	public static final String JFN_PCM_REQ_ID = "prId";
 	public static final String JFN_COMMITTEE = "cmt";
+	public static final String JFN_COMMITTEE_ID = "cmtId";
 	
 	public static final String JFN_COMMITTEES = "cmts";
 	

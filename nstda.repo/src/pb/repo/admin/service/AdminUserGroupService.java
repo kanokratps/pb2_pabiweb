@@ -220,5 +220,26 @@ public class AdminUserGroupService {
         return invalidGroups;
 	}
 	
-	
+	public List<String> listRole(String user) {
+		String userRoles = getAuthoritiesForUser(user)
+				.replace("GROUP_", "")
+				.replace("','", ",")
+				;
+		if (userRoles.startsWith("'")) {
+			userRoles = userRoles.substring(1);
+		}
+		if (userRoles.endsWith("'")) {
+			userRoles = userRoles.substring(0, userRoles.length()-1);
+		}
+		
+		String[] roles = userRoles.split(",");
+		List<String> roleList = new ArrayList<String>();
+		for(int i=0; i<roles.length; i++) {
+			if (!roles[i].startsWith("site_")) {
+				roleList.add(roles[i]);
+			}
+		}
+		
+		return roleList;
+	}
 }

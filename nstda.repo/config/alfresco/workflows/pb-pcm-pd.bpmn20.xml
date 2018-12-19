@@ -17,20 +17,6 @@
     </userTask>
     <exclusiveGateway id="reviewGateway1" name="Exclusive Gateway"></exclusiveGateway>
     <sequenceFlow id="flow53" sourceRef="Reviewer" targetRef="reviewGateway1"></sequenceFlow>
-    <userTask id="Requester" name="Requester" activiti:assignee="${initiator.properties.userName}" activiti:formKey="pcmordwf:requesterResubmitTask">
-      <extensionElements>
-        <activiti:taskListener event="create" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateTaskListener">
-          <activiti:field name="componentId">
-            <activiti:string><![CDATA[pb.pcm.workflow.pd.requester.CreateTask]]></activiti:string>
-          </activiti:field>
-        </activiti:taskListener>
-        <activiti:taskListener event="complete" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateTaskListener">
-          <activiti:field name="componentId">
-            <activiti:string><![CDATA[pb.pcm.workflow.pd.requester.CompleteTask]]></activiti:string>
-          </activiti:field>
-        </activiti:taskListener>
-      </extensionElements>
-    </userTask>
     <sequenceFlow id="flowResubmit" name="Resubmit" sourceRef="resubmitGateway" targetRef="Reviewer">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${pcmordwf_reSubmitOutcome == 'Resubmit'}]]></conditionExpression>
     </sequenceFlow>
@@ -57,17 +43,17 @@
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${pcmordwf_nextReviewers == ''}]]></conditionExpression>
     </sequenceFlow>
     <exclusiveGateway id="resubmitGateway" name="Exclusive Gateway"></exclusiveGateway>
-    <sequenceFlow id="flow124" sourceRef="Requester" targetRef="resubmitGateway"></sequenceFlow>
+    <sequenceFlow id="flow124" sourceRef="RequesterRemote" targetRef="resubmitGateway"></sequenceFlow>
     <sequenceFlow id="flowCancel" name="Cancel" sourceRef="resubmitGateway" targetRef="endevent2">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${pcmordwf_reSubmitOutcome == 'Cancel'}]]></conditionExpression>
     </sequenceFlow>
     <sequenceFlow id="flowApprove" name="Approve" sourceRef="reviewGateway1" targetRef="nextReviewerGateway1">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${pcmordwf_reviewOutcome == 'Approve'}]]></conditionExpression>
     </sequenceFlow>
-    <sequenceFlow id="flowReject" name="Reject" sourceRef="reviewGateway1" targetRef="Requester">
+    <sequenceFlow id="flowReject" name="Reject" sourceRef="reviewGateway1" targetRef="RequesterRemote">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${pcmordwf_reviewOutcome == 'Reject'}]]></conditionExpression>
     </sequenceFlow>
-    <userTask id="Consultant" name="Consultant" activiti:candidateUsers="${pcmordwf_nextReviewers}" activiti:formKey="pcmordwf:consultantConsultTask">
+    <userTask id="Consultant" name="Consultant" activiti:assignee="${pcmordwf_nextReviewers}" activiti:formKey="pcmordwf:consultantConsultTask">
       <extensionElements>
         <activiti:taskListener event="create" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateTaskListener">
           <activiti:field name="componentId">
@@ -88,6 +74,20 @@
     <sequenceFlow id="flowNextReviewer" name="Next Reviewer" sourceRef="nextReviewerGateway1" targetRef="Reviewer">
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${pcmordwf_nextReviewers != ''}]]></conditionExpression>
     </sequenceFlow>
+    <receiveTask id="RequesterRemote" name="RequesterRemote">
+      <extensionElements>
+        <activiti:executionListener event="start" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateExecutionListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.pcm.workflow.pd.requester.StartRemoteExecutor]]></activiti:string>
+          </activiti:field>
+        </activiti:executionListener>
+        <activiti:executionListener event="end" class="com.github.dynamicextensionsalfresco.workflow.activiti.DelegateExecutionListener">
+          <activiti:field name="componentId">
+            <activiti:string><![CDATA[pb.pcm.workflow.pd.requester.EndRemoteExecutor]]></activiti:string>
+          </activiti:field>
+        </activiti:executionListener>
+      </extensionElements>
+    </receiveTask>
   </process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_NSTDAPcmPD">
     <bpmndi:BPMNPlane bpmnElement="NSTDAPcmPD" id="BPMNPlane_NSTDAPcmPD">
@@ -96,9 +96,6 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="reviewGateway1" id="BPMNShape_reviewGateway1">
         <omgdc:Bounds height="40.0" width="40.0" x="253.0" y="149.0"></omgdc:Bounds>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape bpmnElement="Requester" id="BPMNShape_Requester">
-        <omgdc:Bounds height="55.0" width="105.0" x="221.0" y="52.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
         <omgdc:Bounds height="35.0" width="35.0" x="500.0" y="152.0"></omgdc:Bounds>
@@ -114,6 +111,9 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape bpmnElement="Consultant" id="BPMNShape_Consultant">
         <omgdc:Bounds height="55.0" width="105.0" x="221.0" y="240.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="RequesterRemote" id="BPMNShape_RequesterRemote">
+        <omgdc:Bounds height="55.0" width="105.0" x="221.0" y="52.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge bpmnElement="flow53" id="BPMNEdge_flow53">
         <omgdi:waypoint x="183.0" y="169.0"></omgdi:waypoint>
@@ -147,7 +147,7 @@
         <omgdi:waypoint x="517.0" y="24.0"></omgdi:waypoint>
         <omgdi:waypoint x="517.0" y="152.0"></omgdi:waypoint>
         <bpmndi:BPMNLabel>
-          <omgdc:Bounds height="13.0" width="33.0" x="90.0" y="31.0"></omgdc:Bounds>
+          <omgdc:Bounds height="13.0" width="100.0" x="90.0" y="31.0"></omgdc:Bounds>
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge bpmnElement="flowApprove" id="BPMNEdge_flowApprove">

@@ -1,9 +1,6 @@
 package pb.repo.pcm.service;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,17 +12,12 @@ import javax.sql.DataSource;
 
 import net.sf.jasperreports.engine.JRRuntimeException;
 import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.data.JRMapCollectionDataSource;
-import net.sf.jasperreports.engine.export.JRXlsExporterParameter;
-import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
 import net.sf.jasperreports.engine.util.JRLoader;
 
-import org.apache.chemistry.opencmis.commons.impl.MimeTypes;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
@@ -35,12 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import pb.repo.admin.constant.MainMasterConstant;
-import pb.repo.admin.model.MainMasterModel;
 import pb.repo.admin.service.AdminMasterService;
 import pb.repo.pcm.dao.PcmFunctionDAO;
-import pb.repo.pcm.dao.PcmReqDAO;
-import pb.repo.pcm.model.PcmReqModel;
-import pb.repo.pcm.util.PcmReqUtil;
 import pb.repo.pcm.util.PcmUtil;
 
 @Service
@@ -68,13 +56,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listType(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -96,13 +79,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listTeam(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -124,13 +102,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listLevel(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -152,13 +125,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listHour(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -180,13 +148,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listTypeChange(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -208,13 +171,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listRequestDay(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -236,13 +194,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listRequestEffect(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -264,13 +217,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listChange(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -292,13 +240,8 @@ public class PcmFunctionService {
     		String data = memoFunctionDAO.listTrain(params);
     		list = jsonToMap(data);
     		
-    		//log.info(list.toString());
-    		
-            session.commit();
-            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
@@ -309,7 +252,7 @@ public class PcmFunctionService {
 	
 	public JasperPrint genReport(List<Map<String,Object>> list, String name, String from, String to, String type, String typeName, String criteria, String fileName) throws Exception {
 		
-		List<Map<String, Object>> rptConfigList = masterService.listByType(MainMasterConstant.TYPE_REPORT, type , true, null, null);
+		List<Map<String, Object>> rptConfigList = masterService.listByType(MainMasterConstant.TYPE_REPORT, type , true, null, null, null);
 		Map<String, Object> rptConfigModel = rptConfigList.get(0); 
 		
 		 final String basePath = System.getProperty("catalina.base");

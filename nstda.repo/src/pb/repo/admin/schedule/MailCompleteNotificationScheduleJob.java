@@ -65,7 +65,7 @@ import com.sun.mail.smtp.SMTPMessage;
  * New Quartz support coming to Dynamic extensions 1.3
  */
 @Component
-@ScheduledQuartzJob(name = "mailCompleteNotificationJob", cron="0 2/10 * * * ?", group="pb") // real
+//@ScheduledQuartzJob(name = "mailCompleteNotificationJob", cron="0 2/10 * * * ?", group="pb") // real
 //@ScheduledQuartzJob(name = "mailCompleteNotificationJob", cron="0 0/1 * * * ?", group="pb")
 public class MailCompleteNotificationScheduleJob implements Job {
 	

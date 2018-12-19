@@ -35,9 +35,6 @@ public class AdminCurrencyService {
             
             list = dao.list();
             
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }

@@ -1,13 +1,18 @@
 package pb.repo.pcm.model;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 import pb.repo.admin.model.SubModuleModel;
 
 public class PcmReqModel extends SubModuleModel {
 	
 	String reqBy;
 	Integer reqSectionId;
+	String reqByName;
 	
-	String objectiveType;
+	Integer objectiveType;
+	String objectiveTypeName;
 	String objective;
 	String reason;
 	
@@ -18,13 +23,15 @@ public class PcmReqModel extends SubModuleModel {
 	String budgetCcType;
 	String budgetCcName;
 	String budgetCcTypeName;
+	Integer fundId;
+	String fundName;
 	
 	String isStock;
 	Integer stockSectionId;
 	
 	String isPrototype;
-	String prototype;
-	String prototypeContractNo;
+	String prototypeType;
+	String prototypeNo;
 	
 	Integer costControlTypeId;
 	String costControlTypeName;
@@ -32,34 +39,56 @@ public class PcmReqModel extends SubModuleModel {
 	String costControlName;
 	
 	Integer pcmSectionId;
+	Integer pcmOrgId;
 	String location;
 
+	String isSmallAmount;
+	
 	String isAcrossBudget;
 	Double acrossBudget;
 	
 	String isRefId;
 	String refId;
+	String refDocRef;
+	
+	String rid;
 
-	String method;
+	Long prWebMethodId;
 	String methodCond2Rule;
 	String methodCond2;
 	String methodCond2Dtl;
 	
 	Double vat;
 	Integer vatId;
+	Boolean priceInclude;
 	
 	Double total;
+	Double totalCnv;
+	
+	Timestamp contractDate;
 	
 	Integer rewarning;
 	Integer waitingDay;
-	String status;
+	String wfBy;
+	String wfByTime;
 	String wfStatus;
 	
-	public String getStatus() {
-		return status;
+	Timestamp requestedTime;
+	
+	List<PcmReqDtlModel> dtlList;
+	List<PcmReqCmtHdrModel> cmtList;
+	
+	public String getWfBy() {
+		return wfBy;
 	}
-	public void setStatus(String status) {
-		this.status = status;
+	public void setWfBy(String wfBy) {
+		this.wfBy = wfBy;
+	}
+	public String getWfByTime() {
+		return wfByTime;
+	}
+	public void setWfByTime(String wfByTime) {
+		this.wfByTime = wfByTime;
 	}
 	public String getWfStatus() {
 		return wfStatus;
@@ -93,12 +122,6 @@ public class PcmReqModel extends SubModuleModel {
 	}
 	public void setReqBy(String reqBy) {
 		this.reqBy = reqBy;
-	}
-	public String getObjectiveType() {
-		return objectiveType;
-	}
-	public void setObjectiveType(String objectiveType) {
-		this.objectiveType = objectiveType;
 	}
 	public String getObjective() {
 		return objective;
@@ -148,17 +171,29 @@ public class PcmReqModel extends SubModuleModel {
 	public void setBudgetCcTypeName(String budgetCcTypeName) {
 		this.budgetCcTypeName = budgetCcTypeName;
 	}
-	public String getPrototype() {
-		return prototype;
+	public Integer getFundId() {
+		return fundId;
 	}
-	public void setPrototype(String prototype) {
-		this.prototype = prototype;
+	public void setFundId(Integer fundId) {
+		this.fundId = fundId;
 	}
-	public String getPrototypeContractNo() {
-		return prototypeContractNo;
+	public String getFundName() {
+		return fundName;
 	}
-	public void setPrototypeContractNo(String prototypeContractNo) {
-		this.prototypeContractNo = prototypeContractNo;
+	public void setFundName(String fundName) {
+		this.fundName = fundName;
+	}
+	public String getPrototypeType() {
+		return prototypeType;
+	}
+	public void setPrototypeType(String prototypeType) {
+		this.prototypeType = prototypeType;
+	}
+	public String getPrototypeNo() {
+		return prototypeNo;
+	}
+	public void setPrototypeNo(String prototypeNo) {
+		this.prototypeNo = prototypeNo;
 	}
 	public String getLocation() {
 		return location;
@@ -172,11 +207,11 @@ public class PcmReqModel extends SubModuleModel {
 	public void setAcrossBudget(Double acrossBudget) {
 		this.acrossBudget = acrossBudget;
 	}
-	public String getMethod() {
-		return method;
+	public Long getPrWebMethodId() {
+		return prWebMethodId;
 	}
-	public void setMethod(String method) {
-		this.method = method;
+	public void setPrWebMethodId(Long prWebMethodId) {
+		this.prWebMethodId = prWebMethodId;
 	}
 	public String getMethodCond2Rule() {
 		return methodCond2Rule;
@@ -201,6 +236,12 @@ public class PcmReqModel extends SubModuleModel {
 	}
 	public void setTotal(Double total) {
 		this.total = total;
+	}
+	public Double getTotalCnv() {
+		return totalCnv;
+	}
+	public void setTotalCnv(Double totalCnv) {
+		this.totalCnv = totalCnv;
 	}
 	public Double getVat() {
 		return vat;
@@ -232,6 +273,12 @@ public class PcmReqModel extends SubModuleModel {
 	public void setIsRefId(String isRefId) {
 		this.isRefId = isRefId;
 	}
+	public String getRefDocRef() {
+		return refDocRef;
+	}
+	public void setRefDocRef(String refDocRef) {
+		this.refDocRef = refDocRef;
+	}
 	public Integer getVatId() {
 		return vatId;
 	}
@@ -256,6 +303,12 @@ public class PcmReqModel extends SubModuleModel {
 	public void setPcmSectionId(Integer pcmSectionId) {
 		this.pcmSectionId = pcmSectionId;
 	}
+	public Integer getPcmOrgId() {
+		return pcmOrgId;
+	}
+	public void setPcmOrgId(Integer pcmOrgId) {
+		this.pcmOrgId = pcmOrgId;
+	}
 	public Integer getCostControlTypeId() {
 		return costControlTypeId;
 	}
@@ -279,6 +332,66 @@ public class PcmReqModel extends SubModuleModel {
 	}
 	public void setCostControlName(String costControlName) {
 		this.costControlName = costControlName;
+	}
+	public Timestamp getContractDate() {
+		return contractDate;
+	}
+	public void setContractDate(Timestamp contractDate) {
+		this.contractDate = contractDate;
+	}
+	public Timestamp getRequestedTime() {
+		return requestedTime;
+	}
+	public void setRequestedTime(Timestamp requestedTime) {
+		this.requestedTime = requestedTime;
+	}
+	public List<PcmReqDtlModel> getDtlList() {
+		return dtlList;
+	}
+	public void setDtlList(List<PcmReqDtlModel> dtlList) {
+		this.dtlList = dtlList;
+	}
+	public List<PcmReqCmtHdrModel> getCmtList() {
+		return cmtList;
+	}
+	public void setCmtList(List<PcmReqCmtHdrModel> cmtList) {
+		this.cmtList = cmtList;
+	}
+	public String getReqByName() {
+		return reqByName;
+	}
+	public void setReqByName(String reqByName) {
+		this.reqByName = reqByName;
+	}
+	public String getIsSmallAmount() {
+		return isSmallAmount;
+	}
+	public void setIsSmallAmount(String isSmallAmount) {
+		this.isSmallAmount = isSmallAmount;
+	}
+	public Boolean getPriceInclude() {
+		return priceInclude;
+	}
+	public void setPriceInclude(Boolean priceInclude) {
+		this.priceInclude = priceInclude;
+	}
+	public Integer getObjectiveType() {
+		return objectiveType;
+	}
+	public void setObjectiveType(Integer objectiveType) {
+		this.objectiveType = objectiveType;
+	}
+	public String getObjectiveTypeName() {
+		return objectiveTypeName;
+	}
+	public void setObjectiveTypeName(String objectiveTypeName) {
+		this.objectiveTypeName = objectiveTypeName;
+	}
+	public String getRid() {
+		return rid;
+	}
+	public void setRid(String rid) {
+		this.rid = rid;
 	}
 	
 }

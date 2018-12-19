@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.TicketComponent;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -48,6 +49,9 @@ public class AdminTestSystemService {
 	
 	@Autowired
 	AlfrescoService alfrescoService;
+	
+	@Autowired
+	private TicketComponent ticketComponent;
 
 	private void putUserToSet(String s, Set<String> set) {
 		  if (s!=null) {
@@ -179,6 +183,36 @@ public class AdminTestSystemService {
         	} else {
         		result.put("valid", true);
         	}
+        	
+        } catch (Exception ex) {
+			log.error("", ex);
+        	throw ex;
+        }
+
+        return result;
+    }
+	
+	public JSONObject currentUser() throws Exception {
+		
+		JSONObject result = new JSONObject();
+		
+        try {
+        	Set<String> users = ticketComponent.getUsersWithTickets(true);
+        	String rm = null;
+        	for(String u : users) {
+        		if (u.equals("guest")) {
+        			rm = u;
+        		}
+        	}
+        	
+        	if (rm!=null) {
+        		users.remove(rm);
+        	}
+        	
+        	log.info("users:"+users);
+            
+			result.put("cnt", users.size());
+    		result.put("users", users);
         	
         } catch (Exception ex) {
 			log.error("", ex);

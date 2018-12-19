@@ -2,13 +2,14 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="lib/pcm/itextpdf-5.5.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/Alfresco"/>
-	<classpathentry kind="lib" path="lib/pcm/jasperreports-5.6.0.jar"/>
-	<classpathentry kind="lib" path="lib/pcm/jasperreports-fonts-5.6.0.jar"/>
 	<classpathentry kind="lib" path="lib/admin/xmlrpc-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/admin/xmlrpc-client-1.1.1.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/nstda.common"/>
 	<classpathentry kind="lib" path="/nstda.common/lib/fastjson-1.2.8.jar"/>
+	<classpathentry kind="lib" path="lib/pcm/itextpdf-5.5.9.jar"/>
+	<classpathentry kind="lib" path="lib/pcm/jasperreports-6.2.2.jar"/>
+	<classpathentry kind="lib" path="lib/pcm/jasperreports-fonts-6.2.2.jar"/>
+	<classpathentry kind="lib" path="/opt/alfresco-4.2.e/tomcat/lib/servlet-api.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

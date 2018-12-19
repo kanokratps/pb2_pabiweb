@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainUtilDAO">
+    
+    <!-- Copy this method from PR -->
+	<select id="listOldPr" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select *,COUNT(*) OVER() totalRowCount
+		from pb2_pcm_req
+		where status = 'C3'
+		and is_small_amount='1'
+		and (
+			id not in (select pay_dtl2 from pb2_exp_use where is_small_amount='1' and status not in ('X1','X2'))
+			and id not in (select origin_pr_number from pb2_exp_brw where is_small_amount='1' and status not in ('X1','X2'))
+		)
+		<if test="id != null">
+			and id=#{id}
+		</if>
+		
+		ORDER BY ${orderBy}
+    </select>  
+    
+</mapper>

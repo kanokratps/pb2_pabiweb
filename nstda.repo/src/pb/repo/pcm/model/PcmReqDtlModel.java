@@ -8,13 +8,19 @@ public class PcmReqDtlModel extends BaseDataModel {
 	
 	Long id;
 	String masterId;
+	Integer actId;
+	String actName;
+	Integer actGrpId;
+	String actGrpName;
+	Integer assetRuleId;
+	String assetName;
 	String description;
 	Double quantity;
+	Integer unitId;
 	String unit;
 	Double price;
-	Double priceCnv;
 	Double total;
-	String isEquipment;
+	Integer fiscalYear;
 	
 	Timestamp createdTime;
 	String createdBy;
@@ -38,7 +44,39 @@ public class PcmReqDtlModel extends BaseDataModel {
 	public void setMasterId(String masterId) {
 		this.masterId = masterId;
 	}
+
+	public Integer getActId() {
+		return actId;
+	}
+
+	public void setActId(Integer actId) {
+		this.actId = actId;
+	}
+
+	public String getActName() {
+		return actName;
+	}
+
+	public void setActName(String actName) {
+		this.actName = actName;
+	}
+
+	public Integer getActGrpId() {
+		return actGrpId;
+	}
+
+	public void setActGrpId(Integer actGrpId) {
+		this.actGrpId = actGrpId;
+	}
 	
+	public String getActGrpName() {
+		return actGrpName;
+	}
+
+	public void setActGrpName(String actGrpName) {
+		this.actGrpName = actGrpName;
+	}
+
 	public String getDescription() {
 		return description;
 	}
@@ -55,12 +93,12 @@ public class PcmReqDtlModel extends BaseDataModel {
 		this.quantity = quantity;
 	}
 
-	public String getUnit() {
-		return unit;
+	public Integer getUnitId() {
+		return unitId;
 	}
 
-	public void setUnit(String unit) {
-		this.unit = unit;
+	public void setUnitId(Integer unitId) {
+		this.unitId = unitId;
 	}
 
 	public Double getPrice() {
@@ -71,14 +109,6 @@ public class PcmReqDtlModel extends BaseDataModel {
 		this.price = price;
 	}
 
-	public Double getPriceCnv() {
-		return priceCnv;
-	}
-
-	public void setPriceCnv(Double priceCnv) {
-		this.priceCnv = priceCnv;
-	}
-
 	public Double getTotal() {
 		return total;
 	}
@@ -87,12 +117,20 @@ public class PcmReqDtlModel extends BaseDataModel {
 		this.total = total;
 	}
 
-	public String getIsEquipment() {
-		return isEquipment;
+	public String getUnit() {
+		return unit;
 	}
 
-	public void setIsEquipment(String isEquipment) {
-		this.isEquipment = isEquipment;
+	public void setUnit(String unit) {
+		this.unit = unit;
+	}
+	
+	public Integer getFiscalYear() {
+		return fiscalYear;
+	}
+
+	public void setFiscalYear(Integer fiscalYear) {
+		this.fiscalYear = fiscalYear;
 	}
 
 	public Timestamp getCreatedTime() {
@@ -135,4 +173,20 @@ public class PcmReqDtlModel extends BaseDataModel {
 		this.totalRowCount = totalRowCount;
 	}
 
+	public String getAssetName() {
+		return assetName;
+	}
+
+	public void setAssetName(String assetName) {
+		this.assetName = assetName;
+	}
+
+	public Integer getAssetRuleId() {
+		return assetRuleId;
+	}
+
+	public void setAssetRuleId(Integer assetRuleId) {
+		this.assetRuleId = assetRuleId;
+	}
+	
 }

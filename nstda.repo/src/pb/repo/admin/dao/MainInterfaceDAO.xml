@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainInterfaceDAO">
+    
+    <insert
+		id="add"
+		parameterType="map"
+		flushCache="true"
+		statementType="PREPARED"
+		keyProperty="id"
+		useGeneratedKeys="true"
+		>
+	    INSERT INTO pb2_main_interface (
+	    	source,method,params,created_time
+	    ) VALUES (
+	    	#{source},#{method},#{params},Now()
+    	)
+	</insert>
+	
+    <delete id="delete"
+    		parameterType="long"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		DELETE FROM pb2_main_interface WHERE id=#{id}
+	</delete>
+    
+</mapper>

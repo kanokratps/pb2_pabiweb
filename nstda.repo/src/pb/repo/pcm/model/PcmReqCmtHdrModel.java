@@ -9,6 +9,7 @@ public class PcmReqCmtHdrModel {
 	Long id;
 	String pcmReqId;
 	String committee;
+	Integer committeeId;
 	
 	Timestamp createdTime;
 	String createdBy;
@@ -74,6 +75,12 @@ public class PcmReqCmtHdrModel {
 	}
 	public void setDtlList(List<PcmReqCmtDtlModel> dtlList) {
 		this.dtlList = dtlList;
+	}
+	public Integer getCommitteeId() {
+		return committeeId;
+	}
+	public void setCommitteeId(Integer committeeId) {
+		this.committeeId = committeeId;
 	}
 	
 }

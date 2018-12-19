@@ -68,7 +68,7 @@ import com.sun.mail.smtp.SMTPMessage;
  * New Quartz support coming to Dynamic extensions 1.3
  */
 @Component
-@ScheduledQuartzJob(name = "mailRewarningJob", cron="0 10 0 * * ?", group="pb") // real
+//@ScheduledQuartzJob(name = "mailRewarningJob", cron="0 10 0 * * ?", group="pb") // real
 //@ScheduledQuartzJob(name = "mailRewarningJob", cron="0 0 0 * * ?", group="pb")
 public class MailRewarningScheduleJob implements Job {
 	
@@ -116,7 +116,7 @@ public class MailRewarningScheduleJob implements Job {
     		
     		if(memoMailRewarn){
     		
-    			List<Map<String,Object>> masterList = masterService.listByType(MainMasterConstant.TYPE_WORKFLOW, null, true, null, null);
+    			List<Map<String,Object>> masterList = masterService.listByType(MainMasterConstant.TYPE_WORKFLOW, null, true, null, null, null);
 				List<String> wfNames = new ArrayList<String>();
     			for(Map<String,Object> model : masterList) {
     				wfNames.add("activiti$"+model.get(MainMasterConstant.TFN_FLAG1));

@@ -9,14 +9,20 @@ public class SubModuleModel {
 	
 	String docRef;
 	String folderRef;
+	String fileName;
 	
 	Integer waitingLevel;
 	String workflowInsId;
+	
+	String isRefId;
+	String refId;
 	
 	Timestamp createdTime;
 	String createdBy;
 	Timestamp updatedTime;
 	String updatedBy;
+	
+	String status;
 	
 	List<String> listAttachDoc;
 
@@ -33,6 +39,12 @@ public class SubModuleModel {
 	}
 	public void setDocRef(String docRef) {
 		this.docRef = docRef;
+	}
+	public String getFileName() {
+		return fileName;
+	}
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
 	}
 	public String getFolderRef() {
 		return folderRef;
@@ -94,4 +106,23 @@ public class SubModuleModel {
 		}
 		this.listAttachDoc.add(doc);
 	}
+	public String getIsRefId() {
+		return isRefId;
+	}
+	public void setIsRefId(String isRefId) {
+		this.isRefId = isRefId;
+	}
+	public String getRefId() {
+		return refId;
+	}
+	public void setRefId(String refId) {
+		this.refId = refId;
+	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
 }

@@ -7,6 +7,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import pb.common.constant.CommonConstant;
 import pb.repo.admin.constant.MainUserGroupConstant;
 import pb.repo.admin.model.MainUserGroupModel;
 
@@ -62,8 +63,12 @@ public class MainUserGroupUtil {
 	 * convert String '1' to '000001'
 	 */
 	public static String code2login(String code) {
-		DecimalFormat dformat = new DecimalFormat(MainUserGroupConstant.LOGIN_FORMAT);
-		return dformat.format(Integer.parseInt(code));
+		if (code!=null && !code.equals(CommonConstant.DUMMY_EMPLOYEE_CODE)) {
+			DecimalFormat dformat = new DecimalFormat(MainUserGroupConstant.LOGIN_FORMAT);
+			return dformat.format(Integer.parseInt(code));
+		}
+		
+		return code;
 	}
 	
 	/*

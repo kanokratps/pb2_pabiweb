@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainWorkflowAssigneeDAO">
+    <insert
+		id="add"
+		parameterType="map"
+		flushCache="true"
+		statementType="PREPARED"
+		keyProperty="id"
+		useGeneratedKeys="true"
+		>
+	    INSERT INTO pb2_main_workflow_assignee (
+	    	workflow_ins_id,src_user,dest_user,active,created_by,created_time
+	    ) VALUES (
+	    	#{wkId},#{srcUser},#{destUser},#{active},#{createdBy},now()
+    	)
+		
+	</insert>
+	
+	<select id="list" parameterType="map" resultType="map" >
+        SELECT h.*, COUNT(*) OVER() totalRowCount
+        FROM pb2_main_workflow_assignee h,pb2_main_workflow w 
+		WHERE w.workflow_ins_id = h.workflow_ins_id
+		AND w.workflow_ins_id = #{wkId}
+		<if test="orderDesc != null">
+			ORDER BY h.id DESC
+		</if>
+    </select>
+    
+    <select id="listByWorkflowId" parameterType="map" resultType="map">
+        SELECT *, COUNT(*) OVER() totalRowCount
+        FROM pb2_main_workflow_assignee
+        WHERE workflow_ins_id=#{wkId}   
+		<if test="users != null">
+			<foreach item="user" index="index" collection="users" open=" AND src_user in (" separator="," close=")">
+				#{user}
+	   		</foreach>
+   		</if>  
+   		<if test="active != null">
+   			AND active=#{active}
+   		</if>
+   		<if test="orderBy != null">
+			ORDER BY ${orderBy}
+		</if>
+    </select>
+
+    <delete id="deleteByWorkflowId"
+    		parameterType="string"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		DELETE FROM pb2_main_workflow_assignee 
+   		WHERE workflow_ins_id IN (SELECT workflow_ins_id from pb2_main_workflow where master_id=#{masterId})
+	</delete>    
+	
+	<update id="update" 
+        parameterType="map"
+		flushCache="true">
+     UPDATE pb2_main_workflow_assignee 
+     SET active=#{active}
+     WHERE id=#{id}
+    </update>
+    
+    <select id="count" parameterType="map" resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_main_workflow_assignee
+		where 1=1
+		<if test="wkId != null">
+			AND workflow_ins_id = #{wkId}
+		</if>
+		<if test="srcUser != null">
+			AND src_user = #{srcUser}
+		</if>
+		<if test="destUser != null">
+			AND dest_user = #{destUser}
+		</if>
+    </select>
+</mapper>
+

@@ -18,6 +18,7 @@ public class MainMasterModel {
 	  Timestamp updatedTime;
 	  String updatedBy;
 	  Boolean active;
+	  Boolean system;
 	  
 	  private Long totalRowCount;
 	  
@@ -104,6 +105,12 @@ public class MainMasterModel {
 	}
 	public void setActive(Boolean active) {
 		this.active = active;
+	}
+	public Boolean getSystem() {
+		return system;
+	}
+	public void setSystem(Boolean system) {
+		this.system = system;
 	}
 	public Long getTotalRowCount() {
 		return totalRowCount;

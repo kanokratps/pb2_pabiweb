@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainBossEmotionDAO">
+
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select 	org_id, section_id, employee_id, lvl, amount_max_emotion as amount_max, amount_max_emotion, first_name, last_name, doc_type, employee_code
+		from	pb2_ext_boss_view
+		where 	section_id = #{sectionId}   
+		and		doc_type = #{docType}
+		order by lvl
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_ext_boss_view
+    </select>
+	
+</mapper>

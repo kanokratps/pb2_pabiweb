@@ -45,6 +45,25 @@ public class AdminMainTestSystemWebScript {
 	  
 	}
 	
+	@Uri(URI_PREFIX+"/currentUser")
+	public void handleCurrentUser(final WebScriptResponse response) throws Exception {
+	
+		String json = null;
+		
+		try {
+			JSONObject jsObj = testSystemService.currentUser();
+			json = CommonUtil.jsonSuccess(jsObj);
+			
+		} catch (Exception ex) {
+			log.error("", ex);
+			json = CommonUtil.jsonFail(ex.toString());
+			throw ex;
+		} finally {
+			CommonUtil.responseWrite(response, json);
+		}
+	  
+	}
+	
 	@Uri(URI_PREFIX+"/version")
 	public void handleVersion(final WebScriptResponse response) throws Exception {
 	

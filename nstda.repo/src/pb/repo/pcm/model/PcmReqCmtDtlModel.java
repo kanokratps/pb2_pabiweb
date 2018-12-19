@@ -1,12 +1,13 @@
 package pb.repo.pcm.model;
 
 import java.sql.Timestamp;
-import java.util.List;
 
 public class PcmReqCmtDtlModel {
 	
 	String id;
 	Long masterId;
+	String employeeCode;
+	String title;
 	String firstName;
 	String lastName;
 	String position;
@@ -30,6 +31,18 @@ public class PcmReqCmtDtlModel {
 	}
 	public void setMasterId(Long masterId) {
 		this.masterId = masterId;
+	}
+	public String getEmployeeCode() {
+		return employeeCode;
+	}
+	public void setEmployeeCode(String employeeCode) {
+		this.employeeCode = employeeCode;
+	}
+	public String getTitle() {
+		return title;
+	}
+	public void setTitle(String title) {
+		this.title = title;
 	}
 	public String getFirstName() {
 		return firstName;

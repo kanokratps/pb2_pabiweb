@@ -52,10 +52,6 @@ public class AdminMsgService {
             
     		list = mainMsgDAO.listByUser(user);
             
-            session.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }

@@ -19,5 +19,4 @@ public interface PcmReqDtlDAO {
 	public List<PcmReqDtlModel> list(Map<String, Object> params);
 	
 	public List<Map<String, Object>> listForInf(Map<String, Object> params);
-	
 }

@@ -17,4 +17,5 @@ public interface PcmReqCmtDtlDAO {
 	public List<PcmReqCmtDtlModel> listByMasterId(Map<String, Object> params);
 	
 	public void deleteByMasterId(String masterId);
+	
 }

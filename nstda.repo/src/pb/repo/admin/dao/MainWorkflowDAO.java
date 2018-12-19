@@ -1,6 +1,7 @@
 package pb.repo.admin.dao;
 
 import java.util.List;
+import java.util.Map;
 
 import pb.repo.admin.model.MainWorkflowModel;
 
@@ -16,4 +17,8 @@ public interface MainWorkflowDAO {
 	
     public List<MainWorkflowModel> listByMasterId(String id);
 	
+	public List<MainWorkflowModel> list(Map<String, Object> params);
+	
+	public Map<String, Object> getFirstApprover(Map<String, Object> params);
+	public Map<String, Object> getLastApprover(Map<String, Object> params);
 }

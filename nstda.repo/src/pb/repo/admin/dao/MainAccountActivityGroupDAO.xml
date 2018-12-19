@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainAccountActivityGroupDAO">
+    <resultMap id="result" type="mainAccountActivityGroupModel">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+        SELECT ag.* FROM
+	   	pb2_activity_group_view ag
+	    <if test="actId == null">
+	   		WHERE 1=1
+	   	</if>
+	    <if test="actId != null">
+	   		, pb2_activity_view a
+	   		WHERE ag.id = a.activity_group_id
+	   		AND a.id=#{actId}
+	   	</if>
+	    <if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    			concat(ag.name,' ',ag.name_th) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>
+	    <if test="id != null">
+	    	AND ag.id=#{id}
+   		</if>
+	    <if test="noEmotion != null">
+	    	AND ag.special_workflow_emotion is false
+   		</if>
+	    <if test="icharge != null">
+	   		AND ag.internal_charge=#{icharge}::boolean
+   		</if>
+	   ORDER BY ${orderBy}
+    </select>
+    
+    <select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+        select * from pb2_ext_account_activity_group
+        where id=#{id}
+    </select>    
+    	
+</mapper>

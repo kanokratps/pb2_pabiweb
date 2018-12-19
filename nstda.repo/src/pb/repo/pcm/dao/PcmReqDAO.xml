@@ -15,11 +15,14 @@
         <result property="budgetCcType" column="budget_cc_type"/>
         <result property="budgetCcName" column="budget_cc_name"/>
         <result property="budgetCcTypeName" column="budget_cc_type_name"/>
+        <result property="fundId" column="fund_id"/>
+        <result property="fundName" column="fund_name"/>
         <result property="isStock" column="is_stock"/>
         <result property="stockSectionId" column="stock_section_id"/>
         <result property="isPrototype" column="is_prototype"/>
-        <result property="prototype" column="prototype"/>
-        <result property="prototypeContractNo" column="prototype_contract_no"/>
+        <result property="prototypeType" column="prototype_type"/>
+        <result property="prototypeNo" column="prototype_no"/>
+        <result property="contractDate" column="contract_date"/>
         <result property="costControlTypeId" column="cost_control_type_id"/>
         <result property="costControlTypeName" column="cost_control_type_name"/>
         <result property="costControlId" column="cost_control_id"/>
@@ -28,38 +31,74 @@
         <result property="location" column="location"/>
         <result property="isRefId" column="is_ref_id"/>
         <result property="refId" column="ref_id"/>
+        <result property="isSmallAmount" column="is_small_amount"/>
         <result property="isAcrossBudget" column="is_across_budget"/>
         <result property="acrossBudget" column="across_budget"/>
-        <result property="method" column="method"/>
+        <result property="prWebMethodId" column="prweb_method_id"/>
         <result property="methodCond2Rule" column="method_cond2_rule"/>
         <result property="methodCond2" column="method_cond2"/>
         <result property="methodCond2Dtl" column="method_cond2_dtl"/>
         <result property="vat" column="vat"/>
         <result property="vatId" column="vat_id"/>
+        <result property="priceInclude" column="price_include"/>
+        <result property="total" column="total"/>
+        <result property="totalCnv" column="total_cnv"/>
         <result property="workflowInsId" column="workflow_ins_id"/>
+        <result property="refDocRef" column="ref_doc_ref"/>
         <result property="docRef" column="doc_ref"/>
         <result property="folderRef" column="folder_ref"/>
         <result property="waitingLevel" column="waiting_level"/>
+        <result property="requestedTime" column="requested_time"/>
         <result property="createdTime" column="created_time"/>
         <result property="createdBy" column="created_by"/>
         <result property="updatedTime" column="updated_time"/>
         <result property="updatedBy" column="updated_by"/>
+        <result property="wfBy" column="wf_by"/>
+        <result property="wfByTime" column="wf_by_time"/>
         <result property="wfStatus" column="wf_status"/>
         <result property="rewarning" column="rewarning"/>
         <result property="waitingDay" column="waiting_day"/>
+        <result property="rid" column="rid"/>
     </resultMap>
     
-    <select id="list" resultMap="result" parameterType="map">
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select *,COUNT(*) OVER() totalRowCount
+		from pb2_pcm_req_view
+		where 
+		<if test="monitorUser != null">
+			((status != 'D') or (status='D' and created_by_code = #{loginE}))
+		</if>
+		<if test="monitorUser == null">
+			(created_by_code = #{loginE} or (req_by_code = #{loginE} and status!='D') or all_rev ilike '%'||#{loginL}||'%' )
+		</if>
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+				concat(id, ' ', objective_type_name, ' ', objective_type_name_th, ' ',objective,' ',currency,' ',req_by,' ',req_by_th,' ',created_by,' ',created_by_th,to_char(requested_time, 'dd/mm/yyyy'), ' ', budget_cc_name, ' ', budget_cc_name_th) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>  
+		<if test="status != null">
+			AND status=#{status}
+		</if>
+		<if test="objective_type != null">
+			AND objective_type=#{objective_type}
+		</if>
+		ORDER BY ${orderBy}
+		LIMIT #{limit}
+		OFFSET #{start}
+    </select>
+    
+    <select id="llist" resultMap="result" parameterType="map">
         SELECT
-		    REQ.ID, total, objective_type, objective, 
-		    	budget_cc, budget_cc_type, b.name budget_cc_name,
-				WF_STATUS, STATUS, reason, 
+		    REQ.ID, total, total_cnv, CASE WHEN #{lang}='' THEN mm.flag2 ELSE mm.name END objective_type, objective, 
+		    	budget_cc, budget_cc_type, CASE WHEN #{lang}='' THEN b.name ELSE b.name_th END budget_cc_name,
+		    	WF_BY, WF_BY_TIME,
+				WF_STATUS, STATUS, reason, currency,
 				cost_control_id, cost_control_type_id, 
 				location, 
-				method, method_cond2, method_cond2_rule, method_cond2_dtl,
+				prweb_method_id, method_cond2, method_cond2_rule, method_cond2_dtl,
 				WORKFLOW_INS_ID, TASK_ID,
-				UPDATED_TIME, UPDATED_BY, CREATED_TIME, 
-				FOLDER_REF, DOC_REF,
+				REQ.UPDATED_TIME, REQ.UPDATED_BY, REQ.CREATED_TIME, 
+				FOLDER_REF, DOC_REF, contract_date,
   			CASE 
   				WHEN STATUS='D' THEN '1'
             	WHEN STATUS='W2' THEN '2'
@@ -71,32 +110,91 @@
             	WHEN STATUS='X2' THEN '8'
             	ELSE STATUS
        		END ORDER_FIELD,
-	      	COALESCE(CBY ,CREATED_BY) CREATED_BY,
+	      	COALESCE(CBY ,REQ.CREATED_BY) CREATED_BY,
 	      	COALESCE(RBY ,REQ_BY) REQ_BY,
 		    COUNT(*) OVER() totalRowCount
 		FROM
-		    (SELECT ID, total, objective_type, objective, budget_cc, budget_cc_type,
-				NULL WF_STATUS, STATUS, reason, cost_control_id, cost_control_type_id, location, method, method_cond2, method_cond2_rule, method_cond2_dtl,
+		    (SELECT ID, total, total_cnv, objective_type, objective, budget_cc, budget_cc_type, contract_date, currency,
+		    	NULL WF_BY, NULL WF_BY_TIME,
+				NULL WF_STATUS, STATUS, reason, cost_control_id, cost_control_type_id, location, prweb_method_id, method_cond2, method_cond2_rule, method_cond2_dtl,
 				WORKFLOW_INS_ID, NULL TASK_ID,
 				UPDATED_TIME, UPDATED_BY, CREATED_TIME, CREATED_BY,
-				(select first_name from pb2_ext_hr_employee where lpad(employee_code,6,'0') = pb2_pcm_req.created_by) CBY,
+				(select CASE 
+					WHEN #{lang}='' THEN 
+						first_name
+					ELSE
+						coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'hr.employee,first_name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e3.id), e3.first_name)
+					END
+					first_name
+				from pb2_ext_hr_employee e3 where lpad(employee_code,6,'0') = pb2_pcm_req.created_by) CBY,
 				FOLDER_REF, DOC_REF, REQ_BY,
-				(select first_name from pb2_ext_hr_employee where lpad(employee_code,6,'0') = pb2_pcm_req.req_by) RBY
+				(select CASE 
+					WHEN #{lang}='' THEN 
+						first_name
+					ELSE
+						coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'hr.employee,first_name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e4.id), e4.first_name)
+					END
+					first_name
+				from pb2_ext_hr_employee e4 where lpad(employee_code,6,'0') = pb2_pcm_req.req_by) RBY
 			FROM pb2_pcm_req
 			WHERE STATUS='D' AND CREATED_BY=#{loginE}
  			UNION
-			SELECT ID, M.total, objective_type, objective, budget_cc, budget_cc_type,
+			SELECT ID, M.total, M.total_cnv, objective_type, objective, budget_cc, budget_cc_type, contract_date, currency,
+				W.BY WF_BY,
 				CASE WHEN (W.STATUS IS NULL) THEN ''
-				ELSE CONCAT (W.BY ,'-', W.STATUS ,'-', to_char(W.BY_TIME, 'DD/MM/YY HH24:MI')) 
-				END WF_STATUS, M.STATUS, reason, cost_control_id, cost_control_type_id, location, method, method_cond2, method_cond2_rule, method_cond2_dtl,
+				ELSE to_char(W.BY_TIME, 'DD/MM/YYYY HH24:MI') 
+				END WF_BY_TIME,
+				W.STATUS${lang} WF_STATUS, M.STATUS, reason, cost_control_id, cost_control_type_id, location, prweb_method_id, method_cond2, method_cond2_rule, method_cond2_dtl,
 				M.WORKFLOW_INS_ID, TASK_ID,
 				UPDATED_TIME, UPDATED_BY, CREATED_TIME, CREATED_BY,
-				(select first_name from pb2_ext_hr_employee where lpad(employee_code,6,'0') = M.created_by) CBY,
+				(select CASE 
+					WHEN #{lang}='' THEN 
+						first_name
+					ELSE
+						coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'hr.employee,first_name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e1.id), e1.first_name)
+					END
+					first_name
+				from pb2_ext_hr_employee e1 where lpad(employee_code,6,'0') = M.created_by) CBY,
 				FOLDER_REF, DOC_REF, REQ_BY,
-				(select first_name from pb2_ext_hr_employee where lpad(employee_code,6,'0') = M.req_by) RBY 
-			FROM pb2_pcm_req M LEFT JOIN 
+				(select CASE 
+					WHEN #{lang}='' THEN 
+						first_name
+					ELSE
+						coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'hr.employee,first_name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e2.id), e2.first_name)
+					END
+					first_name
+				from pb2_ext_hr_employee e2 where lpad(employee_code,6,'0') = M.req_by) RBY 
+			FROM pb2_pcm_req M 
+			LEFT JOIN 
 			(
-			SELECT MASTER_ID, WORKFLOW_INS_ID, STATUS, e.first_name as BY, BY_TIME, TASK_ID 
+			SELECT MASTER_ID, WORKFLOW_INS_ID, STATUS, STATUS_TH,
+			CASE 
+			WHEN #{lang}='' THEN 
+				e.first_name
+			ELSE
+				coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'hr.employee,first_name'
+				and type = 'model' and lang='th_TH'
+				and res_id = e.id), e.first_name)
+			END as
+			BY, BY_TIME, TASK_ID 
 			FROM pb2_main_workflow w  left join pb2_ext_hr_employee e on w.by = lpad(e.employee_code,6,'0')
 			WHERE TYPE='PCM_REQ' AND 
 			w.ID IN (
@@ -116,31 +214,40 @@
 				    </foreach>
 					GROUP BY master_id
 				)
+				OR id IN (SELECT master_id FROM pb2_main_workflow_next_actor WHERE actor_user LIKE #{loginE} GROUP BY master_id)
 				OR CREATED_BY = #{loginE} 
+				OR REQ_BY = #{loginE}
 			)
 		) REQ
 		LEFT JOIN
 		(
-			select 'U' _type,id,name
-			from pb2_ext_res_section
+			select 'U' _type,id,concat('[',trim(code),'] ',name) "name", concat('[',trim(code),'] ',name_th) name_th
+			from (select code,id,name,
+				coalesce((select value
+					from pb2_ext_ir_translation
+					where name = 'res.section,name'
+					and type = 'model' and lang='th_TH'
+					and res_id = sec.id), name) as name_th
+				from pb2_ext_res_section sec) s
 			union
-			select 'P' _type,id,name
-			from pb2_ext_res_project
+			select 'P' _type,id,concat('[',trim(code),'] ',name) "name", concat('[',trim(code),'] ',name_th) name_th
+			from (select p.id,p.name, p.code,
+			coalesce((select value
+				from pb2_ext_ir_translation
+				where name = 'res.project,name'
+				and type = 'model' and lang='th_TH'
+				and res_id = p.id), p.name) as name_th
+				FROM pb2_ext_res_project p) pro
 		) b on (REQ.budget_cc_type = b._type and REQ.budget_cc = b.id)
+		LEFT JOIN pb2_main_master mm on (REQ.objective_type=mm.code and mm.type='PC')
 		
 		WHERE
 			1=1
-		<if test="searchTerm != null">
-		AND (REQ.id like #{searchTerm}
-		OR objective like #{searchTerm}
-		OR reason like #{searchTerm}
-		OR location like #{searchTerm}
-		OR method like #{searchTerm}
-		OR method_cond2_rule like #{searchTerm}
-		OR method_cond2 like #{searchTerm}
-		OR method_cond2_dtl like #{searchTerm}
-		)			
-		</if>
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    			concat(REQ.id, ' ', objective_type, ' ', objective, ' ', reason, ' ', location, ' ', method_cond2_rule, ' ', method_cond2, ' ', method_cond2_dtl) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>  
 		<if test="status != null">
 			AND status=#{status}
 		</if>
@@ -151,6 +258,85 @@
 		LIMIT #{limit}
 		OFFSET #{start}
     </select>
+    
+    <select id="listForSearch" resultType="map" parameterType="map">
+		SELECT REQ.ID, total, total_cnv, objective_type, b.name budget_cc_name, b.name_th budget_cc_name_th, status, objective,FOLDER_REF, DOC_REF, 
+			    COALESCE(v_created_by.first_name, req.created_by) AS created_by,
+			    COALESCE(v_created_by.first_name_th, req.created_by) AS created_by_th,
+			    COALESCE(v_req_by.first_name, req.req_by) AS req_by,
+			    COALESCE(v_req_by.first_name_th, req.req_by) AS req_by_th,
+				COUNT(*) OVER() totalRowCount, CREATED_TIME, objective_type_name, objective_type_name_th
+		FROM
+      		(SELECT ID, M.total, M.total_cnv, objective_type, objective, budget_cc, budget_cc_type, M.STATUS, reason, cost_control_id, cost_control_type_id, location, prweb_method_id, method_cond2, method_cond2_rule, method_cond2_dtl,
+    		M.WORKFLOW_INS_ID ,
+    		UPDATED_TIME, UPDATED_BY, CREATED_TIME, CREATED_BY,
+    		FOLDER_REF, DOC_REF, REQ_BY,
+    		is_ref_id
+   			FROM pb2_pcm_req M  
+   			WHERE M.STATUS='C2'
+  			) REQ
+  		LEFT JOIN ( SELECT t.id,
+            t.name AS objective_type_name,
+            t.sequence,
+            COALESCE(ir.value, t.name::text) AS objective_type_name_th
+           FROM pb2_ext_purchase_type t
+             LEFT JOIN ( SELECT pb2_ext_ir_translation.res_id,
+                    pb2_ext_ir_translation.value
+                   FROM pb2_ext_ir_translation
+                  WHERE pb2_ext_ir_translation.name::text = 'purchase_type,name'::text AND pb2_ext_ir_translation.type::text = 'model'::text AND pb2_ext_ir_translation.lang::text = 'th_TH'::text) ir
+                    ON t.id = ir.res_id) obj ON req.objective_type = obj.id
+  		LEFT JOIN ( SELECT pb2_hr_employee_view.employee_code,
+            pb2_hr_employee_view.first_name,
+            pb2_hr_employee_view.first_name_th
+           FROM pb2_hr_employee_view) v_created_by ON req.created_by = v_created_by.employee_code
+     	LEFT JOIN ( SELECT pb2_hr_employee_view.employee_code,
+            pb2_hr_employee_view.first_name,
+            pb2_hr_employee_view.first_name_th
+           FROM pb2_hr_employee_view) v_req_by ON req.req_by = v_req_by.employee_code
+  		LEFT JOIN
+  		(
+			SELECT 'U' AS _type,
+	            pb2_section_view.id,
+	            pb2_section_view.description AS name,
+	            pb2_section_view.description_th AS name_th
+	           FROM pb2_section_view
+	        UNION
+	         SELECT 'P' AS _type,
+	            pb2_project_view.id,
+	            pb2_project_view.description AS name,
+	            pb2_project_view.description_th AS name_th
+	           FROM pb2_project_view
+	        UNION
+	         SELECT 'A' AS _type,
+	            pb2_invest_asset_view.id,
+	            pb2_invest_asset_view.asset AS name,
+	            pb2_invest_asset_view.asset_th AS name_th
+	           FROM pb2_invest_asset_view
+	        UNION
+	         SELECT 'C' AS _type,
+	            pb2_invest_construction_phase_view.id,
+	            pb2_invest_construction_phase_view.construction AS name,
+	            pb2_invest_construction_phase_view.construction_th AS name_th
+	           FROM pb2_invest_construction_phase_view
+  		) b on (REQ.budget_cc_type = b._type and REQ.budget_cc = b.id)
+  		WHERE (
+  			created_by = #{loginE} 
+  			AND is_ref_id='0'
+  			AND REQ.ID not in (select ref_id from pb2_pcm_req where is_ref_id='1' and status not in ('X1','X2'))
+  			AND status='C2'
+  		)
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    			concat(REQ.id, ' ', objective_type_name, ' ', objective_type_name_th, ' ', objective, ' ', reason, ' ', location, ' ', method_cond2_rule, ' ', method_cond2, ' ', method_cond2_dtl) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>
+   		<if test="objective_type != null">
+			AND objective_type=#{objective_type}
+		</if> 
+		ORDER BY ${orderBy}
+		LIMIT #{limit}
+		OFFSET #{start}
+    </select>    
     
     <insert
 		id="add"
@@ -166,17 +352,20 @@
 	    	,objective_type,objective,reason
 	    	,currency,currency_rate
 	    	,budget_cc,budget_cc_type
+	    	,fund_id
 	    	,is_stock,stock_section_id
-	    	,is_prototype,prototype,prototype_contract_no
+	    	,is_prototype,prototype_type,prototype_no
 	    	,cost_control_id,cost_control_type_id
 	    	,pcm_section_id,location
+	    	,is_small_amount
 	    	,is_across_budget,across_budget
 	    	,is_ref_id,ref_id
-	    	,method
+	    	,prweb_method_id
 	    	,method_cond2_rule,method_cond2,method_cond2_dtl
-	    	,vat,vat_id
-	    	,total
-	    	,doc_ref,folder_ref
+	    	,vat,vat_id,price_include
+	    	,total,total_cnv
+	    	,contract_date
+	    	,doc_ref,folder_ref,ref_doc_ref
 	    	,waiting_level,status
 	    	,created_by,updated_by
 	    ) VALUES (
@@ -185,17 +374,20 @@
 	    	,#{objectiveType},#{objective},#{reason}
 	    	,#{currency},#{currencyRate}
 	    	,#{budgetCc},#{budgetCcType}
+	    	,#{fundId}
 	    	,#{isStock},#{stockSectionId}
-	    	,#{isPrototype},#{prototype},#{prototypeContractNo}
+	    	,#{isPrototype},#{prototypeType},#{prototypeNo}
 	    	,#{costControlId},#{costControlTypeId}
 	    	,#{pcmSectionId},#{location}
+	    	,#{isSmallAmount}
 	    	,#{isAcrossBudget},#{acrossBudget}
 	    	,#{isRefId},#{refId}
-	    	,#{method}
+	    	,#{prWebMethodId}
 	    	,#{methodCond2Rule},#{methodCond2},#{methodCond2Dtl}
-	    	,#{vat},#{vatId}
-    		,#{total}
-    		,#{docRef},#{folderRef}
+	    	,#{vat},#{vatId},#{priceInclude}
+    		,#{total},#{totalCnv}
+    		,#{contractDate}
+    		,#{docRef},#{folderRef},#{refDocRef}
     		,#{waitingLevel},#{status}
     		,#{createdBy},#{updatedBy}
     	)
@@ -236,58 +428,100 @@
 	    ,currency_rate =#{currencyRate}
 	    ,budget_cc =#{budgetCc}
 	    ,budget_cc_type =#{budgetCcType}
+	    ,fund_id =#{fundId}
 	    ,is_stock =#{isStock}
 	    ,stock_section_id =#{stockSectionId}
 	    ,is_prototype =#{isPrototype}
-	    ,prototype =#{prototype}
-	    ,prototype_contract_no =#{prototypeContractNo}
+	    ,prototype_type =#{prototypeType}
+	    ,prototype_no =#{prototypeNo}
 	    ,cost_control_type_id =#{costControlTypeId}
 	    ,cost_control_id =#{costControlId}
 	    ,pcm_section_id =#{pcmSectionId}
 	    ,location =#{location}
+	    ,is_small_amount =#{isSmallAmount}
 	    ,is_across_budget =#{isAcrossBudget}
 	    ,across_budget =#{acrossBudget}
 	    ,is_ref_id =#{isRefId}
 	    ,ref_id =#{refId}
-	    ,method =#{method}
+	    ,prweb_method_id =#{prWebMethodId}
 	    ,method_cond2_rule =#{methodCond2Rule}
 	    ,method_cond2 =#{methodCond2}
 	    ,method_cond2_dtl =#{methodCond2Dtl}
 	    ,vat =#{vat}
 	    ,vat_id =#{vatId}
+	    ,price_include =#{priceInclude}
 	    ,total =#{total}
+	    ,total_cnv =#{totalCnv}
+	    ,contract_date =#{contractDate}
+	    ,ref_doc_ref =#{refDocRef}
 	    ,doc_ref =#{docRef}
 	    ,folder_ref =#{folderRef}
 	    ,waiting_level =#{waitingLevel}
         ,updated_by =#{updatedBy}
         ,updated_time =Now()
+        ,requested_time =#{requestedTime}
      WHERE id=#{id}
     </update>
     
-    <select id="get" parameterType="string" resultMap="result">
+    <select id="get" parameterType="map" resultMap="result">
         SELECT
-		    *, b.name budget_cc_name, c.name cost_control_name, ct.name cost_control_type_name,
+		    *, CASE WHEN #{lang}='' THEN b.name ELSE b.name_th END budget_cc_name,
+		    c.name cost_control_name, ct.name cost_control_type_name, f.name fund_name,
 		    CASE 
-  				WHEN budget_cc_type='U' THEN 'หน่วยงาน'
-            	WHEN budget_cc_type='P' THEN 'โครงการ'
+  				WHEN budget_cc_type='U' THEN CASE WHEN #{lang}='' THEN 'Organization' ELSE 'หน่วยงาน' END 
+            	WHEN budget_cc_type='P' THEN CASE WHEN #{lang}='' THEN 'Project' ELSE 'โครงการ' END
+            	WHEN budget_cc_type='A' THEN CASE WHEN #{lang}='' THEN 'Asset' ELSE 'ครุภัณฑ์หลัก' END
+            	WHEN budget_cc_type='C' THEN CASE WHEN #{lang}='' THEN 'Construction' ELSE 'สิ่งก่อสร้าง' END
             	ELSE budget_cc_type
        		END budget_cc_type_name
 		FROM
 		    pb2_pcm_req r
 		LEFT JOIN
 		(
-		select 'U' _type,id,name
-		from pb2_ext_res_section
-		union
-		select 'P' _type,id,name
-		from pb2_ext_res_project
-		) b on (r.budget_cc_type = b._type and r.budget_cc = b.id)
+			select 'U' _type,sec.id,concat('[',trim(code),'] ',name) "name", concat('[',trim(code),'] ',coalesce(name_th,name)) name_th
+		    from pb2_ext_res_section sec left join 
+		    (select res_id,value name_th
+		     from pb2_ext_ir_translation
+		     where name = 'res.section,name'
+		     and type = 'model' and lang='th_TH') as  ir on sec.id = ir.res_id 
+		   union
+		   select 'P' _type,p.id,concat('[',trim(code),'] ',name) "name", concat('[',trim(code),'] ',coalesce(name_th,name)) name_th
+		   from pb2_ext_res_project p left join
+		   (select res_id,value name_th
+		    from pb2_ext_ir_translation
+		    where name = 'res.project,name'
+		    and type = 'model' and lang='th_TH') as ir on p.id = ir.res_id 
+		   union
+		   select 'A' _type,a.id,concat('[',trim(code),'] ',name) "name", concat('[',trim(code),'] ',coalesce(name_th,name)) name_th
+		   FROM pb2_ext_res_invest_asset a left join
+		   (select res_id,value name_th
+		    from pb2_ext_ir_translation
+		    where name = 'res.invest_asset,name'
+		    and type = 'model' and lang='th_TH') as ir on a.id = ir.res_id 
+		    union
+		    select 'C' _type,c.id,concat('[',trim(code),'] ',name) "name", concat('[',trim(code),'] ',coalesce(name_th,name)) name_th
+		   FROM pb2_ext_res_invest_construction_phase c  left join
+		  (select res_id,value name_th
+		    from pb2_ext_ir_translation
+		    where name = 'res.invest_construction_phase,name'
+		    and type = 'model' and lang='th_TH') as ir on c.id = ir.res_id
+		) b on (r.budget_cc_type = b._type and r.budget_cc = b.id)		
+		
+		LEFT JOIN pb2_ext_res_fund f on (r.fund_id = f.id)
 		
 		LEFT JOIN pb2_ext_cost_control c on (r.cost_control_id = c.id)
 		LEFT JOIN pb2_ext_cost_control_type ct on (r.cost_control_type_id = ct.id)
 		
 		WHERE r.id=#{id}
     </select>
+    
+    <select id="getForWfPath" parameterType="map" resultMap="result">
+        SELECT
+		    *
+		FROM
+		    pb2_pcm_req r
+		WHERE r.id=#{id}
+    </select>    
     
     <select id="genNewId" parameterType="map" resultType="string">
     	SELECT CONCAT(field2,TO_CHAR(CURRENT_TIMESTAMP, 'YYYYMM'),'-',TRIM(TO_CHAR(CAST (RIGHT(id, 3) AS INT)+1,'000'))) NEW_ID 
@@ -329,14 +563,19 @@
     </update>
     
     
-    <select id="listForInf" resultType="map" parameterType="map">
+    <select id="listForInf" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
 		select 
 			r.id req_id,
 			r.req_by,
+			r.contract_date,
 			a.actor_user rp_id,
-			case when (r.is_across_budget = '1') then across_budget else 0 end total,
-			r.prototype, 
-			m.flag1 objective_type,
+			<!-- case when (r.is_across_budget = '1') then across_budget else 0 end total, -->
+			case when (r.is_across_budget = '1') then r.total_cnv else 0 end total,
+			r.is_small_amount, 
+			r.prototype_type, 
+			r.prototype_no, 
+			<!-- pm.type_id method_type,-->
+			r.objective_type method_type,
 			r.stock_section_id,
 			r.pcm_section_id,
 			r.reason,
@@ -345,21 +584,74 @@
 			currency_rate,
 			location, 
 			r.updated_time,
-			r.created_time,
-			o.operating_unit_id, 
+			r.requested_time,
+			pur_org_id, 
 			r.is_prototype,
-			budget_cc, 
-			method, 
+			budget_cc,
+			r.fund_id,
+			prweb_method_id, 
+			r.method_cond2,
+			method_cond2_dtl,
+			method_id,
 			w.by last_approver,
-			w.by_time
+			w.by_time,
+			case when (r.is_ref_id = '1') then ref_id else '' end ref_id,
+			pm.price_range_id,pm.condition_id
 		from pb2_pcm_req r
 		left join pb2_main_workflow_next_actor a on r.id = a.master_id --Next Actor
 		left join pb2_ext_res_currency c on r.currency = c.name
-		left join pb2_ext_hr_employee e on r.req_by = lpad(e.employee_code, 6 ,'0') --Operating Unit ID
-		left join pb2_ext_res_org o on e.org_id = o.id
+		left join
+			(select org_id pur_org_id,p.id
+			from pb2_ext_wkf_config_purchase_unit p, pb2_ext_wkf_config_doctype d
+			where p.doctype_id = d.id and d.name = 'PR' ) pu on r.pcm_section_id = pu.id
 		left join pb2_main_workflow w on w.master_id = r.id --Last Approver
-		left join pb2_main_master m on objective_type=m.code and m.type='PC'
+		left join pb2_ext_prweb_purchase_method pm on prweb_method_id = pm.id
 		where r.id = #{id}
     </select>
     
+    <select id="listOld" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select r.*,COUNT(*) OVER() totalRowCount,mm.objective_type_name, mm.objective_type_name_th
+		from pb2_pcm_req r
+        LEFT JOIN ( SELECT t.id,
+          t.name AS objective_type_name,
+          t.sequence,
+          COALESCE(ir.value, t.name::text) AS objective_type_name_th
+         FROM pb2_ext_purchase_type t
+         LEFT JOIN ( SELECT pb2_ext_ir_translation.res_id,
+                 pb2_ext_ir_translation.value
+                 FROM pb2_ext_ir_translation
+                 WHERE pb2_ext_ir_translation.name::text = 'purchase_type,name'::text 
+                 AND pb2_ext_ir_translation.type::text = 'model'::text 
+                 AND pb2_ext_ir_translation.lang::text = 'th_TH'::text) ir ON t.id = ir.res_id) mm ON r.objective_type = mm.id
+		where status = 'C3'
+		and is_small_amount='1'
+		and req_by=#{r}
+		and budget_cc=#{bg}
+		and budget_cc_type=#{bgt}
+		and fund_id=#{f}
+		and (
+			(r.id not in (select pay_dtl2 from pb2_exp_use where is_small_amount='1' and status not in ('X1','X2') and pay_dtl2 is not null and pay_dtl2!='')
+			and r.id not in (select origin_pr_number from pb2_exp_brw where is_small_amount='1' and status not in ('X1','X2') and origin_pr_number is not null and origin_pr_number!='')
+			<if test="exid != null">
+				) or (
+					r.id in (select pay_dtl2 from pb2_exp_use ex where is_small_amount='1' and ex.id=#{exid} and pay_dtl2 is not null and pay_dtl2!='')
+			</if>
+			<if test="avid != null">
+				) or (
+					r.id in (select origin_pr_number from pb2_exp_brw av where is_small_amount='1' and av.id=#{avid} and origin_pr_number is not null and origin_pr_number!='')
+			</if>
+			)
+		)
+		
+		ORDER BY ${orderBy}
+    </select>    
+    
+    <select id="listExAv" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select *,COUNT(*) OVER() totalRowCount from (
+	      	select ex.id,status from pb2_exp_use ex where ex.is_small_amount='1' and pay_dtl2=#{id}
+			union
+			select av.id,status from pb2_exp_brw av where av.is_small_amount='1' and origin_pr_number=#{id}
+		) r
+		ORDER BY id
+    </select>  
 </mapper>

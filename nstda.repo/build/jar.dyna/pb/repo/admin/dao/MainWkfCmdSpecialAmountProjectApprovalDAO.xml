@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainWkfCmdSpecialAmountProjectApprovalDAO">
+    <resultMap id="result" type="mainWkfCmdSpecialAmountProjectApprovalModel">
+        <result property="id" column="id"/>
+        <result property="docTypeId" column="doctype_id"/>
+        <result property="empId" column="employee_id"/>
+        <result property="minimum" column="amount_min"/>
+        <result property="maximum" column="amount_max"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+
+	<select id="list" resultMap="result">
+		select * from pb2_ext_wkf_cmd_special_amount_project_approval order by name
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_ext_wkf_cmd_special_amount_project_approval
+    </select>
+	
+</mapper>

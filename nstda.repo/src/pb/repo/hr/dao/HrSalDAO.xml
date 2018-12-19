@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.hr.dao.HrSalDAO">
+    <resultMap id="result" type="hrSalModel">
+        <result property="id" column="id"/>
+        <result property="objective" column="objective"/>
+        <result property="sectionId" column="section_id"/>
+        <result property="docType" column="doc_type"/>
+        <result property="workflowInsId" column="workflow_ins_id"/>
+        <result property="total" column="total"/>
+        <result property="docRef" column="doc_ref"/>
+        <result property="folderRef" column="folder_ref"/>
+        <result property="waitingLevel" column="waiting_level"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="updatedTime" column="updated_time"/>
+        <result property="updatedBy" column="updated_by"/>
+        <result property="status" column="status"/>
+        <result property="wfBy" column="wf_by"/>
+        <result property="wfByTime" column="wf_by_time"/>
+        <result property="wfStatus" column="wf_status"/>
+        <result property="orgName" column="org_name"/>
+    </resultMap>
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select *,COUNT(*) OVER() totalRowCount
+		from pb2_hr_salary_view
+		where
+		<if test="monitorUser != null">
+			((status != 'D') or (status='D' and created_by_code = #{loginE}))
+		</if>
+		<if test="monitorUser == null">
+			(created_by_code= #{loginE} or all_rev ilike '%'||#{loginL}||'%' )
+		</if>
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+				concat(id, ' ', org_name, ' ', org_name_th, ' ',objective,' ',created_by,' ',created_by_th,' ',to_char(created_time,'dd/mm/yyyy'),' ',method_name) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>  
+		<if test="doc_type != null">
+			AND doc_type=#{doc_type}
+		</if>
+		<if test="status != null">
+			AND status=#{status}
+		</if>
+		ORDER BY ${orderBy}
+		LIMIT #{limit}
+		OFFSET #{start}
+    </select>
+    
+    <insert
+		id="add"
+		parameterType="hrSalModel"
+		flushCache="true"
+		statementType="PREPARED"
+		keyProperty="id"
+		useGeneratedKeys="true"
+		>
+	    INSERT INTO pb2_hr_salary(
+	    	id
+	    	,folder_ref
+	    	,doc_ref
+	    	,objective
+	    	,section_id
+	    	,doc_type
+	    	,workflow_ins_id
+	    	,waiting_level
+	    	,status
+	    	,total
+	    	,created_by,updated_by
+	    ) VALUES (
+	    	#{id}
+	    	,#{folderRef}
+	    	,#{docRef}
+	    	,#{objective}
+	    	,#{sectionId}
+	    	,#{docType}
+    		,#{workflowInsId}
+    		,#{waitingLevel}
+    		,#{status}
+    		,#{total}
+    		,#{createdBy},#{updatedBy}
+    	)
+		
+	</insert>
+	
+	<select id="count"  resultType="long">
+        SELECT
+		    count(1)
+		FROM
+		    pb2_hr_salary
+    </select>
+	
+	<update id="update" 
+        parameterType="hrSalModel"
+		flushCache="true">
+     UPDATE pb2_hr_salary 
+     SET 
+     	workflow_ins_id=#{workflowInsId}
+		<if test="status != null">
+     		,status=#{status}
+		</if>			
+		,section_id =#{sectionId}
+	    ,objective =#{objective}
+	    ,doc_type =#{docType}
+	    ,total =#{total}
+	    ,doc_ref =#{docRef}
+	    ,folder_ref =#{folderRef}
+	    ,waiting_level =#{waitingLevel}
+	    ,created_by =#{createdBy}
+        ,updated_by =#{updatedBy}
+        ,updated_time =Now()
+     WHERE id=#{id}
+    </update>
+    
+    <select id="get" parameterType="string" resultMap="result">
+        SELECT
+		    *
+		FROM
+		    pb2_hr_salary
+		WHERE id=#{id}
+    </select>
+    
+    <update id="updateStatus" 
+        parameterType="hrSalModel"
+		flushCache="true">
+     UPDATE pb2_hr_salary 
+     SET  
+	<if test="status != null">
+		WAITING_LEVEL=#{waitingLevel}
+	</if>
+	<if test="status != null">
+		, status=#{status}
+	</if>
+     WHERE id=#{id}
+    </update>
+    
+	<select id="listWorkflowPath" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="string">    
+    (SELECT CONCAT('REVIEWER #',LEVEL) AS LEVEL,TRIM(BOTH ',' FROM REVIEWER_USER) AS U,TRIM(BOTH ',' FROM REVIEWER_GROUP) AS G,LEVEL AS ORDERVAL
+	FROM pb2_main_worklfow_REVIEWER
+	WHERE MASTER_ID = #{id})
+	ORDER BY ORDERVAL
+    </select>
+
+	<delete id="delete"
+    		parameterType="string"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		DELETE FROM pb2_hr_salary WHERE id=#{id}
+	</delete>
+    
+</mapper>

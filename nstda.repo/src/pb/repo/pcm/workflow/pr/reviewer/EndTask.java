@@ -10,14 +10,14 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import pb.repo.admin.constant.PcmReqConstant;
 import pb.repo.admin.service.AdminMasterService;
 import pb.repo.admin.service.AdminViewerService;
 import pb.repo.admin.service.AdminWkfConfigService;
-import pb.repo.admin.service.MainWorkflowService;
-import pb.repo.pcm.constant.PcmReqConstant;
 import pb.repo.pcm.constant.PcmReqWorkflowConstant;
 import pb.repo.pcm.model.PcmReqModel;
 import pb.repo.pcm.service.PcmReqService;
+import pb.repo.pcm.service.PcmReqWorkflowService;
 
 @Component("pb.pcm.workflow.pr.reviewer.EndTask")
 public class EndTask implements ExecutionListener {
@@ -25,7 +25,7 @@ public class EndTask implements ExecutionListener {
 	private static Logger log = Logger.getLogger(EndTask.class);
 
 	@Autowired
-	MainWorkflowService mainWorkflowService;
+	PcmReqWorkflowService mainWorkflowService;
 	
 	@Autowired
 	AuthenticationService authenticationService;
@@ -60,7 +60,7 @@ public class EndTask implements ExecutionListener {
 			String id = (String)ObjectUtils.defaultIfNull(execution.getVariable(WF_PREFIX+"id"), "");
 			log.info("  id:" + id);
 			
-			PcmReqModel model = pcmReqService.get(id.toString());
+			PcmReqModel model = pcmReqService.get(id.toString(), null);
 			model.setStatus(PcmReqConstant.ST_CLOSED_BY_ACT);
 			pcmReqService.updateStatus(model);
 			

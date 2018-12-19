@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.AdminWorkflowDAO">
+
+    <select id="llist" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		SELECT *,COUNT(*) OVER() totalRowCount FROM (
+			select task_id as id, id as no,objective as desc, 
+			created_by as preparer, req_by as requester, 
+			created_by_code as preparer_code, req_by_code as requester_code, 
+			null as remark, wf_status as status, requested_time as reqdate,
+			all_rev, workflow_ins_id, folder_ref, consult
+			from pb2_pcm_req_view LEFT JOIN (
+select master_id, string_agg(assignee,' ') as consult
+from pb2_main_workflow
+where status ilike 'consulted'
+and master_id ilike 'PR%'
+group by master_id) con on pb2_pcm_req_view.id = con.master_id
+			WHERE #{type} in ('0','PR')
+			AND status_code in ('W1','W2','S')
+			UNION
+			select task_id as id, id as no,objective as desc, 
+			created_by as preparer, created_by as requester, 
+			created_by_code as preparer_code, created_by_code as requester_code, 
+			null as remark, wf_status as status, created_time as reqdate,
+			all_rev, workflow_ins_id, folder_ref, consult
+			from pb2_pcm_ord_view LEFT JOIN (
+select master_id, string_agg(assignee,' ') as consult
+from pb2_main_workflow
+where status ilike 'consulted'
+and master_id ilike 'PD%'
+group by master_id) con on pb2_pcm_ord_view.id = con.master_id
+			WHERE #{type} in ('0','PD')
+			AND status_code in ('W1','S')
+			UNION
+			select task_id as id, id as no,objective as desc, 
+			created_by as preparer, req_by as requester, 
+			created_by_code as preparer_code, req_by_code as requester_code, 
+			null as remark, wf_status as status, requested_time as reqdate,
+			all_rev, workflow_ins_id, folder_ref, consult
+			from pb2_exp_brw_view LEFT JOIN (
+select master_id, string_agg(assignee,' ') as consult
+from pb2_main_workflow
+where status ilike 'consulted'
+and master_id ilike 'AV%'
+group by master_id) con on pb2_exp_brw_view.id = con.master_id
+			WHERE #{type} in ('0','AV')
+			AND status in ('W1','W2','S')
+			UNION
+			select task_id as id, id as no,objective as desc, 
+			created_by as preparer, req_by as requester, 
+			created_by_code as preparer_code, req_by_code as requester_code, 
+			null as remark, wf_status as status, requested_time as reqdate,
+			all_rev, workflow_ins_id, folder_ref, consult
+			from pb2_exp_use_view LEFT JOIN (
+select master_id, string_agg(assignee,' ') as consult
+from pb2_main_workflow
+where status ilike 'consulted'
+and master_id ilike 'EX%'
+group by master_id) con on pb2_exp_use_view.id = con.master_id
+			WHERE #{type} in ('0','EX')
+			AND status in ('W1','W2','S')
+			UNION
+			select task_id as id, id as no,objective as desc, 
+			created_by as preparer, created_by as requester, 
+			created_by_code as preparer_code, created_by_code as requester_code, 
+			null as remark, wf_status as status, created_time as reqdate,
+			all_rev, workflow_ins_id, folder_ref, consult
+			from pb2_hr_salary_view LEFT JOIN (
+select master_id, string_agg(assignee,' ') as consult
+from pb2_main_workflow
+where status ilike 'consulted'
+and master_id ilike 'SL%'
+group by master_id) con on pb2_hr_salary_view.id = con.master_id
+			WHERE #{type} in ('0','HR')
+			AND status in ('W1','S')
+		) qry
+		WHERE 1=1
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    		concat(no,' ',desc, ' ', reason) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>
+		<if test="e != null">
+			AND (preparer_code=#{e} or requester_code=#{e} or all_rev ilike '%'||#{e}||'%' or consult ilike '%'||#{e}||'%')
+   		</if>
+		<if test="ids != null">
+			<foreach item="item" index="index" collection="ids" open="AND no in (" separator="," close=")">
+	    		#{item}
+	   		</foreach>
+   		</if>
+		<if test="orderBy != null">
+			ORDER BY ${orderBy}
+   		</if>
+	</select>
+	
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+	    SELECT wf.*,COUNT(*) OVER() totalRowCount
+		FROM pb2_workflow_view wf 
+		<if test="a != null">
+			LEFT JOIN pb2_main_workflow_assignee a on a.workflow_ins_id=wf.activitiworkflow
+   		</if>
+		WHERE 1=1
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    		concat(activititask,' ',activitiworkflow,' ',docid,' ',description_,' ',action,' ',assignee_,' ',preparer,' ',requester,' ',to_char(reqdate, 'dd/mm/yyyy')) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>
+		<if test="e != null">
+	 		<if test="m != null">
+				AND (assignee_code ilike #{e})
+	   		</if>
+	 		<if test="a != null">
+				AND (src_user=#{e} OR dest_user=#{e})
+			</if>
+	 		<if test="m == null and a == null">
+				AND (preparer_code=#{e} or requester_code=#{e} or all_rev ilike '%'||#{e}||'%')
+			</if>
+   		</if>
+   		<if test="e == null and a != null">
+   			AND (src_user is not null AND dest_user is not null)
+   		</if>
+   		<if test="type != null">
+   			AND substring(docid,1,2) = #{type}
+   		</if>
+		<if test="ids != null">
+			<foreach item="item" index="index" collection="ids" open="AND activititask in (" separator="," close=")">
+	    		#{item}
+	   		</foreach>
+   		</if>
+		<if test="orderBy != null">
+			ORDER BY ${orderBy}
+   		</if>
+		<if test="limit != null">
+			LIMIT #{limit}
+			OFFSET #{start}
+		</if>
+   		
+	</select>
+	
+	<update id="update" 
+        parameterType="map"
+		flushCache="true">
+	     UPDATE ${table} 
+	     SET updated_by=#{updatedBy}
+	         ,updated_time=now()
+	     <if test="status!=null">
+	     	 ,status=#{status}
+	     </if>
+	     <if test="doc_ref!=null">
+	     	 ,doc_ref=#{doc_ref}
+	     </if>
+	     WHERE id=#{id}
+    </update>
+    
+    <update id="updateReviewer" 
+        parameterType="map"
+		flushCache="true">
+	     UPDATE pb2_main_workflow_reviewer 
+	     SET reviewer_user=#{user}
+	     WHERE master_id=#{master_id}
+	     AND reviewer_user=#{ouser}
+		 <if test="level != null">
+			level=#{level}
+   		 </if>
+    </update>	
+    	
+    <select id="getByDocId" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="string">
+        select * from pb2_workflow_view
+        where docid like #{id}
+    </select>
+    
+    <select id="getForWfPath" parameterType="map" resultType="map">
+        SELECT
+		    *
+		FROM
+		    ${table} r
+		WHERE r.id=#{id}
+    </select>    
+    
+</mapper>

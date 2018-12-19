@@ -12,6 +12,7 @@ import org.springframework.extensions.webscripts.WebScriptResponse;
 import org.springframework.stereotype.Component;
 
 import pb.common.constant.CommonConstant;
+import pb.common.model.FileModel;
 import pb.common.util.CommonUtil;
 import pb.repo.admin.constant.MainMasterConstant;
 import pb.repo.admin.model.MainMasterModel;
@@ -117,7 +118,7 @@ public class MainUtilWebScript {
 		String json = null;
 		
 		try {
-			MainMasterModel model = masterService.getSystemConfig(MainMasterConstant.SCC_MAIN_PAGING_SIZE);
+			MainMasterModel model = masterService.getSystemConfig(MainMasterConstant.SCC_MAIN_PAGING_SIZE,false);
 			
 			JSONObject jsObj = new JSONObject();
 			jsObj.put("pageSize", Integer.parseInt(model.getFlag1()));
@@ -156,6 +157,38 @@ public class MainUtilWebScript {
 		} finally {
 			CommonUtil.responseWrite(response, json);
 		}
+	}
+	
+	@Uri(method=HttpMethod.GET, value=URI_PREFIX+"/getFolderDtl")
+	public void handleGetFolderDtl(@RequestParam(required=false) String n
+			, @RequestParam(required=false) String lang
+			, final WebScriptResponse response)  throws Exception {
+		
+		String json = null;
+
+		try {
+			log.info("folderRef="+n);
+			
+			NodeRef folderRef = new NodeRef(n);
+			
+			List<FileModel> fileList = alfrescoService.listFile(folderRef,lang);
+			
+			log.info("fileList="+fileList);
+			
+			json = CommonUtil.jsonSuccess(fileList);
+		} catch (Exception ex) {
+			log.error("", ex);
+			try {
+				json = CommonUtil.jsonFail(ex.toString());
+			} catch (JSONException e) {
+				log.error("", e);
+			}
+			throw ex;
+			
+		} finally {
+			CommonUtil.responseWrite(response, json);
+		}
+		
 	}
 	
 }

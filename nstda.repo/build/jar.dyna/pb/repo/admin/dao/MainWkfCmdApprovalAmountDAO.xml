@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainWkfCmdApprovalAmountDAO">
+    <resultMap id="result" type="mainWkfCmdApprovalAmountModel">
+        <result property="id" column="id"/>
+        <result property="level" column="level"/>
+        <result property="orgId" column="org_id"/>
+        <result property="docTypeId" column="doctype_id"/>
+        <result property="amountMin" column="amount_min"/>
+        <result property="amountMax" column="amount_max"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+
+	<select id="list" resultMap="result">
+		select * from pb2_ext_wkf_cmd_approval_amount order by name
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_ext_wkf_cmd_approval_amount
+    </select>
+	
+</mapper>

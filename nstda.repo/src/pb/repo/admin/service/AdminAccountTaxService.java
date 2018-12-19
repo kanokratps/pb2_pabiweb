@@ -50,14 +50,32 @@ public class AdminAccountTaxService {
 	    		list.add(map);
     		}    		
             
-            session.commit();
         } catch (Exception ex) {
-        	session.rollback();
+        	log.error(ex);
         } finally {
         	session.close();
         }
         
         return list;
+	}
+	
+	public Map<String, Object> get(Integer id) {
+		
+		Map<String, Object> map = null;
+		
+        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+        try {
+            MainAccountTaxDAO dao = session.getMapper(MainAccountTaxDAO.class);
+            
+    		map = dao.get(id);
+            
+        } catch (Exception ex) {
+        	log.error(ex);
+        } finally {
+        	session.close();
+        }
+        
+        return map;
 	}
 	
 }

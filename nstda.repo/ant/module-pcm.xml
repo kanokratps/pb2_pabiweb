@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Module Pcm" default="dist">
-    <description>Do Module Memo Task</description>
+    <description>Do Module Pcm Task</description>
     
     <target name="dist.dyna" description="Copy Dynamic Module Pcm Files">
     	
@@ -19,6 +19,9 @@
 	    	<fileset dir="${bin.dir}" includes="pb/repo/common/jdbc/*"/>
 	    	<fileset dir="${bin.dir}" includes="pb/repo/admin/constant/MainMasterConstant.*"/>
 	    	<fileset dir="${bin.dir}" includes="pb/repo/admin/constant/MainWorkflowConstant.*"/>
+	    	<fileset dir="${bin.dir}" includes="pb/repo/admin/constant/SubModuleConstant.*"/>
+	    	<fileset dir="${bin.dir}" includes="pb/repo/admin/constant/PcmReqConstant.*"/>
+	    	<fileset dir="${bin.dir}" includes="pb/repo/admin/exception/NotFoundApprovalMatrixException.*"/>
   	    	<fileset dir="${common.config.dir}/alfresco/web/WEB-INF/classes" includes="angsa.ttf"/>
 	    </copy>
 

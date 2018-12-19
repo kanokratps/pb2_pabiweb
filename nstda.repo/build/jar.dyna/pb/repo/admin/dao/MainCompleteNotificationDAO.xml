@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainCompleteNotificationDAO">
+    <resultMap id="result" type="mainCompleteNotificationModel">
+        <result property="id" column="id"/>
+        <result property="receiver" column="receiver"/>
+        <result property="taskId" column="task_id"/>
+        <result property="template" column="template"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+    
+    <select id="list" resultMap="result" parameterType="map">
+    
+       SELECT 		*
+	   FROM 		pb2_MAIN_COMPLETE_NOTIFICATION
+	   WHERE	 1=1	
+	
+		<if test="taskId != null">
+		 AND TASK_ID = #{taskId}
+		</if>
+		
+    </select>
+    
+    <insert
+		id="add"
+		parameterType="mainCompleteNotificationModel"
+		flushCache="true"
+		statementType="PREPARED"
+		keyProperty="id"
+		useGeneratedKeys="true"
+		>
+	    insert into pb2_main_complete_notification(receiver,task_id,template,created_by,created_time)
+    	values (#{receiver},#{taskId},#{template},#{createdBy},now())
+		
+	</insert>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_main_complete_notification
+	
+    </select>
+    
+	<delete id="delete"
+    		parameterType="long"
+			flushCache="true"
+			statementType="PREPARED"
+			>
+   		delete from pb2_main_complete_notification where id=#{id}
+	</delete>
+	
+    <select id="get" parameterType="long" resultMap="result">
+        select
+		    *
+		from
+		    pb2_main_complete_notification
+		where id=#{id}
+    </select>
+    
+</mapper>

@@ -28,4 +28,5 @@ public interface MainMasterDAO {
 	public List<MainMasterModel> listCmb(Map params);
 	public List<MainMasterModel> listColumnSort(Map<String, Object> map); 
 	
+	public Long reset(String seqName);
 }

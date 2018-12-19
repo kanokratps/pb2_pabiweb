@@ -1,5 +1,6 @@
 package pb.repo.pcm.util;
 
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -14,8 +15,6 @@ import pb.common.constant.JsonConstant;
 import pb.common.util.CommonDateTimeUtil;
 import pb.common.util.CommonUtil;
 import pb.repo.pcm.constant.PcmOrdConstant;
-import pb.repo.pcm.constant.PcmReqConstant;
-import pb.repo.pcm.model.PcmOrdDtlModel;
 import pb.repo.pcm.model.PcmOrdModel;
 
 public class PcmOrdUtil {
@@ -32,19 +31,28 @@ public class PcmOrdUtil {
 		jsObj.put(PcmOrdConstant.JFN_ID, model.getId());
 		
 		jsObj.put(PcmOrdConstant.JFN_OBJECTIVE, model.getObjective());
+		
 		jsObj.put(PcmOrdConstant.JFN_APP_BY, model.getAppBy());
+		jsObj.put(PcmOrdConstant.JFN_REQ_BY_NAME, model.getReqByName());
+		
 		jsObj.put(PcmOrdConstant.JFN_PR_ID, model.getPrId());
 		jsObj.put(PcmOrdConstant.JFN_SECTION_ID, model.getSectionId());
 		jsObj.put(PcmOrdConstant.JFN_DOC_TYPE, model.getDocType());
+		jsObj.put(PcmOrdConstant.JFN_METHOD, model.getMethod());
+		
+		jsObj.put(PcmOrdConstant.JFN_ORG_NAME, model.getOrgName());
 		
 		jsObj.put(PcmOrdConstant.JFN_TOTAL, String.valueOf(model.getTotal()));
+		DecimalFormat df = new DecimalFormat(CommonConstant.MONEY_FORMAT);
+		jsObj.put(PcmOrdConstant.JFN_TOTAL_SHOW, df.format(model.getTotal()!=null ? model.getTotal() : 0));
+		
 		jsObj.put(PcmOrdConstant.JFN_WORKFLOW_INS_ID, model.getWorkflowInsId());
 		jsObj.put(PcmOrdConstant.JFN_DOC_REF, model.getDocRef());
 		jsObj.put(PcmOrdConstant.JFN_FOLDER_REF, model.getFolderRef());
 		jsObj.put(PcmOrdConstant.JFN_WAITING_LEVEL, String.valueOf(model.getWaitingLevel()));
 		jsObj.put(PcmOrdConstant.JFN_STATUS, model.getStatus());
 		jsObj.put(PcmOrdConstant.JFN_WF_STATUS, model.getWfStatus());
-		jsObj.put(PcmReqConstant.JFN_CREATED_TIME_SHOW, CommonDateTimeUtil.convertToGridDateTime(model.getCreatedTime()));
+		jsObj.put(PcmOrdConstant.JFN_CREATED_TIME_SHOW, CommonDateTimeUtil.convertToGridDateTime(model.getCreatedTime()));
 		jsObj.put(PcmOrdConstant.JFN_CREATED_TIME, model.getCreatedTime());
 		jsObj.put(PcmOrdConstant.JFN_CREATED_BY, model.getCreatedBy());
 		jsObj.put(PcmOrdConstant.JFN_UPDATED_TIME, CommonDateTimeUtil.convertToGridDate(model.getUpdatedTime()));
@@ -75,6 +83,27 @@ public class PcmOrdUtil {
 		return action.toString();
 	}
 	
+	public static String getAction(Map<String,Object> map) {
+		StringBuffer action = new StringBuffer();
+		
+		action.append(PcmOrdConstant.ACTION_SHOW_HISTORY);
+		if (map.get(PcmOrdConstant.JFN_STATUS)!=null) {
+			if (map.get(PcmOrdConstant.JFN_STATUS).equals(PcmOrdConstant.ST_WAITING)) {
+				action.append(PcmOrdConstant.ACTION_SHOW_DIAGRAM);
+			}
+			
+			if (map.get(PcmOrdConstant.JFN_FOLDER_REF) != null && !((String)map.get(PcmOrdConstant.JFN_FOLDER_REF)).trim().equals("")) {
+				action.append(PcmOrdConstant.ACTION_GOTO_FOLDER);
+			}
+			
+			if (map.get(PcmOrdConstant.JFN_DOC_REF) != null && !((String)map.get(PcmOrdConstant.JFN_DOC_REF)).trim().equals("")) {
+				action.append(PcmOrdConstant.ACTION_SHOW_DETAIL);
+			}
+		}
+		
+		return action.toString();
+	}
+	
 	public static JSONArray convertToJSONArray(List<PcmOrdModel> inList) throws Exception {
 		JSONArray jsArr = new JSONArray();
 		
@@ -98,25 +127,6 @@ public class PcmOrdUtil {
 		return jsonObj.toString();
 	}
 	
-	public static String jsonSuccess(List<PcmOrdModel> list, List<PcmOrdDtlModel> dtlList) throws Exception {
-		
-		Long total = list.size() > 0 ? list.get(0).getTotalRowCount() : 0;
-
-		JSONObject jsonObj = new JSONObject();
-
-		jsonObj.put(JsonConstant.SUCCESS,  true);
-		jsonObj.put(JsonConstant.TOTAL,  total);
-		jsonObj.put(JsonConstant.DATA, convertToJSONArray(list));
-		
-		JSONObject jsonObjDtl = new JSONObject();
-		for(PcmOrdDtlModel model : dtlList) {
-			jsonObjDtl.put(model.getDescription(), model.getQuantity());
-		}
-		jsonObj.put("dtls", jsonObjDtl);
-		
-		return jsonObj.toString();
-	}
-
 	public static String getMessage(String key, Locale locale) {
 		return CommonUtil.getMessage(CommonConstant.MODULE_PCM, key, locale);
 	}

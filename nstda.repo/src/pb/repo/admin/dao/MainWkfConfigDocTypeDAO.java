@@ -7,7 +7,7 @@ import pb.repo.admin.model.MainWkfConfigDocTypeModel;
 
 public interface MainWkfConfigDocTypeDAO {
 
-	public List<MainWkfConfigDocTypeModel> list();
+	public List<MainWkfConfigDocTypeModel> list(Map<String, Object> params);
 	
 	public Long count();
 	

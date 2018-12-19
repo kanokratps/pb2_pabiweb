@@ -9,4 +9,6 @@ public interface MainCostControlDAO {
 	
 	public Long count();
 	
+	public Map<String, Object> get(Integer id);
+	
 }

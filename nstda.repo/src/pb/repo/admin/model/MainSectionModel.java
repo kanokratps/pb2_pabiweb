@@ -8,6 +8,7 @@ public class MainSectionModel {
 	String name;
 	Integer divisionId;
 	Integer sectorId;
+	Integer subSectorId;
 	Integer orgId;
 	Integer costcenterId;
 	  
@@ -59,6 +60,14 @@ public class MainSectionModel {
 
 	public void setOrgId(Integer orgId) {
 		this.orgId = orgId;
+	}
+	
+	public Integer getSubSectorId() {
+		return subSectorId;
+	}
+
+	public void setSubSectorId(Integer subSectorId) {
+		this.subSectorId = subSectorId;
 	}
 
 	public Integer getCostcenterId() {

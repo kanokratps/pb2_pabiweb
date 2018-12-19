@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainUserDAO">
+
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select * from (
+			select	e.id,
+					lpad(e.employee_code, 6 ,'0') emp_id,
+					e.first_name, 
+					e.last_name,
+					e.work_phone,
+					e.mobile_phone,
+					o.name org_name,
+					o.name_short org_name_short,
+					s.name section_name,
+					e.section_id, 
+					e.org_id,
+					o.code ocode, 
+					trim(s.code) scode,
+					p.name pos_name,
+					coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'res.org,name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e.org_id), o.name) as org_name_th,
+					coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'res.org,name_short'
+						and type = 'model' and lang='th_TH'
+						and res_id = e.org_id), o.name_short) as org_name_short_th,
+					coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'res.section,name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e.section_id), s.name) as section_name_th,
+					coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'hr.employee,first_name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e.id), e.first_name) as first_name_th,
+					coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'hr.employee,last_name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e.id), e.last_name) as last_name_th,
+					coalesce((select value
+					    from pb2_ext_ir_translation
+					    where name = 'hr.position,name'
+					    and type = 'model' and lang='th_TH'
+					    and res_id = e.position_id), p.name) as pos_name_th,
+			    	coalesce((select value
+						from pb2_ext_ir_translation
+						where name = 'res.partner.title,name'
+						and type = 'model' and lang='th_TH'
+						and res_id = e.title_id), t.name) as title_th,
+				    t.name title
+			from pb2_ext_hr_employee e 
+			left join pb2_ext_res_org o on e.org_id = o.id
+			left join pb2_ext_res_section s on e.section_id = s.id
+			left join pb2_ext_hr_position p on e.position_id = p.id
+			left join pb2_ext_res_partner_title t on e.title_id = t.id
+			where e.id!=1
+		) qry
+		WHERE 1=1
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="AND (" separator=" AND " close=")">
+	    			concat(org_name_short, ' ',org_name_short_th, ' ',section_name, ' ',emp_id, ' ',first_name,' ',last_name,' ',pos_name,' ',pos_name_th,' ',org_name_th, ' ',section_name_th,' ',first_name_th,' ',last_name_th,' ',scode,' ',ocode) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>  
+		ORDER BY ${orderBy}
+	</select>
+	
+	<select id="getByLogin" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select * from pb2_ext_res_users
+		where login=#{login}
+		and active is true
+	</select>
+</mapper>

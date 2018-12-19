@@ -27,7 +27,7 @@ public class AdminProjectService {
 	@Autowired
 	AuthenticationService authService;
 
-	public List<Map<String, Object>> list(String searchTerm) {
+	public List<Map<String, Object>> list(String searchTerm, String lang) {
 		
 		List<Map<String, Object>> list = null;
 		
@@ -37,7 +37,14 @@ public class AdminProjectService {
             
         	Map<String, Object> params = new HashMap<String, Object>();
         	
-        	params.put("searchTerm", searchTerm);
+        	if (searchTerm!=null) {
+        		String[] terms = searchTerm.split(" ");
+        	
+        		params.put("terms", terms);
+        	}
+        	lang = lang!=null && lang.startsWith("th") ? "_th" : "";
+        	params.put("orderBy", "org_name_short"+lang+", name"+lang+", pm_name"+lang);
+        	params.put("lang", lang);
         	
             list = dao.list(params);
             
@@ -69,7 +76,30 @@ public class AdminProjectService {
 		return map;
 	}
 	
-	public List<Map<String, Object>> listProjectManager(Integer projectId) {
+//	public List<Map<String, Object>> listProjectManager(Integer projectId) {
+//		
+//		List<Map<String, Object>> list = null;
+//		
+//        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+//        try {
+//        	MainProjectMemberDAO dao = session.getMapper(MainProjectMemberDAO.class);
+//            
+//        	Map<String, Object> params = new HashMap<String, Object>();
+//        	
+//        	params.put("projectId", projectId);
+//        	
+//            list = dao.listProjectManager(params);
+//            
+//        } catch (Exception ex) {
+//        	log.error(ex);
+//        } finally {
+//        	session.close();
+//        }
+//		
+//		return list;
+//	}
+	
+	public List<Map<String, Object>> listPMSpecialBudget(Integer projectId, String module) {
 		
 		List<Map<String, Object>> list = null;
 		
@@ -80,8 +110,9 @@ public class AdminProjectService {
         	Map<String, Object> params = new HashMap<String, Object>();
         	
         	params.put("projectId", projectId);
+        	params.put("module", module);
         	
-            list = dao.listProjectManager(params);
+            list = dao.listPMSpecialBudget(params);
             
         } catch (Exception ex) {
         	log.error(ex);
@@ -91,4 +122,5 @@ public class AdminProjectService {
 		
 		return list;
 	}
+	
 }

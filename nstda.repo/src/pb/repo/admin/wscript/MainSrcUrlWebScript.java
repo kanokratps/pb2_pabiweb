@@ -10,7 +10,6 @@ import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.extensions.webscripts.WebScriptResponse;
 import org.springframework.stereotype.Component;
@@ -42,7 +41,6 @@ public class MainSrcUrlWebScript {
 	
 	@Autowired
 	AuthenticationService authService;
-
 	
 	/*
 	 * p1 = where condition : type='M'
@@ -52,14 +50,15 @@ public class MainSrcUrlWebScript {
 								,@RequestParam(required=false) final String p2
 								,@RequestParam(required=false) final String orderBy
 								,@RequestParam(required=false) final Boolean all
+								,@RequestParam(required=false) final String lang
 								, final WebScriptResponse response)
 			throws Exception {
 
-		log.info("handleMainMaster:p1:"+p1+",p2:"+p2+",orderBy:"+orderBy+",all:"+all);
+		log.info("/master:p1:"+p1+",p2:"+p2+",orderBy:"+orderBy+",all:"+all+",lang:"+lang);
 		String json = null;
 
 		try {
-			Map<String, Object> map = mainSrcUrlService.listMainMaster(p1, p2, orderBy, all);
+			Map<String, Object> map = mainSrcUrlService.listMainMaster(p1, p2, orderBy, all, lang);
 			json = CommonUtil.jsonSuccess(map);
 
 		} catch (Exception ex) {
@@ -85,12 +84,42 @@ public class MainSrcUrlWebScript {
 								, final WebScriptResponse response)
 			throws Exception {
 
-		log.info("handleMainMaster2:p1:"+p1+",p2:"+p2+",orderBy:"+orderBy+",all:"+all);
+		log.info("/master2:p1:"+p1+",p2:"+p2+",orderBy:"+orderBy+",all:"+all);
 		String json = null;
 
 		try {
 			List<Map<String, Object>> list = mainSrcUrlService.listMainMaster2(p1, p2, orderBy, all);
 			json = CommonUtil.jsonSuccess(list);
+
+		} catch (Exception ex) {
+			log.error("", ex);
+			json = CommonUtil.jsonFail(ex.toString());
+			throw ex;
+
+		} finally {
+			CommonUtil.responseWrite(response, json);
+
+		}
+	}	
+	
+	/*
+	 * p1 = where condition : type='M'
+	 */
+	@Uri(URI_PREFIX + "/master3")
+	public void handleMainMaster3(@RequestParam final String p1
+								,@RequestParam(required=false) final String p2
+								,@RequestParam(required=false) final String orderBy
+								,@RequestParam(required=false) final Boolean all
+								,@RequestParam(required=false) final String lang
+								, final WebScriptResponse response)
+			throws Exception {
+
+		log.info("/master3:p1:"+p1+",p2:"+p2+",orderBy:"+orderBy+",all:"+all+",lang:"+lang);
+		String json = null;
+
+		try {
+			Map<String, Object> map = mainSrcUrlService.listMainMaster3(p1, p2, orderBy, all, lang);
+			json = CommonUtil.jsonSuccess(map);
 
 		} catch (Exception ex) {
 			log.error("", ex);
@@ -117,6 +146,36 @@ public class MainSrcUrlWebScript {
 			Map<String, Object> field = mainSrcUrlService.getMainMasterField(p1, p2);
 			
 			json = CommonUtil.jsonSuccess(field);
+			
+		} catch (Exception ex) {
+			log.error("", ex);
+			json = CommonUtil.jsonFail(ex.toString());
+			throw ex;
+
+		} finally {
+			CommonUtil.responseWrite(response, json);
+
+		}
+	}
+	
+	/*
+	 * t = type
+	 * c = code
+	 * lang = language
+	 */
+	@Uri(URI_PREFIX + "/masterValue")
+	public void handleMainMasterValue(@RequestParam final String t, 
+									  @RequestParam final String c,
+									  @RequestParam final String lang,
+									  final WebScriptResponse response)
+			throws Exception {
+
+		String json = null;
+
+		try {
+			Map<String, Object> value = mainSrcUrlService.getMainMasterValue(t,c,lang);
+			
+			json = CommonUtil.jsonSuccess(value);
 			
 		} catch (Exception ex) {
 			log.error("", ex);
@@ -197,5 +256,34 @@ public class MainSrcUrlWebScript {
 			CommonUtil.responseWrite(response, json);
 
 		}
-	}	
+	}
+	
+	/*
+	 * c = code
+	 */
+	@Uri(URI_PREFIX + "/userName")
+	public void handleUserName(@RequestParam final String c,
+								  @RequestParam final String lang,
+								  final WebScriptResponse response)
+			throws Exception {
+
+		String json = null;
+
+		try {
+			Map<String, Object> value = mainSrcUrlService.getUserName(c,lang);
+			
+			json = CommonUtil.jsonSuccess(value);
+			
+		} catch (Exception ex) {
+			log.error("", ex);
+			json = CommonUtil.jsonFail(ex.toString());
+			throw ex;
+
+		} finally {
+			CommonUtil.responseWrite(response, json);
+
+		}
+	}
+	
+	
 }

@@ -21,9 +21,11 @@ public class PcmOrdWorkflowConstant extends MainWorkflowConstant {
     public static final QName PROP_FOLDER_REF = QName.createQName(MODEL_URI, "folderRef");
     public static final QName PROP_REQUESTED_TIME = QName.createQName(MODEL_URI, "requestedTime");
     
+    public static final QName PROP_DESCRIPTION = QName.createQName(MODEL_URI, "description");
+    
     public static final QName PROP_DOCUMENT = QName.createQName(MODEL_URI, "document");
     public static final QName PROP_ATTACH_DOCUMENT = QName.createQName(MODEL_URI, "attachDocument");
-    public static final QName PROP_COMMENT_HISTORY = QName.createQName(MODEL_URI, "commentHistory");
+//    public static final QName PROP_COMMENT_HISTORY = QName.createQName(MODEL_URI, "commentHistory");
     
     public static final QName PROP_REMARK = QName.createQName(MODEL_URI, "remark");
     public static final QName PROP_TASK_HISTORY = QName.createQName(MODEL_URI, "taskHistory");

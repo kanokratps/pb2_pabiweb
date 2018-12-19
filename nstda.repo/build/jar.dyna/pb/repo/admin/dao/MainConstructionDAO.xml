@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainConstructionDAO">
+    <resultMap id="result" type="mainConstructionModel">
+        <result property="id" column="id"/>
+        <result property="construction" column="construction"/>
+        <result property="constructionTh" column="construction_th"/>
+        <result property="org" column="org"/>
+        <result property="orgTh" column="org_th"/>
+        <result property="sectionId" column="section_id"/>
+        <result property="costcenter" column="costcenter"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select c.*
+		from pb2_invest_construction_phase_view c
+		<if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="WHERE (" separator=" AND " close=")">
+	    			concat(construction, ' ', construction_th, ' ', org, ' ', org_th, ' ', costcenter) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>
+		ORDER BY ${orderBy}
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_invest_construction_phase_view
+    </select>
+    
+    <select id="getFromView" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+        select * from pb2_invest_construction_phase_view
+        where id=#{id}
+    </select>
+    
+    <select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+        select * from pb2_invest_construction_phase_view
+        where id=#{id}
+    </select>
+    
+	<!-- select id="listWarehouse" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select w.name warehouse, p.id as picking_type_id, p.name as picking_type_name
+		from pb2_ext_res_section s join pb2_ext_res_org o on s.org_id = o.id
+		join pb2_ext_stock_warehouse w on o.operating_unit_id = w.operating_unit_id
+		join pb2_ext_stock_picking_type p on p.id = w.in_type_id
+		where s.id = #{id}
+	</select-->
+	
+</mapper>

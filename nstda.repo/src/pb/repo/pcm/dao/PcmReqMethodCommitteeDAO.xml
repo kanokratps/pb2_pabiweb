@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.pcm.dao.PcmReqMethodCommitteeDAO">
+    <resultMap id="result" type="pcmReqMethodCommitteeModel">
+        <result property="id" column="id"/>
+        <result property="seq" column="seq"/>
+        <result property="methodId" column="method_id"/>
+        <result property="title" column="title"/>
+        <result property="amountMin" column="amount_min"/>
+    </resultMap>
+
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		SELECT *,COUNT(*) OVER() totalRowCount 
+		FROM pb2_pr_method_committee_view
+		WHERE
+			method_id=#{id}
+		ORDER BY seq
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_pr_method_committee_view
+    </select>
+    
+    <select id="get" parameterType="string" resultMap="result">
+        SELECT
+		    *
+		FROM
+		    pb2_pr_method_committee_view
+		WHERE id=#{id}
+    </select>
+    
+</mapper>

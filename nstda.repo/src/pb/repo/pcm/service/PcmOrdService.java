@@ -7,23 +7,33 @@ import java.io.Writer;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.sql.DataSource;
 
+import org.activiti.engine.RuntimeService;
+import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.workflow.activiti.ActivitiScriptNode;
+import org.alfresco.repo.workflow.activiti.ActivitiScriptNodeList;
+import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.coci.CheckOutCheckInService;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentService;
+import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.TemplateProcessor;
@@ -39,19 +49,29 @@ import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.extensions.surf.util.I18NUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import pb.common.constant.CommonConstant;
 import pb.common.model.FileModel;
+import pb.common.util.CommonDateTimeUtil;
+import pb.common.util.CommonUtil;
 import pb.common.util.FileUtil;
 import pb.common.util.FolderUtil;
-import pb.repo.admin.constant.MainHrEmployeeConstant;
+import pb.common.util.NodeUtil;
+import pb.repo.admin.constant.MainBudgetSrcConstant;
 import pb.repo.admin.constant.MainMasterConstant;
 import pb.repo.admin.constant.MainWkfConfigDocTypeConstant;
 import pb.repo.admin.constant.MainWorkflowConstant;
+import pb.repo.admin.dao.MainWorkflowDAO;
+import pb.repo.admin.dao.MainWorkflowHistoryDAO;
+import pb.repo.admin.dao.MainWorkflowNextActorDAO;
 import pb.repo.admin.dao.MainWorkflowReviewerDAO;
-import pb.repo.admin.model.MainHrEmployeeModel;
 import pb.repo.admin.model.MainMasterModel;
+import pb.repo.admin.model.MainWkfConfigDocTypeModel;
+import pb.repo.admin.model.MainWorkflowHistoryModel;
 import pb.repo.admin.model.MainWorkflowNextActorModel;
 import pb.repo.admin.model.MainWorkflowReviewerModel;
 import pb.repo.admin.model.SubModuleModel;
@@ -61,15 +81,12 @@ import pb.repo.admin.service.AdminUserGroupService;
 import pb.repo.admin.service.AdminWkfConfigService;
 import pb.repo.admin.service.AlfrescoService;
 import pb.repo.admin.service.MainSrcUrlService;
-import pb.repo.admin.service.MainWorkflowService;
 import pb.repo.admin.service.SubModuleService;
 import pb.repo.admin.util.MainUserGroupUtil;
+import pb.repo.common.mybatis.DbConnectionFactory;
 import pb.repo.pcm.constant.PcmOrdConstant;
 import pb.repo.pcm.constant.PcmOrdWorkflowConstant;
-import pb.repo.pcm.constant.PcmReqConstant;
 import pb.repo.pcm.dao.PcmOrdDAO;
-import pb.repo.pcm.dao.PcmOrdDtlDAO;
-import pb.repo.pcm.model.PcmOrdDtlModel;
 import pb.repo.pcm.model.PcmOrdModel;
 import pb.repo.pcm.util.PcmOrdUtil;
 import pb.repo.pcm.util.PcmUtil;
@@ -125,13 +142,19 @@ public class PcmOrdService implements SubModuleService {
 	MainSrcUrlService mainSrcUrlService;
 	
 	@Autowired
-	MainWorkflowService mainWorkflowService;
+	PcmOrdWorkflowService mainWorkflowService;
 	
 	@Autowired
 	AdminWkfConfigService adminWkfConfigService;
 	
 	@Autowired
 	AdminHrEmployeeService adminHrEmployeeService;
+
+	@Autowired
+	private RuntimeService runtimeService;
+	
+	@Autowired
+	ServiceRegistry serviceRegistry;
 	
 	public PcmOrdModel save(PcmOrdModel model,Map<String, Object> docMap, List<Map<String, Object>> attList) throws Exception {
 		
@@ -150,15 +173,11 @@ public class PcmOrdService implements SubModuleService {
     		/*
     		 * Add DB
     		 */
-        	pcmOrdDAO.add(model);
-            
-//            List<PcmOrdDtlModel> dtlList = PcmOrdDtlUtil.convertJsonToList(dtls, model.getId());
-//            for(PcmOrdDtlModel dtlModel : dtlList) {
-//	        	dtlModel.setCreatedBy(model.getUpdatedBy());
-//	        	dtlModel.setUpdatedBy(model.getUpdatedBy());
-//	        	
-//            	pcmOrdDtlDAO.add(dtlModel);
-//            }
+        	if (model.getCreatedTime()==null) {
+        		pcmOrdDAO.add(model);
+        	} else {
+        		pcmOrdDAO.update(model);
+        	}
             
             session.commit();
         } catch (Exception ex) {
@@ -192,41 +211,41 @@ public class PcmOrdService implements SubModuleService {
 
 	}
 	
-	public JSONObject validateAssignee(PcmOrdModel model) throws Exception {
-		
-		JSONObject result = new JSONObject();
-		
-        try {
-            setUserGroupFields(model);
-            
-            Set<String> invalidUsers = new HashSet<String>();
-            Set<String> invalidGroups = new HashSet<String>();
-            
-//           	List<MainApprovalMatrixDtlModel> listDtl = adminApprovalMatrixService.listDtl(model.getApprovalMatrixId());
-//           	for (MainApprovalMatrixDtlModel dtlModel : listDtl) {
-//                invalidUsers.addAll(userGroupService.listInvalidUser(dtlModel.getReviewerUser()));
-//                invalidGroups.addAll(userGroupService.listInvalidGroup(dtlModel.getReviewerGroup()));
-//           	}
-            
-            log.info("invalidUsers:"+invalidUsers);
-            log.info("invalidGroups:"+invalidGroups);
-            
-        	if (invalidUsers.size()>0 || invalidGroups.size()>0) {
-				result.put("valid", false);
-        		result.put("users", invalidUsers);
-        		result.put("groups", invalidGroups);
-        	} else {
-        		result.put("valid", true);
-        	}
-        	
-        } catch (Exception ex) {
-			log.error("", ex);
-        	throw ex;
-        } finally {
-        }
-
-        return result;
-	}
+//	public JSONObject validateAssignee(PcmOrdModel model) throws Exception {
+//		
+//		JSONObject result = new JSONObject();
+//		
+//        try {
+//            setUserGroupFields(model);
+//            
+//            Set<String> invalidUsers = new HashSet<String>();
+//            Set<String> invalidGroups = new HashSet<String>();
+//            
+////           	List<MainApprovalMatrixDtlModel> listDtl = adminApprovalMatrixService.listDtl(model.getApprovalMatrixId());
+////           	for (MainApprovalMatrixDtlModel dtlModel : listDtl) {
+////                invalidUsers.addAll(userGroupService.listInvalidUser(dtlModel.getReviewerUser()));
+////                invalidGroups.addAll(userGroupService.listInvalidGroup(dtlModel.getReviewerGroup()));
+////           	}
+//            
+//            log.info("invalidUsers:"+invalidUsers);
+//            log.info("invalidGroups:"+invalidGroups);
+//            
+//        	if (invalidUsers.size()>0 || invalidGroups.size()>0) {
+//				result.put("valid", false);
+//        		result.put("users", invalidUsers);
+//        		result.put("groups", invalidGroups);
+//        	} else {
+//        		result.put("valid", true);
+//        	}
+//        	
+//        } catch (Exception ex) {
+//			log.error("", ex);
+//        	throw ex;
+//        } finally {
+//        }
+//
+//        return result;
+//	}
 	
 	private void doCommonSaveProcess(PcmOrdModel model, Map<String, Object> docMap, List<Map<String, Object>> attList) throws Exception {
     	/*
@@ -236,68 +255,78 @@ public class PcmOrdService implements SubModuleService {
 		
 		NodeRef folderNodeRef = new NodeRef(model.getFolderRef());
 		
+    	/*
+    	 * Delete Old Files
+    	 */
+    	Set<QName> qnames = new HashSet<QName>();
+    	qnames.add(ContentModel.TYPE_CONTENT);
+    	qnames.add(ApplicationModel.TYPE_FILELINK);
+    	List<ChildAssociationRef> docs = nodeService.getChildAssocs(folderNodeRef, qnames);
+    	for(ChildAssociationRef doc : docs) {
+    		
+    		log.info("doc:"+doc.toString());
+    		log.info("   childRef:"+doc.getChildRef().toString());
+    		if (!doc.getQName().getLocalName().equals(model.getId()+".pdf")) { // it is not main.pdf
+    			alfrescoService.cancelCheckout(doc.getChildRef());
+    			alfrescoService.deleteFileFolder(doc.getChildRef().toString());
+        		log.info("   delete");
+    		}
+    	}		
+		
 		/*
 		 * Save Doc
 		 */
-		model.setDocRef(genDoc(model, folderNodeRef, docMap));
+		model.setDocRef(genDoc(model, folderNodeRef, docMap, getDocDesc()));
     	
     	/*
     	 * Save Attachments
     	 */
     	for(Map<String, Object> attMap : attList) {
     		log.info(" + "+attMap.get("name"));
-		    model.setAttachDoc(genDoc(model, folderNodeRef, attMap));
+		    model.setAttachDoc(genDoc(model, folderNodeRef, attMap, attMap.get("desc") != null ? (String)attMap.get("desc") : ""));
     	}
 	}
 	
-	public String genDoc(PcmOrdModel model, NodeRef folderNodeRef, Map<String, Object> docMap) throws Exception {
-		/*
-		 * Convert Base64 String to InputStream 
-		 */
-    	FileUtil fileUtil = new FileUtil();
-    	InputStream is = fileUtil.base64InputStream((String)docMap.get("content"));
-    	
-    	String ecmFileName = (String)docMap.get("name");
-    	
-    	log.info("Gen Doc : "+ecmFileName);
-    	/*
-    	 * Put Doc in ECM
-    	 */
-    	NodeRef oldDocRef = alfrescoService.searchSimple(folderNodeRef, ecmFileName);
-    	if (oldDocRef != null) {
-	    	log.info("  is checked out:"+oldDocRef.toString());
-		    if (checkOutCheckInService.isCheckedOut(oldDocRef)) {
-		    	log.info("    true");
-		    	final NodeRef wNodeRef = alfrescoService.getWorkingCopyNodeRef(oldDocRef.toString());
-		    	log.info("    cancel check out:"+wNodeRef);
-				AuthenticationUtil.runAs(new RunAsWork<String>()
-				{
-					public String doWork() throws Exception
-					{
+	public String genDoc(PcmOrdModel model, NodeRef folderNodeRef, Map<String, Object> docMap, String docDesc) throws Exception {
 
-				    	checkOutCheckInService.cancelCheckout(wNodeRef);
-						return null;
-					}
-				}, AuthenticationUtil.getAdminUserName());
-		    }
-		    else {
-		    	log.info("    false");
-		    }
-
-    		alfrescoService.deleteFileFolder(oldDocRef.toString());
-    	}
-    	NodeRef docRef = alfrescoService.createDoc(folderNodeRef, is, ecmFileName);
-    	
-    	return docRef.toString();
+		NodeRef docRef = null;
+		
+		if (docMap.get("url")!=null && !((String)docMap.get("url")).equals("")) {
+			String url = (String)docMap.get("url"); 
+			docRef = new NodeRef(NodeUtil.fullNodeRef(url));
+			log.info("Gen Doc : "+docRef.toString());
+			
+			NodeRef refDocRef = alfrescoService.createLink(folderNodeRef, docRef, (String)docMap.get("name"));
+		} else {
+			/*
+			 * Convert Base64 String to InputStream 
+			 */
+	    	FileUtil fileUtil = new FileUtil();
+	    	InputStream is = fileUtil.base64InputStream((String)docMap.get("content"));
+	    	
+	    	String ecmFileName = (String)docMap.get("name");
+	    	
+	    	log.info("Gen Doc : "+ecmFileName);
+	    	/*
+	    	 * Put Doc in ECM
+	    	 */
+	    	NodeRef oldDocRef = alfrescoService.searchSimple(folderNodeRef, ecmFileName);
+	    	if (oldDocRef != null) {
+	    		alfrescoService.cancelCheckout(oldDocRef);
+	    		alfrescoService.deleteFileFolder(oldDocRef.toString());
+	    	}
+	    	docRef = alfrescoService.createDoc(folderNodeRef, is, ecmFileName, docDesc);
+		}
+		
+		return docRef.toString();
 	}
 	
 	public List<FileModel> listFile(String id) throws Exception {
 
-		final PcmOrdModel model = get(id);
-		log.info("list file : memoId:"+model.getId());
+		final PcmOrdModel model = get(id, null);
+		log.info("list file:"+model.getId()+", folderRef:"+model.getFolderRef());
 		
 		final NodeRef folderNodeRef = new NodeRef(model.getFolderRef());
-		log.info("            folderRef:"+model.getFolderRef());
 		
 		List<FileModel> files = AuthenticationUtil.runAs(new RunAsWork<List<FileModel>>()
 	    {
@@ -309,15 +338,21 @@ public class PcmOrdService implements SubModuleService {
 		    	qnames.add(ContentModel.TYPE_CONTENT);
 		    	List<ChildAssociationRef> docs = nodeService.getChildAssocs(folderNodeRef, qnames);
 		    	for(ChildAssociationRef doc : docs) {
-		    		log.info("doc:"+doc.toString());
-		    		log.info("   childRef:"+doc.getChildRef().toString());
-		    		log.info("   qname:"+doc.getQName().getLocalName());
+		    		log.info("   "+doc.getQName().getLocalName()+", "+doc.getChildRef().toString());
 		    		
 		    		if (!doc.getQName().getLocalName().equals(model.getId()+".pdf")) {
 		    			FileModel fileModel = new FileModel();
 		    			fileModel.setName(doc.getQName().getLocalName());
+		    			String desc = (String)nodeService.getProperty(doc.getChildRef(), ContentModel.PROP_DESCRIPTION);
+		    			fileModel.setDesc(desc);
 		    			fileModel.setNodeRef(doc.getChildRef().toString());
 		    			fileModel.setAction("D");
+		    			
+			    		Serializable modifier = nodeService.getProperty(doc.getChildRef(),ContentModel.PROP_MODIFIER);
+			    		fileModel.setBy(modifier.toString());
+			    		
+			    		fileModel.setTimestamp(new Timestamp(((Date)nodeService.getProperty(doc.getChildRef(),ContentModel.PROP_CREATED)).getTime()));
+			    		
 		    			files.add(fileModel);
 		    		}
 		    	}
@@ -391,6 +426,44 @@ public class PcmOrdService implements SubModuleService {
 		return jsArr;
 	}
 	
+	public JSONArray listMethod(String lang) throws Exception {
+		
+		JSONArray jsArr = new JSONArray();
+		
+		String allLbl = null;
+		if (lang!=null && lang.startsWith("th")) {
+			allLbl = "ทั้งหมด";
+		} else {
+			allLbl = "All";
+		}
+		
+		JSONObject jsObj = new JSONObject();
+		
+		jsObj.put("id", "");
+		jsObj.put("name", "== "+allLbl+" ==");
+		
+		jsArr.put(jsObj);
+		
+		Map<String,Object> params = new HashMap<String,Object>();
+		
+		params.put("module", "purchase_pd");
+//		params.put("name", "PD");
+		params.put("orderBy", "id");
+		
+		List<MainWkfConfigDocTypeModel> list = adminWkfConfigService.listDocType(params);
+		
+		for(MainWkfConfigDocTypeModel model : list) {
+			jsObj = new JSONObject();
+			
+			jsObj.put("id", model.getName());
+			jsObj.put("name", model.getDescription());
+			
+			jsArr.put(jsObj);
+		}
+		
+		return jsArr;
+	}	
+	
 	private void createEcmFolder(PcmOrdModel model) throws Exception {
 		
 		boolean exists = (model.getFolderRef()!=null) && fileFolderService.exists(new NodeRef(model.getFolderRef()));
@@ -402,19 +475,18 @@ public class PcmOrdService implements SubModuleService {
     			cal.add(Calendar.YEAR, 1);
     		}
     		Timestamp timestampValue = new Timestamp(cal.getTimeInMillis());
-    		map.put(PcmReqConstant.JFN_FISCAL_YEAR, timestampValue);
+    		map.put(PcmOrdConstant.JFN_FISCAL_YEAR, timestampValue);
 			
-			
-			Iterator it = map.keys();
-			while(it.hasNext()) {
-				Object obj = it.next();
-				log.info("--"+obj.toString());
-			}
+//			Iterator it = map.keys();
+//			while(it.hasNext()) {
+//				Object obj = it.next();
+//				log.info("--"+obj.toString());
+//			}
 	
 			Writer w = null;
 			TemplateProcessor pc = templateService.getTemplateProcessor("freemarker");
 			
-			MainMasterModel pathFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_PATH_FORMAT);
+			MainMasterModel pathFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_PATH_FORMAT,false);
 			String pathFormat = pathFormatModel.getFlag1();
 			
 			List<Object> paths = new ArrayList<Object>();
@@ -425,9 +497,9 @@ public class PcmOrdService implements SubModuleService {
 				paths.add(folderMap);
 				
 				int pos;
-				if (format.indexOf(PcmReqConstant.JFN_FISCAL_YEAR) >= 0
-					|| format.indexOf(PcmReqConstant.JFN_CREATED_TIME) >= 0
-					|| format.indexOf(PcmReqConstant.JFN_UPDATED_TIME) >= 0
+				if (format.indexOf(PcmOrdConstant.JFN_FISCAL_YEAR) >= 0
+					|| format.indexOf(PcmOrdConstant.JFN_CREATED_TIME) >= 0
+					|| format.indexOf(PcmOrdConstant.JFN_UPDATED_TIME) >= 0
 					) {
 					
 					String dFormat = CommonConstant.RDF_DATE;
@@ -442,7 +514,7 @@ public class PcmOrdService implements SubModuleService {
 					int rpos2 = format.indexOf(CommonConstant.REPS_SUFFIX);
 					String fieldName = format.substring(rpos+CommonConstant.REPS_PREFIX.length(), rpos2);
 					
-					SimpleDateFormat df = new SimpleDateFormat(dFormat);
+					SimpleDateFormat df = new SimpleDateFormat(dFormat,Locale.US);
 					folderMap.put("name", df.format(map.get(fieldName)));
 				}	
 				else {
@@ -467,7 +539,7 @@ public class PcmOrdService implements SubModuleService {
 			} // for
 			
 			
-			MainMasterModel siteModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_SITE_ID);
+			MainMasterModel siteModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_SITE_ID,false);
 			String siteId = siteModel.getFlag1();
 			
 			log.info("site : "+siteId);
@@ -494,26 +566,77 @@ public class PcmOrdService implements SubModuleService {
 //		model.setRequesterGroup(apModel.getRequesterGroup());
 	}
 	
-	public List<PcmOrdModel> list(Map<String, Object> params) {
+	public List<Map<String, Object>> list(Map<String, Object> params) {
 		
-		List<PcmOrdModel> list = null;
+		List<Map<String, Object>> list = null;
 		
 		SqlSession session = PcmUtil.openSession(dataSource);
         try {
             PcmOrdDAO dao = session.getMapper(PcmOrdDAO.class);
-            log.info("pcm req list param:"+params);
+            log.info("pcm ord list param:"+params);
     		list = dao.list(params);
+    		
+    		String lang = ((String)params.get("lang")).toUpperCase();
+    		
+    		for(Map<String, Object> map : list) {
+
+				map.put(PcmOrdConstant.JFN_WF_STATUS, 
+						map.get(PcmOrdConstant.TFN_WF_BY+lang)
+						+"-"+
+						map.get(PcmOrdConstant.TFN_WF_STATUS+lang)
+						+"-"+
+						CommonDateTimeUtil.convertToGridDateTime((Timestamp)map.get(PcmOrdConstant.TFN_WF_BY_TIME))
+				);
+				map.put(PcmOrdConstant.JFN_CREATED_BY,map.get(PcmOrdConstant.TFN_CREATED_BY+lang));
+				map.put(PcmOrdConstant.JFN_CREATED_TIME_SHOW, CommonDateTimeUtil.convertToGridDateTime((Timestamp)map.get(PcmOrdConstant.TFN_CREATED_TIME)));
+				map.put(PcmOrdConstant.JFN_ORG_NAME,map.get(PcmOrdConstant.TFN_ORG_NAME+lang));
+				
+				map.put(PcmOrdConstant.JFN_ACTION, PcmOrdUtil.getAction(map));
+				
+    			map.put("totalrowcount", map.get("totalrowcount"));
+				
+				map = CommonUtil.removeThElement(map);
+			}
             
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         	throw ex;
         } finally {
         	session.close();
         }
         
         return list;
+	}
+	
+	public void delete(String id) throws Exception {
+		
+		SqlSession session = PcmUtil.openSession(dataSource);
+        try {
+            PcmOrdDAO pcmOrdDAO = session.getMapper(PcmOrdDAO.class);
+            MainWorkflowDAO workflowDAO = session.getMapper(MainWorkflowDAO.class);
+            MainWorkflowHistoryDAO workflowHistoryDAO = session.getMapper(MainWorkflowHistoryDAO.class);
+            MainWorkflowReviewerDAO workflowReviewerDAO = session.getMapper(MainWorkflowReviewerDAO.class);
+            MainWorkflowNextActorDAO workflowNextActorDAO = session.getMapper(MainWorkflowNextActorDAO.class);
+
+    		PcmOrdModel model = get(id, null);
+    		boolean exists = (model.getFolderRef()!=null) && fileFolderService.exists(new NodeRef(model.getFolderRef()));    		
+    		if(exists) {
+    			alfrescoService.deleteFileFolder(model.getFolderRef());
+        	}
+
+    		workflowNextActorDAO.deleteByMasterId(id);
+    		workflowHistoryDAO.deleteByMasterId(id);
+    		workflowReviewerDAO.deleteByMasterId(id);
+    		workflowDAO.deleteByMasterId(id);
+    		pcmOrdDAO.delete(id);
+            
+            session.commit();
+        } catch (Exception ex) {
+			log.error("", ex);
+        	session.rollback();
+        } finally {
+        	session.close();
+        }
 	}
 	
 	public void deleteReviewerByMasterId(String id) throws Exception {
@@ -530,7 +653,7 @@ public class PcmOrdService implements SubModuleService {
         }
 	}
 	
-	public PcmOrdModel get(String id) {
+	public PcmOrdModel get(String id, String lang) {
 		
 		PcmOrdModel model = null;
 		
@@ -539,12 +662,13 @@ public class PcmOrdService implements SubModuleService {
             PcmOrdDAO pcmOrdDAO = session.getMapper(PcmOrdDAO.class);
             
     		model = pcmOrdDAO.get(id);
-    		model.setTotalRowCount(1l);
-            
-            session.commit();
+    		if (model!=null) {
+    			model.setTotalRowCount(1l);
+    		} else {
+    			log.info("PD not found : "+id);
+    		}
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -552,56 +676,9 @@ public class PcmOrdService implements SubModuleService {
         return model;
 	}
 	
-	public List<PcmOrdDtlModel> listDtlByMasterId(String masterId) {
-		
-		List<PcmOrdDtlModel> list = null;
-		
-		SqlSession session = PcmUtil.openSession(dataSource);
-        try {
-            PcmOrdDtlDAO dtlDAO = session.getMapper(PcmOrdDtlDAO.class);
-            
-    		Map<String, Object> map = new HashMap<String, Object>();
-    		map.put("masterId", masterId);
-
-    		list = dtlDAO.list(map);
-            
-            session.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	session.rollback();
-        	throw ex;
-        } finally {
-        	session.close();
-        }
-        
-        return list;
-	}
-	
-	public List<PcmOrdDtlModel> listDtlByMasterIdAndFieldName(String masterId, String fieldName) {
-		
-		List<PcmOrdDtlModel> list = null;
-		
-		SqlSession session = PcmUtil.openSession(dataSource);
-        try {
-            PcmOrdDtlDAO dtlDAO = session.getMapper(PcmOrdDtlDAO.class);
-            
-    		Map<String, Object> map = new HashMap<String, Object>();
-    		map.put("masterId", masterId);
-    		map.put("fieldName", fieldName);
-
-    		list = dtlDAO.list(map);
-            
-            session.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	session.rollback();
-        	throw ex;
-        } finally {
-        	session.close();
-        }
-        
-        return list;
-	}
+	public PcmOrdModel getForWfPath(String id, String lang) {
+        return get(id, lang);
+	}	
 	
 	public void update(PcmOrdModel model) throws Exception {
 		
@@ -660,10 +737,8 @@ public class PcmOrdService implements SubModuleService {
     		if (list.size()>0) {
     			model = list.get(0);
     		}
-            session.commit();
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -671,30 +746,85 @@ public class PcmOrdService implements SubModuleService {
         return model;
 	}	
 	
-	public List<Map<String, Object>> listWorkflowPath(String id) {
+	public List<Map<String, Object>> listWorkflowPath(String id, String lang) {
 		
-		List<Map<String, Object>> list = null;
+		List<Map<String, Object>> list = mainWorkflowService.listWorkflowPath(id, lang);
 		
-		SqlSession session = PcmUtil.openSession(dataSource);
+		/*
+		 * Add Requester
+		 */
+		PcmOrdModel model = get(id, null);
+		
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("LEVEL", mainWorkflowService.getTaskCaption(MainWorkflowConstant.TN_SUPERVISOR, lang, null));
+		map.put("U", model.getAppBy());
+		map.put("G", "");
+		map.put("IRA", false);
+		map.put("C", "0");
+		
+		list.add(0, map);
+		
+		map = new HashMap<String, Object>();
+		map.put("LEVEL", mainWorkflowService.getTaskCaption(MainWorkflowConstant.TN_PREPARER, lang, null));
+		map.put("U", model.getCreatedBy());
+		map.put("G", "");
+		map.put("IRA", false);
+		map.put("C", "0");
+		
+		list.add(0, map);
+		
+		/*
+		 * Add Next Actor
+		 */
+		List<Map<String, Object>> actorList = null;
+		SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
         try {
-           
-            PcmOrdDAO dao = session.getMapper(PcmOrdDAO.class);
-
-    		list = dao.listWorkflowPath(id);
             
-            session.commit();
+            MainWorkflowNextActorDAO dao = session.getMapper(MainWorkflowNextActorDAO.class);
+
+    		actorList = dao.listWorkflowPath(id);
+    		
+    		list.addAll(actorList);
+            
         } catch (Exception ex) {
 			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
-        
-        return list;
+		
+        /*
+         * Convert Employeee Code to Name
+         */
+        lang = (lang!=null && lang.startsWith("th") ? "_th" : "");
+
+        List<String> codes = new ArrayList<String>();
+		for(Map<String, Object> rec:list) {
+			codes.add((String)rec.get("U"));
+		}
+		if (codes.size()>0) {
+			List<Map<String, Object>> empList = adminHrEmployeeService.listInSet(codes);
+			for(Map<String, Object> rec:list) {
+				for (Map<String, Object> empModel : empList) {
+					if (empModel.get("code").equals(rec.get("U"))) {
+						rec.put("U", empModel.get("code") + " - " + empModel.get("first_name"+lang));
+						break;
+					}
+				}
+			}
+		}
+		
+		return list;
 	}
 
 	@Override
-	public void update(SubModuleModel subModuleModel) throws Exception {
+	public void update(SqlSession session, SubModuleModel subModuleModel) throws Exception {
+		PcmOrdModel model = (PcmOrdModel)subModuleModel;
+        PcmOrdDAO dao = session.getMapper(PcmOrdDAO.class);
+        model.setUpdatedTime(new Timestamp(Calendar.getInstance().getTimeInMillis()));
+    	dao.update(model);
+	}
+	
+	public void _update(SubModuleModel subModuleModel) throws Exception {
 		PcmOrdModel model = (PcmOrdModel)subModuleModel;
 		
         SqlSession session = PcmUtil.openSession(dataSource);
@@ -729,14 +859,13 @@ public class PcmOrdService implements SubModuleService {
 			throws Exception {
 		PcmOrdModel pcmOrdModel = (PcmOrdModel)paramModel;
 		
-		MainMasterModel descFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_WF_DESC_FORMAT);
+		MainMasterModel descFormatModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_WF_DESC_FORMAT,false);
 		String descFormat = descFormatModel.getFlag1();
 		
 		JSONObject map = PcmOrdUtil.convertToJSONObject(pcmOrdModel);
 		
-		Writer w = null;
 		TemplateProcessor pc = templateService.getTemplateProcessor("freemarker");
-		w = new StringWriter();
+		Writer w = new StringWriter();
 		pc.processString(descFormat, map, w);
 		
 		return w.toString();
@@ -765,7 +894,7 @@ public class PcmOrdService implements SubModuleService {
 
         parameters.put(PcmOrdWorkflowConstant.PROP_DOCUMENT, (Serializable)docList);
         parameters.put(PcmOrdWorkflowConstant.PROP_ATTACH_DOCUMENT, (Serializable)attachDocList);
-        parameters.put(PcmOrdWorkflowConstant.PROP_COMMENT_HISTORY, "");
+//        parameters.put(PcmOrdWorkflowConstant.PROP_COMMENT_HISTORY, "");
         
         parameters.put(PcmOrdWorkflowConstant.PROP_TASK_HISTORY, "");	
         
@@ -776,52 +905,51 @@ public class PcmOrdService implements SubModuleService {
 		parameters.put(PcmOrdWorkflowConstant.PROP_TOTAL, model.getTotal());
 		
 		Map<String, Object> docType = adminWkfConfigService.getDocType(model.getDocType());
-		parameters.put(PcmOrdWorkflowConstant.PROP_METHOD, (String)docType.get(MainWkfConfigDocTypeConstant.TFN_DESCRIPTION));
+		String desc = (String)docType.get(MainWkfConfigDocTypeConstant.TFN_DESCRIPTION);
+		int pos = desc.indexOf("-");
+		if (pos>=0) {
+			desc = desc.substring(pos+1);
+		}
+		parameters.put(PcmOrdWorkflowConstant.PROP_METHOD, desc);
 		
-		MainHrEmployeeModel empModel = adminHrEmployeeService.get(model.getAppBy());
-		parameters.put(PcmOrdWorkflowConstant.PROP_REQUESTER, empModel.getFirstName()+" "+empModel.getLastName());
+		
+//		MainHrEmployeeModel empModel = adminHrEmployeeService.get(model.getAppBy());
+//		parameters.put(PcmOrdWorkflowConstant.PROP_REQUESTER, empModel.getFirstName()+" "+empModel.getLastName());
+		parameters.put(PcmOrdWorkflowConstant.PROP_REQUESTER, model.getAppBy());
 	}
 
 	@Override
-	public String getActionCaption(String action) {
-		Map<String, String> WF_TASK_ACTIONS = new HashMap<String, String>();
+	public String getActionCaption(String action, String lang) {
+		StringBuffer sb = new StringBuffer();
+		if (lang!=null && lang.indexOf("th")>=0) {
+			sb.append(PcmOrdConstant.WF_TASK_ACTIONS_TH.get(action));
+		} else {
+			sb.append(PcmOrdConstant.WF_TASK_ACTIONS.get(action));
+		}
 		
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_START, "ขออนุมัติ");
-		
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_APPROVE, "อนุมัติ");
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_REJECT, "ไม่อนุมัติ");
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_CONSULT, "ขอคำปรึกษา");
-    	
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_COMMENT, "ให้ความเห็น");
-    	
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_RESUBMIT, "ขออนุมัติใหม่");
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_CANCEL, "ยกเลิก");
-    	
-    	WF_TASK_ACTIONS.put(MainWorkflowConstant.TA_COMPLETE, "PO");
-		
-		return WF_TASK_ACTIONS.get(action);
+		return sb.toString();
 	}
 
 	@Override
 	public List<MainWorkflowNextActorModel> listNextActor(SubModuleModel model) {
 		List<MainWorkflowNextActorModel> list = new ArrayList<MainWorkflowNextActorModel>();
 		
-		PcmOrdModel realModel = (PcmOrdModel)model;
-		
-		List<Map<String, Object>> superList = adminWkfConfigService.listSupervisor(realModel.getSectionId());
-		if(superList.size()>0) {
-			Map<String, Object> map = superList.get(0);
-			
-			MainWorkflowNextActorModel actorModel = new MainWorkflowNextActorModel();
-			
-			actorModel.setMasterId(model.getId());
-			actorModel.setLevel(1);
-			actorModel.setActor(PcmReqConstant.NA_BOSS);
-			actorModel.setActorUser(MainUserGroupUtil.code2login((String)map.get(MainHrEmployeeConstant.TFN_EMPLOYEE_CODE)));
-			actorModel.setCreatedBy(model.getUpdatedBy());
-			
-			list.add(actorModel);
-		}
+//		PcmOrdModel realModel = (PcmOrdModel)model;
+//		
+//		List<Map<String, Object>> superList = adminWkfConfigService.listSupervisor(realModel.getSectionId());
+//		if(superList.size()>0) {
+//			Map<String, Object> map = superList.get(0);
+//			
+//			MainWorkflowNextActorModel actorModel = new MainWorkflowNextActorModel();
+//			
+//			actorModel.setMasterId(model.getId());
+//			actorModel.setLevel(1);
+//			actorModel.setActor(PcmReqConstant.NA_BOSS);
+//			actorModel.setActorUser(MainUserGroupUtil.code2login((String)map.get(MainHrEmployeeConstant.TFN_EMPLOYEE_CODE)));
+//			actorModel.setCreatedBy(model.getUpdatedBy());
+//			
+//			list.add(actorModel);
+//		}
 		
 		return list;
 	}
@@ -830,12 +958,12 @@ public class PcmOrdService implements SubModuleService {
 	public String getFirstComment(SubModuleModel model) {
 		PcmOrdModel realModel = (PcmOrdModel)model;
 		
-		return realModel.getObjective() + " " + realModel.getDocType();
+		return realModel.getObjective();
 	}
 
 	@Override
-	public String getNextActionInfo() {
-		return "ฝ่ายพัสดุ";
+	public String getNextActionInfo(Object obj, String lang) {
+		return mainWorkflowService.getTaskCaption(MainWorkflowConstant.TN_PROCUREMENT,lang,null);
 	}
 
 	@Override
@@ -856,5 +984,375 @@ public class PcmOrdService implements SubModuleService {
 	@Override
 	public String getModelPrefix() {
 		return PcmOrdWorkflowConstant.MODEL_PREFIX;
+	}
+
+//	@Override
+//	public Map<String, String> getBossMap(String docType, SubModuleModel subModuleModel) throws Exception {
+//		
+//		PcmOrdModel model = (PcmOrdModel)subModuleModel;
+//		
+//		/*
+//		 * Search Original Boss List
+//		 */
+//		Map<String, String> tmpMap = new LinkedHashMap<String, String>();
+//		
+//		log.info("getBossMap()");
+//		log.info("  docType:'"+docType+"'");
+//		log.info("  reqUser:"+model.getCreatedBy());
+//		
+//        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+//        try {
+//        	MainBossDAO dao = session.getMapper(MainBossDAO.class);
+//        	
+//        	Map<String, Object> params = new HashMap<String, Object>();
+//        	params.put("docType", docType);
+//       		params.put("sectionId", model.getSectionId());
+//        	
+//    		log.info("  sectionId:"+params.get("sectionId"));
+//        	List<Map<String, Object>> bossList = dao.list(params);
+//        	log.info("  bossList"+bossList);
+//        	if (bossList==null || bossList.size()==0) {
+//        		throw new NotFoundApprovalMatrixException();
+//        	}
+//        	
+//        	tmpMap = getUnitBossMap(model, bossList, tmpMap);
+//
+//            log.info("  bossMap:"+tmpMap);                       
+//        } catch (Exception ex) {
+//        	log.error(ex);
+//        	throw ex;
+//        } finally {
+//        	session.close();
+//        }
+//		
+//		return tmpMap;
+//	}
+	
+	public Map<String, String> getUnitBossMap(PcmOrdModel model, List<Map<String, Object>> bossList,Map<String, String> tmpMap ) throws Exception {
+		
+		String reqByCode = MainUserGroupUtil.login2code(model.getCreatedBy());
+    	
+    	Map<String, Object> reservedBoss = null;
+    	Map<String, Object> lastBossMap = null;
+    	
+    	/*
+    	 * Find Boss by level, if reqByCode exist in workflow path
+    	 */
+    	int start = 0;
+    	int i = 0;
+    	
+    	int len = bossList.size();
+    	if (len>0) {
+	    	for(int j=len-1;j>=0;j--) {
+	    		Map<String, Object> boss = bossList.get(j);
+	    		
+	    		log.info("  "+boss.get("lvl")+" "+boss.get("employee_code"));
+	    		
+	    		if (boss.get("employee_code").equals(model.getCreatedBy())) {
+	    			log.info(model.getCreatedBy()+" is in path");
+	    			start = j;
+	    			break;
+	    		}
+	    	}
+    	}
+    	
+    	
+    	/*
+    	 * Find Boss by money, if reqByCode not exist in workflow path
+    	 */
+    	Double total = model.getTotal();
+    	log.info("total:"+total);
+   	
+    	i = 0;
+    	log.info("  start:"+start);
+    	for(Map<String, Object> boss : bossList) {
+    		
+    		log.info("  "+boss.get("lvl")+" "+boss.get("employee_code")+" (amt:"+boss.get("amount_max")+")");
+    		
+    		if (i>=start) {
+    			if (tmpMap.size()==0 || total > (Double)lastBossMap.get("amount_max")) {
+    				tmpMap.put((String)boss.get("lvl"), (String)boss.get("employee_code"));
+    				lastBossMap = boss;
+    			}
+    			else
+    			if (reservedBoss==null) {
+    				reservedBoss = boss;
+    				break;
+    			}
+    		}
+    		i++;
+    	}
+    	
+    	log.info("lastBoss:"+lastBossMap.get("employee_code")+", reqBy:"+model.getCreatedBy());
+    	/*
+    	 * Replace Last Boss if he is Requester
+    	 */
+    	if (lastBossMap.get("employee_code").equals(model.getCreatedBy())) {
+    		if (reservedBoss!=null) {
+        		tmpMap.remove(lastBossMap.get("lvl"));
+    			tmpMap.put((String)reservedBoss.get("lvl"), (String)reservedBoss.get("employee_code"));
+    		}
+    		else {
+    			// Waiting SA
+    			
+    		}
+    	}
+    	
+    	
+    	/*
+    	 * Remove Requester from first position
+    	 */
+    	if (tmpMap.size()>1) {
+    		i = 0;
+    		for(Entry<String, String> e : tmpMap.entrySet()) {
+    			if(i==0) {
+    				if (e.getValue().equals(model.getCreatedBy())) {
+    					tmpMap.remove(e.getKey());
+    					break;
+    				}
+    			}
+    			i++;
+    		}
+    	}
+    	
+    	
+//    	/*
+//    	 * Remove Requester from Boss List
+//    	 */
+//    	List<String> rmList = new ArrayList<String>();
+//    	int i = 1;
+//    	int size = tmpMap.size();
+//    	for(Entry<String, String> e : tmpMap.entrySet()) {
+//    		log.info("  e.key:"+e.getKey()+", value:"+e.getValue());
+//    		
+//    		if (i==size) {
+//    			break;
+//    		}
+//    		
+//    		if (e.getValue().equals(reqByCode)) {
+//    			rmList.add(e.getKey());
+//    		}
+//    		
+//    		i++;
+//    	}
+//
+//    	for(String k : rmList) {
+//    		tmpMap.remove(k);
+//    	}
+		
+		 /*
+         * Remove duplicated Boss
+         */
+		Map<String, String> map = removeDuplicatedBoss(tmpMap);
+		
+		return map;
+	}
+	
+	private Map<String, String> removeDuplicatedBoss(Map<String, String> tmpMap) {
+		
+		Map<String, String> map = new LinkedHashMap<String, String>();
+		
+		Entry<String, String> prevEntry = null;
+		for(Entry<String, String> e : tmpMap.entrySet()) {
+			
+			if (prevEntry==null || !e.getValue().equals(prevEntry.getValue())) {
+				map.put(e.getKey(), e.getValue());
+			}
+			
+			prevEntry = e;
+		}
+		
+//		if (prevEntry != null) {
+//			map.put((String)prevEntry.getKey(), (String)prevEntry.getValue());
+//		}
+//		
+        log.info("  map="+map);
+
+        return map;
+	}
+	
+
+
+	@Override
+	public List<String> listRelatedUser(SubModuleModel model) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	@Override
+	public String getDocDesc() {
+		return "ใบ พด.";
+	}
+	
+	@Override
+	public MainWorkflowHistoryModel getReqByWorkflowHistory(SubModuleModel subModuleModel) {
+		return null;
+	}
+	
+	@Override
+	public MainWorkflowHistoryModel getAppByWorkflowHistory(SubModuleModel subModuleModel) {
+		MainWorkflowHistoryModel hModel = new MainWorkflowHistoryModel();
+		
+		PcmOrdModel model = (PcmOrdModel)subModuleModel;
+		
+		hModel.setTime(model.getCreatedTime());
+		hModel.setLevel(0);
+		hModel.setComment("");
+		hModel.setAction(getActionCaption(MainWorkflowConstant.TA_APPROVE,""));
+		hModel.setActionTh(getActionCaption(MainWorkflowConstant.TA_APPROVE,"th"));
+		hModel.setTask(MainWorkflowConstant.WF_TASK_NAMES.get(MainWorkflowConstant.TN_SUPERVISOR));
+		hModel.setTaskTh(MainWorkflowConstant.WF_TASK_NAMES_TH.get(MainWorkflowConstant.TN_SUPERVISOR));
+		hModel.setBy(model.getAppBy());
+		
+		return hModel;
 	}	
+
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void continueRequesterTask(final String exeId, String action, PcmOrdModel model, String comment, String docType) {
+		Map<String, Object> map = new HashMap<String, Object>();
+		
+		map.put(PcmOrdWorkflowConstant.MODEL_PREFIX+"reSubmitOutcome", action);
+		map.put(PcmOrdWorkflowConstant.MODEL_PREFIX+"workflowStatus", action);
+		map.put("reqBy", model.getUpdatedBy());
+		map.put("comment", comment);
+		map.put("docType", docType);
+		
+        List<ActivitiScriptNode> docList = new ActivitiScriptNodeList();
+        docList.add(new ActivitiScriptNode(new NodeRef(model.getDocRef()), serviceRegistry));
+		map.put(PcmOrdWorkflowConstant.MODEL_PREFIX+"document", docList);
+		
+        List<ActivitiScriptNode> attachDocList = new ActivitiScriptNodeList();
+        if(model.getListAttachDoc() !=null) {
+        	for(String nodeRef : model.getListAttachDoc()) {
+        		log.info("attach node ref:"+nodeRef);
+        		attachDocList.add(new ActivitiScriptNode(new NodeRef(nodeRef), serviceRegistry));
+            }
+        }
+		map.put(PcmOrdWorkflowConstant.MODEL_PREFIX+"attachDocument", attachDocList);
+
+		runtimeService.signal(exeId, map);
+	}
+	
+	@Transactional(readOnly = false, propagation = Propagation.REQUIRED)
+	public void updateFinalDoc(PcmOrdModel model, Map<String, Object> doc) throws Exception {
+		// update doc content
+		if (doc!=null) {
+			log.info("doc!=null");
+			FileUtil fileUtil = new FileUtil();
+			InputStream is = fileUtil.base64InputStream((String)doc.get("content"));
+			
+			ContentWriter contentWriter = contentService.getWriter(new NodeRef(model.getDocRef()), ContentModel.PROP_CONTENT, true);
+		    contentWriter.setMimetype("application/pdf");
+		    contentWriter.putContent(is);
+			log.info("update doc");
+		}
+	}
+
+	@Override
+	public List<String> getSpecialUserForAddPermission(SubModuleModel model) {
+		List<String> list = new ArrayList();
+		
+		PcmOrdModel pcmOrdModel = (PcmOrdModel)model;
+		
+		list.add(pcmOrdModel.getAppBy());
+		
+		return list;
+	}
+	
+	@Override
+	public String getFirstStatus() {
+		return PcmOrdConstant.ST_WAITING;
+	}
+
+	@Override
+	public Boolean addPermissionToAttached() {
+		return true;
+	}
+
+	@Override
+	public List<String> getSpecialGroupForAddPermission() {
+		MainMasterModel topGroup = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_TOP_GROUP,false);
+		
+		String[] tgs = topGroup!=null && topGroup.getFlag1()!=null ? topGroup.getFlag1().split(",") : null;
+		
+		return Arrays.asList(tgs);
+	}
+
+	@Override
+	public String getWorkflowDescriptionEn(SubModuleModel paramModel)
+			throws Exception {
+		PcmOrdModel model = (PcmOrdModel)paramModel;
+		
+		PcmOrdModel enModel = new PcmOrdModel();
+		enModel.setId(model.getId());
+		enModel.setObjective(model.getObjective());
+		enModel.setStatus("");
+		enModel.setCreatedBy(model.getCreatedBy());
+		enModel.setTotal(model.getTotal());
+		enModel.setDocType(model.getDocType());
+		
+		prepareModelForWfDesc(enModel, "");
+		
+		return getWorkflowDescription(enModel);
+	}
+
+	@Override
+	public QName getPropDescEn() {
+		return PcmOrdWorkflowConstant.PROP_DESCRIPTION;
+	}
+
+	@Override
+	public void setFirstTaskAssignee(Map<QName, Serializable> parameters,
+			SubModuleModel model) {
+	}
+
+	@Override
+	public void prepareModelForWfDesc(SubModuleModel smModel, String lang) {
+		PcmOrdModel model = (PcmOrdModel)smModel;
+		
+		Map<String,Object> dtl = adminHrEmployeeService.getWithDtl(model.getCreatedBy(),null);
+		String langSuffix = lang!=null && lang.startsWith("th") ? "_th" : "";
+		String ename = dtl.get("title"+langSuffix) + " " + dtl.get("first_name"+langSuffix) + " " + dtl.get("last_name"+langSuffix);
+		model.setReqByName(ename);
+		
+		if (model.getDocType()!=null) {
+//			MainMasterModel method = masterService.getByTypeAndCode(MainMasterConstant.TYPE_PCM_ORD_DOC_TYPE,model.getDocType());
+			Map<String, Object> docType = adminWkfConfigService.getDocType(model.getDocType());
+			model.setMethod((String)docType.get(MainWkfConfigDocTypeConstant.TFN_DESCRIPTION));
+		}
+
+	}
+
+	@Override
+	public Map<String, Object> getWorkflowPathParamters(SubModuleModel subModuleModel) {
+		Map<String,Object> map = new HashMap<String,Object>();
+		
+		PcmOrdModel model = (PcmOrdModel)subModuleModel;
+		
+		map.put(MainWorkflowConstant.WPP_BGT_SRC_TYPE, MainBudgetSrcConstant.TYPE_UNIT);
+		map.put(MainWorkflowConstant.WPP_BGT_SRC, model.getSectionId());
+		map.put(MainWorkflowConstant.WPP_REQ_BY, model.getCreatedBy());
+		
+		return map;
+	}
+
+	@Override
+	public Double getWorkflowPathParamterTotalForProject(SubModuleModel subModuleModel) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Double getWorkflowPathParamterTotalForSection(SubModuleModel subModuleModel) {
+		PcmOrdModel model = (PcmOrdModel)subModuleModel;
+		
+		Double total = model.getTotal();
+		
+		return total;
+	}
+
+	@Override
+	public String getMessage(String key) {
+		return PcmOrdUtil.getMessage(key, I18NUtil.getLocale());
+	}
 }

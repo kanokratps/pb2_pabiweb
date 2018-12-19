@@ -52,6 +52,7 @@ Import-Package: com.github.dynamicextensionsalfresco.actions.annotations
  ,org.alfresco.service.cmr.model
  ,org.alfresco.service.cmr.version
  ,org.alfresco.service.namespace
+ ,org.alfresco.util
  ,org.springframework.aop
  ,org.springframework.aop.framework
  ,org.springframework.beans.factory.annotation
@@ -79,33 +80,47 @@ Import-Package: com.github.dynamicextensionsalfresco.actions.annotations
  ,org.json
  ,org.json.simple
  ,sun.reflect
+ ,pb.repo.admin.constant
  ,pb.repo.admin.model
  ,pb.repo.admin.dao
  ,pb.repo.admin.service
  ,pb.repo.admin.util
+ ,pb.repo.admin.exception
  ,pb.repo.common.mybatis
  ,pb.common.constant
+ ,pb.common.comparator
+ ,pb.common.exception
  ,pb.common.model
  ,pb.common.util
  ,pb.common.wscript
  ,org.apache.commons.logging
- ,org.xml.sax
  ,javax.xml.parsers
  ,javax.xml.bind
+ ,javax.servlet.http
  ,org.apache.commons.digester
  ,org.apache.commons.collections.map
  ,org.apache.commons.beanutils
  ,org.apache.log4j
  ,org.w3c.dom
  ,org.apache.chemistry.opencmis.commons.impl
+ ,org.apache.xerces.parsers
+ ,org.xml.sax
+ ,org.xml.sax.helpers
+ ,org.apache.commons.codec.digest
 Bundle-SymbolicName: pb-exp-repo-dyna
 Bundle-ClassPath: .
  ,lib/sun.misc.BASE64Decoder.jar
- ,lib/itextpdf-5.5.0.jar
- ,lib/jasperreports-5.6.0.jar
- ,lib/jasperreports-fonts-5.6.0.jar
+ ,lib/itextpdf-5.5.9.jar
+ ,lib/jasperreports-6.2.2.jar
+ ,lib/jasperreports-fonts-6.2.2.jar
+ ,lib/jasperreports-functions-6.2.2.jar
+ ,lib/joda-time-2.1.jar
+ ,lib/PrintUtil-0.99.jar
  ,lib/jasper-compiler-jdt-5.5.23.jar
  ,lib/com.lowagie.text-2.1.7.jar
  ,lib/fastjson-1.2.5.jar
  ,lib/xmlrpc-1.1.1.jar
  ,lib/xmlrpc-client-1.1.1.jar
+ ,lib/poi-3.13.jar
+ ,lib/poi-ooxml-3.13.jar
+ ,lib/poi-scratchpad3.13.jar

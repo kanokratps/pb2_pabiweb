@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainAccountFiscalYearDAO">
+    <resultMap id="result" type="mainAccountFiscalYearModel">
+        <result property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="state" column="state"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+       SELECT *
+	   FROM pb2_ext_account_fiscalyear
+	   WHERE state = 'draft'
+	   AND date_stop &gt;= now() - interval '1 day'
+	   ORDER BY name
+    </select>
+    
+    <select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+        select * from pb2_ext_account_fiscalyear
+        where id=#{id}
+    </select>
+    	
+    <select id="getCurrent" resultType="org.apache.commons.collections.map.CaseInsensitiveMap">
+		select cast(name as integer) fiscalyear
+		from pb2_ext_account_fiscalyear
+		where now() between date_start and date_stop
+    </select>
+        
+</mapper>

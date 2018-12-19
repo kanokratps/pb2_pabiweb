@@ -9,7 +9,6 @@ import org.json.JSONObject;
 
 import pb.repo.pcm.constant.PcmReqDtlConstant;
 import pb.repo.pcm.model.PcmReqDtlModel;
-import pb.repo.pcm.model.PcmReqModel;
 
 public class PcmReqDtlUtil {
 	
@@ -35,9 +34,8 @@ public class PcmReqDtlUtil {
 			jsObj.put(PcmReqDtlConstant.JFN_ID, model.getId());
 			jsObj.put(PcmReqDtlConstant.JFN_DESCRIPTION, model.getDescription());
 			jsObj.put(PcmReqDtlConstant.JFN_QUANTITY, String.valueOf(model.getQuantity()));
-			jsObj.put(PcmReqDtlConstant.JFN_UNIT, model.getUnit());
+			jsObj.put(PcmReqDtlConstant.JFN_UNIT_ID, model.getUnitId());
 			jsObj.put(PcmReqDtlConstant.JFN_PRICE, String.valueOf(model.getPrice()));
-			jsObj.put(PcmReqDtlConstant.JFN_PRICE_CNV, String.valueOf(model.getPriceCnv()));
 			jsObj.put(PcmReqDtlConstant.JFN_TOTAL, String.valueOf(model.getTotal()));
 			jsObj.put(PcmReqDtlConstant.JFN_CREATED_TIME, model.getCreatedTime());
 			jsObj.put(PcmReqDtlConstant.JFN_CREATED_BY, model.getCreatedBy());
@@ -61,12 +59,23 @@ public class PcmReqDtlUtil {
 				
 				PcmReqDtlModel model = new PcmReqDtlModel();
 				model.setMasterId(masterId);
-				model.setIsEquipment(jsonObj.getString(PcmReqDtlConstant.JFN_IS_EQUIPMENT));
+				model.setActName(jsonObj.getString(PcmReqDtlConstant.JFN_ACT_NAME));
+				model.setActId(jsonObj.getInt(PcmReqDtlConstant.JFN_ACT_ID));
+				model.setActGrpName(jsonObj.getString(PcmReqDtlConstant.JFN_ACT_GRP_NAME));
+				model.setActGrpId(jsonObj.getInt(PcmReqDtlConstant.JFN_ACT_GRP_ID));
+				model.setAssetName(jsonObj.getString(PcmReqDtlConstant.JFN_ASSET_NAME));
+				Object o = jsonObj.get(PcmReqDtlConstant.JFN_ASSET_RULE_ID);
+				model.setAssetRuleId(o!=null && !o.equals("null") && !o.equals("") ? jsonObj.getInt(PcmReqDtlConstant.JFN_ASSET_RULE_ID) : null);
 				model.setDescription(jsonObj.getString(PcmReqDtlConstant.JFN_DESCRIPTION));
 				model.setQuantity(Double.parseDouble(jsonObj.getString(PcmReqDtlConstant.JFN_QUANTITY)));
+				model.setUnitId(jsonObj.getInt(PcmReqDtlConstant.JFN_UNIT_ID));
 				model.setUnit(jsonObj.getString(PcmReqDtlConstant.JFN_UNIT));
 				model.setPrice(Double.parseDouble(jsonObj.getString(PcmReqDtlConstant.JFN_PRICE)));
-				model.setPriceCnv(Double.parseDouble(jsonObj.getString(PcmReqDtlConstant.JFN_PRICE_CNV)));
+				model.setFiscalYear(jsonObj.get(PcmReqDtlConstant.JFN_FISCAL_YEAR)!=null 
+						&& !jsonObj.getString(PcmReqDtlConstant.JFN_FISCAL_YEAR).equals("null") 
+						&& !jsonObj.getString(PcmReqDtlConstant.JFN_FISCAL_YEAR).equals("")
+						? Integer.parseInt(jsonObj.getString(PcmReqDtlConstant.JFN_FISCAL_YEAR)) 
+						: 0);
 				model.setTotal(Double.parseDouble(jsonObj.getString(PcmReqDtlConstant.JFN_TOTAL)));
 				
 				list.add(model);
@@ -78,7 +87,7 @@ public class PcmReqDtlUtil {
 	
 	public static void addAction(List<PcmReqDtlModel> list) {
 		for (PcmReqDtlModel model : list) {
-			model.setAction("ED");
+			model.setAction("CED");
 		}
 	}	
 }

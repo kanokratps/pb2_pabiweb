@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainHrExpenseRuleDAO">
+    <resultMap id="result" type="mainHrExpenseRuleModel">
+        <result property="id" column="id"/>
+        <result property="activityId" column="activity_id"/>
+        <result property="condition1" column="condition_1"/>
+        <result property="condition2" column="condition_2"/>
+        <result property="position" column="position"/>
+        <result property="uom" column="uom"/>
+        <result property="amount" column="amount"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+    </resultMap>
+
+	<select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select e.*,a.name activity_name
+		FROM pb2_ext_hr_expense_rule e
+		left join pb2_ext_account_activity a on e.activity_id=a.id
+		WHERE activity_id=#{id}
+		AND condition_1=#{cond} 
+		order by condition_1
+	</select>
+	
+	<select id="listDistinct" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select activity_id,condition_1
+		from pb2_ext_hr_expense_rule
+		WHERE activity_id=#{id}
+		group by activity_id,condition_1
+		order by condition_1
+	</select>
+	
+	<select id="count"  resultType="long">
+        select
+		    count(1)
+		from
+		    pb2_ext_hr_employee
+    </select>
+    
+    <select id="get" parameterType="string" resultMap="result">
+        SELECT
+		    *
+		FROM
+		    pb2_ext_hr_employee
+		WHERE lpad(employee_code, 6 ,'0')=lpad(#{code}, 6 ,'0')
+    </select>
+    
+</mapper>

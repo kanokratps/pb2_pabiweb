@@ -13,7 +13,7 @@ public class SubModuleConstant {
 	
 	public static final String TFN_FOLDER_REF = "FOLDER_REF";
 	public static final String TFN_DOC_REF = "DOC_REF";
-
+	public static final String TFN_STATUS = "STATUS";
 	
 	public static final String TFN_CREATED_TIME = "CREATED_TIME";
 	public static final String TFN_CREATED_BY = "CREATED_BY";
@@ -32,6 +32,8 @@ public class SubModuleConstant {
 	public static final String JFN_DOC_REF = "doc_ref";
 	public static final String JFN_ATTACH_DOC = "attach_doc";
 
+	public static final String JFN_STATUS = "status";
+	
 	public static final String JFN_CREATED_TIME = "created_time";
 	public static final String JFN_CREATED_BY = "created_by";
 	public static final String JFN_UPDATED_TIME = "updated_time";

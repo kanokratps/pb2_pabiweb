@@ -25,11 +25,9 @@ import pb.repo.admin.service.AdminCompleteNotificationService;
 import pb.repo.admin.service.AdminMasterService;
 import pb.repo.admin.service.AdminViewerService;
 import pb.repo.admin.service.AlfrescoService;
-import pb.repo.admin.service.MainWorkflowService;
 import pb.repo.pcm.constant.PcmOrdWorkflowConstant;
-import pb.repo.pcm.model.PcmOrdModel;
 import pb.repo.pcm.service.PcmOrdService;
-import pb.repo.pcm.service.PcmSignatureService;
+import pb.repo.pcm.service.PcmOrdWorkflowService;
 
 @Component("pb.pcm.workflow.pd.start.CompleteTask")
 public class CompleteTask implements ExecutionListener {
@@ -65,11 +63,8 @@ public class CompleteTask implements ExecutionListener {
 	PcmOrdService pcmOrdService;
 	
 	@Autowired
-	MainWorkflowService mainWorkflowService;
+	PcmOrdWorkflowService mainWorkflowService;
 
-	@Autowired
-	PcmSignatureService signatureService;
-	
 	@Autowired
 	AdminMasterService adminMasterService;
 	
@@ -100,53 +95,22 @@ public class CompleteTask implements ExecutionListener {
 		AuthenticationUtil.runAs(new RunAsWork<String>() {
 			public String doWork() throws Exception
 			{
-//				log.info("  task.getTaskDefinitionKey():" + task.getTaskDefinitionKey());
-//				log.info("  task.id="+task.getId());
-//				log.info("  task.Description="+task.getDescription());
-//				log.info("  task.EventName="+task.getEventName());
-//				log.info("  task.Name="+task.getName());
-//				log.info("  task.Owner="+task.getOwner());
-				
 				try {
-//					Object id = ObjectUtils.defaultIfNull(task.getVariable(WF_PREFIX+"id"), "");
 					Object id = ObjectUtils.defaultIfNull(execution.getVariable(WF_PREFIX+"id"), "");
 					
-					log.info("  id :: " + id.toString());
-					PcmOrdModel model = pcmOrdService.get(id.toString());
-					Integer level = model.getWaitingLevel();
-//					Integer lastLevel = mainWorkflowService.getLastReviewerLevel(model.getId());
-//					ExecutionEntity executionEntity = ((ExecutionEntity)task.getExecution()).getProcessInstance();
-					
-					String curUser = authenticationService.getCurrentUserName();
-					String taskKey = "ผู้ขออนุมัติ";
-					String finalAction = MainWorkflowConstant.TA_START;
-					
-//					log.info("  level:"+level);
-//					log.info("  last level:"+lastLevel);
-//					log.info("  action:"+finalAction);
+					log.info("  id:" + id.toString());
+//					PcmOrdModel model = pcmOrdService.get(id.toString(), null);
+//					Integer level = model.getWaitingLevel();
 //					
-//					model.setStatus(PcmReqConstant.ST_WAITING);
-//					model.setWaitingLevel(1);
+//					String curUser = authenticationService.getCurrentUserName();
+//					String taskKey = MainWorkflowConstant.WF_TASK_NAMES.get(MainWorkflowConstant.TN_PREPARER);;
+//					String finalAction = MainWorkflowConstant.TA_START;
 					
-//					mainWorkflowService.updateExecutionEntity(executionEntity, task, "requestedTime");
-//					mainWorkflowService.updateExecutionEntity(executionEntity, task, "remark");
+//					String taskComment = model.getObjective()+ " " + model.getDocType();
 //					
-//					mainWorkflowService.updateExecutionEntity(executionEntity, task, "document");
-//					mainWorkflowService.updateExecutionEntity(executionEntity, task, "attachDocument");
-					
-					
-					// Keep TaskId to pcmwf:taskHistory.
-//					String taskHistory = (String)execution.getVariable(WF_PREFIX+"taskHistory");
-//					String finalTaskHistory = MainWorkflowUtil.appendTaskKey(taskHistory, taskKey, level);
-//					execution.setVariable(WF_PREFIX+"taskHistory", finalTaskHistory);
-
-//					log.info("  status : "+model.getStatus()+", waitingLevel:"+model.getWaitingLevel());
-//					pcmReqService.updateStatus(model);
-					
-					String taskComment = model.getObjective()+ " " + model.getDocType();
-					
-					mainWorkflowService.setModuleService(pcmOrdService);
-					finalAction = mainWorkflowService.saveWorkflowHistory(execution, curUser, taskKey, taskComment, finalAction, null,  model.getId(), level);
+//					mainWorkflowService.setModuleService(pcmOrdService);
+//					finalAction = mainWorkflowService.saveWorkflowHistory(execution, curUser, taskKey, taskComment, finalAction, null,  model.getId(), level, PcmOrdConstant.ST_WAITING);
+					execution.setVariable("LEVEL", 1);
 				}
 				catch (Exception ex) {
 					log.error(ex);

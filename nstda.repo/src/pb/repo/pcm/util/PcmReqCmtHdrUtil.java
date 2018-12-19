@@ -44,6 +44,7 @@ public class PcmReqCmtHdrUtil {
 				PcmReqCmtHdrModel model = new PcmReqCmtHdrModel();
 				model.setPcmReqId(masterId);
 				model.setCommittee(jsonObj.getString(PcmReqCmtHdrConstant.JFN_COMMITTEE));
+				model.setCommitteeId(jsonObj.getInt(PcmReqCmtHdrConstant.JFN_COMMITTEE_ID));
 				
 				list.add(model);
 
@@ -53,6 +54,22 @@ public class PcmReqCmtHdrUtil {
 					JSONObject dtlObj = dtlArr.getJSONObject(j);
 					
 					PcmReqCmtDtlModel dtlModel = new PcmReqCmtDtlModel();
+					dtlModel.setEmployeeCode(dtlObj.getString(PcmReqCmtDtlConstant.JFN_EMPLOYEE_CODE));
+					dtlModel.setTitle("0");
+
+					String tid = null;
+					try {
+						tid = dtlObj.getString(PcmReqCmtDtlConstant.JFN_TID);
+					} catch (Exception ex) {
+						
+					}
+					if (tid!=null && !tid.equals("null") && !tid.equals("")) {
+						dtlModel.setTitle(dtlObj.getString(PcmReqCmtDtlConstant.JFN_TID));
+					} else {
+						dtlModel.setTitle("0");
+//						dtlModel.setTitle(dtlObj.getString(PcmReqCmtDtlConstant.JFN_TITLE)!=null && !dtlObj.getString(PcmReqCmtDtlConstant.JFN_TITLE).equals("null") ? dtlObj.getString(PcmReqCmtDtlConstant.JFN_TITLE) : "");
+					}
+					
 					dtlModel.setFirstName(dtlObj.getString(PcmReqCmtDtlConstant.JFN_FIRST_NAME));
 					dtlModel.setLastName(dtlObj.getString(PcmReqCmtDtlConstant.JFN_LAST_NAME));
 					dtlModel.setPosition(dtlObj.getString(PcmReqCmtDtlConstant.JFN_POSITION));
@@ -64,6 +81,34 @@ public class PcmReqCmtHdrUtil {
 		}
 		
 		return list;
+	}
+	
+	public static JSONArray convertToJSONArray(List<PcmReqCmtHdrModel> inList) throws Exception {
+		
+		List<JSONObject> outList = new ArrayList<JSONObject>();
+		
+		JSONObject jsObj = null;
+		for(PcmReqCmtHdrModel model : inList) {
+			jsObj = new JSONObject();
+			
+			jsObj.put(PcmReqCmtHdrConstant.JFN_ID, model.getId());
+			jsObj.put(PcmReqCmtHdrConstant.JFN_PCM_REQ_ID, model.getPcmReqId());
+			jsObj.put(PcmReqCmtHdrConstant.JFN_COMMITTEE, model.getCommittee());
+			jsObj.put(PcmReqCmtHdrConstant.JFN_COMMITTEE_ID, model.getCommitteeId());
+			
+			jsObj.put(PcmReqCmtHdrConstant.JFN_COMMITTEES, PcmReqCmtDtlUtil.convertToJSONArray(model.getDtlList()));
+			
+			jsObj.put(PcmReqCmtHdrConstant.JFN_CREATED_TIME, model.getCreatedTime());
+			jsObj.put(PcmReqCmtHdrConstant.JFN_CREATED_BY, model.getCreatedBy());
+			jsObj.put(PcmReqCmtHdrConstant.JFN_UPDATED_TIME, model.getUpdatedTime());
+			jsObj.put(PcmReqCmtHdrConstant.JFN_UPDATED_BY, model.getUpdatedBy());		
+			
+			jsObj.put(PcmReqCmtHdrConstant.JFN_ACTION, "ED");
+
+			outList.add(jsObj);
+		}
+		
+		return new JSONArray(outList);
 	}	
 	
 }

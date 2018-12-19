@@ -11,6 +11,7 @@
 		<import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
 		<import uri="http://www.alfresco.org/model/bpm/1.0" prefix="bpm" />
 		<import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+		<import uri="http://www.alfresco.org/model/application/1.0" prefix="app" />
 	</imports>
 
 	<!-- Introduction of new namespaces defined by this model -->
@@ -32,6 +33,7 @@
 			<mandatory-aspects>
 				<aspect>pcmreqwf:commonAspect</aspect>
 				<aspect>pcmreqwf:specialAspect</aspect>
+				<aspect>pcmreqwf:counseleeAspect</aspect>
 				<aspect>pcmreqwf:reSubmitAspect</aspect>
 			</mandatory-aspects>
 		</type>
@@ -41,6 +43,7 @@
 			<mandatory-aspects>
 				<aspect>pcmreqwf:commonAspect</aspect>
 				<aspect>pcmreqwf:specialAspect</aspect>
+				<aspect>pcmreqwf:counseleeAspect</aspect>
 				<aspect>pcmreqwf:reviewAspect</aspect>
 			</mandatory-aspects>
 		</type>
@@ -69,10 +72,6 @@
 				<property name="pcmreqwf:remark">
 					<type>d:text</type>
 				</property>
-				<property name="pcmreqwf:commentHistory">
-					<type>d:text</type>
-					<mandatory>false</mandatory>
-				</property>
 				<property name="pcmreqwf:nextReviewers">
 					<type>d:text</type>
 					<mandatory>false</mandatory>
@@ -89,8 +88,12 @@
 				<property name="pcmreqwf:currentTaskKey">
 					<type>d:text</type>
 				</property>
-
-				
+				<property name="pcmreqwf:lang">
+					<type>d:text</type>
+				</property>
+				<property name="pcmreqwf:description">
+					<type>d:text</type>
+				</property>
 			</properties>
 			
 			<associations>
@@ -145,6 +148,9 @@
 		<aspect name="pcmreqwf:consultAspect">
 			<title>PCM WorkFlow Consult Task Properties</title>
 			<properties>
+				<property name="pcmreqwf:counselee">
+					<type>d:text</type>
+				</property>
 				<property name="pcmreqwf:consultOutcome">
 					<type>d:text</type>
 					<default>Comment</default>
@@ -157,6 +163,15 @@
 							</parameter>
 						</constraint>
 					</constraints>
+				</property>
+			</properties>
+		</aspect>
+		
+		<aspect name="pcmreqwf:counseleeAspect">
+			<title>PCM WorkFlow Consult Task Properties</title>
+			<properties>
+				<property name="pcmreqwf:consultant">
+					<type>d:text</type>
 				</property>
 			</properties>
 		</aspect>
@@ -200,6 +215,21 @@
 					<type>d:double</type>
 				</property>
 			</properties>
+			
+			<associations>
+				<association name="pcmreqwf:refDocument">
+					<source>
+						<mandatory>false</mandatory>
+						<many>false</many>
+					</source>
+					<target>
+						<class>cm:content</class>
+						<mandatory>false</mandatory>
+						<many>true</many>
+					</target>
+				</association>
+			</associations>			
+			
 		</aspect>
 		
 	</aspects>

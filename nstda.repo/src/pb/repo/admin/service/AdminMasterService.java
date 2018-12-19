@@ -68,9 +68,6 @@ public class AdminMasterService {
 
     		list = mainMasterDAO.list(map);
             
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -78,7 +75,7 @@ public class AdminMasterService {
         return list;
 	}
 	
-	public List<Map<String, Object>> listByType(String type, String searchTerm, Boolean active, Integer start, Integer limit) {
+	public List<Map<String, Object>> listByType(String type, String searchTerm, Boolean active, Boolean system, Integer start, Integer limit) {
 		
 		List<Map<String, Object>> list = null;
 		
@@ -96,21 +93,14 @@ public class AdminMasterService {
     		Map<String, Object> map = new HashMap<String, Object>();
     		map.put("type",type);
     		map.put("searchTerm", searchTerm);
-    		if (active!=null) {
-    			map.put("active", active);
-    		}
-    		else {
-    			map.put("active", null);
-    		}
+    		map.put("active", active!=null ? active : null); 
+    		map.put("system", system!=null ? system : null); 
+    		
     		map.put("start", start);
     		map.put("limit", limit);
     		
     		list = mainMasterDAO.listByType(map);
             
-            session.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -132,9 +122,6 @@ public class AdminMasterService {
 
     		list = mainMasterDAO.listAuthType(map);
             
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -156,9 +143,6 @@ public class AdminMasterService {
 
     		list = mainMasterDAO.listByAuthType(map);
             
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -183,9 +167,6 @@ public class AdminMasterService {
 
     		list = mainMasterDAO.listMasterWithOutMatrix(map);
             
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -220,9 +201,6 @@ public class AdminMasterService {
     		model = mainMasterDAO.get(id);
     		model.setTotalRowCount(1l);
             
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -230,7 +208,7 @@ public class AdminMasterService {
         return model;
 	}
 	
-	public MainMasterModel getSystemConfig(String code) {
+	public MainMasterModel getSystemConfig(String code, boolean showLog) {
 		
 		MainMasterModel model = null;
 		
@@ -245,11 +223,40 @@ public class AdminMasterService {
     		model = mainMasterDAO.getByTypeAndCode(params);
     		model.setTotalRowCount(1l);
             
-    		log.info("get "+code+": OK");
-            session.commit();
+    		if (showLog) {
+    			log.info("get "+code+": OK");
+    		}
         } catch (Exception ex) {
     		log.error("get "+code+": ERR:"+ex.getMessage());
-        	session.rollback();
+        } finally {
+        	session.close();
+        }
+        
+        return model;
+	}
+	
+	public MainMasterModel getSystemConfig(String code) {
+		return getSystemConfig(code, true);
+	}
+	
+	public MainMasterModel getByTypeAndCode(String type, String code) {
+		
+		MainMasterModel model = null;
+		
+        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+        try {
+            MainMasterDAO mainMasterDAO = session.getMapper(MainMasterDAO.class);
+            
+            Map<String, Object> params = new HashMap<String, Object>();
+            params.put(MainMasterConstant.JFN_TYPE, type);
+            params.put(MainMasterConstant.JFN_CODE, code);
+            
+    		model = mainMasterDAO.getByTypeAndCode(params);
+    		model.setTotalRowCount(1l);
+            
+    		log.info("get "+type+"."+code+": OK");
+        } catch (Exception ex) {
+    		log.error("get "+type+"."+code+": ERR:"+ex.getMessage());
         } finally {
         	session.close();
         }
@@ -271,9 +278,6 @@ public class AdminMasterService {
             
     		list = mainMasterDAO.listByTypeAndCode(params);
             
-            session.commit();
-        } catch (Exception ex) {
-        	session.rollback();
         } finally {
         	session.close();
         }
@@ -295,14 +299,26 @@ public class AdminMasterService {
 
     		list = mainMasterDAO.listColumnSort(map);
             
+        } finally {
+        	session.close();
+        }
+        
+        return list;
+	}
+	
+	public void reset(String seqName) {
+        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+        try {
+            MainMasterDAO mainMasterDAO = session.getMapper(MainMasterDAO.class);
+
+    		mainMasterDAO.reset(seqName);
+            
             session.commit();
         } catch (Exception ex) {
         	session.rollback();
         } finally {
         	session.close();
         }
-        
-        return list;
 	}
 
 }

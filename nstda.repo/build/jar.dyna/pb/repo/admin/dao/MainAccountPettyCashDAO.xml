@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainAccountPettyCashDAO">
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+	    SELECT a.id,p.display_name as name_th,p.display_name2 as name
+		FROM pb2_ext_account_pettycash a,pb2_ext_res_partner p
+		where a.partner_id = p.id
+		ORDER BY name${lang}
+    </select>
+    
+    <select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+	    SELECT a.id,p.display_name as name_th,p.display_name2 as name 
+		FROM pb2_ext_account_pettycash a,pb2_ext_res_partner p
+		where a.partner_id = p.id
+        and a.id=#{id}
+    </select>    
+    	
+</mapper>

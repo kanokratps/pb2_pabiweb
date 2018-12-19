@@ -24,14 +24,12 @@ import pb.repo.admin.model.MainMasterModel;
 import pb.repo.admin.service.AdminMasterService;
 import pb.repo.admin.service.AdminTestSystemService;
 import pb.repo.admin.service.AdminUserGroupService;
-import pb.repo.admin.service.MainWorkflowService;
 import pb.repo.pcm.constant.PcmOrdConstant;
-import pb.repo.pcm.model.PcmOrdDtlModel;
 import pb.repo.pcm.model.PcmOrdModel;
 import pb.repo.pcm.service.PcmOrdService;
+import pb.repo.pcm.service.PcmOrdWorkflowService;
 import pb.repo.pcm.util.PcmOrdUtil;
 
-import com.github.dynamicextensionsalfresco.webscripts.annotations.HttpMethod;
 import com.github.dynamicextensionsalfresco.webscripts.annotations.RequestParam;
 import com.github.dynamicextensionsalfresco.webscripts.annotations.Uri;
 import com.github.dynamicextensionsalfresco.webscripts.annotations.WebScript;
@@ -51,7 +49,7 @@ public class PcmOrdWebScript {
 	TemplateService templateService;
 
 	@Autowired
-	private MainWorkflowService mainWorkflowService;
+	private PcmOrdWorkflowService mainWorkflowService;
 	
 	@Autowired
 	private AdminMasterService masterService;
@@ -73,6 +71,8 @@ public class PcmOrdWebScript {
 	  	  	  , @RequestParam(required=false) final String fields
 			  , @RequestParam(required=false) final Integer start
 			  , @RequestParam(required=false) final Integer limit
+			  , @RequestParam(required=false) final String sort
+	  	  	  , @RequestParam(required=false) final String lang
 			  , final WebScriptResponse response)  throws Exception {
 
 	  	/*
@@ -80,12 +80,11 @@ public class PcmOrdWebScript {
 	  	 */
 		Map<String, Object> params = new HashMap<String, Object>();
 		
-		String searchTerm = null;
-		
 		if (s != null && !s.equals("")) {
-			searchTerm = "%" + s + "%";
+    		String[] terms = s.split(" ");
+        	
+    		params.put("terms", terms);
 		}
-		params.put("searchTerm", searchTerm);
 		params.put("start", start);
 		params.put("limit", limit);
 		
@@ -123,16 +122,80 @@ public class PcmOrdWebScript {
 			putOneParam(params, jsObj, PcmOrdConstant.JFN_STATUS);
 		}		
 		
-		params.put("orderBy", "ORDER_FIELD, updated_time DESC");		
+		// Order By
+		StringBuffer orderBy = new StringBuffer();
+		StringBuffer oriOrderBy = new StringBuffer();
+		
+		if (sort!=null) {
+			JSONArray sortArr = new JSONArray(sort);
+			for(int i=0; i<sortArr.length(); i++) {
+				if (oriOrderBy.length()>0) {
+					oriOrderBy.append(",");
+				}
+				JSONObject sortObj = sortArr.getJSONObject(i);
+				oriOrderBy.append(sortObj.getString("property"));
+				oriOrderBy.append(" ");
+				oriOrderBy.append(sortObj.getString("direction"));
+			}
+		} else {
+			MainMasterModel orderByModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_ORDER_BY,false);
+			oriOrderBy.append(orderByModel.getFlag1());
+		}
+		
+		String[] orders = oriOrderBy.toString().split(",");
+		for(int i=0; i<orders.length; i++) {
+			if (orderBy.length()>0) {
+				orderBy.append(",");
+			}
+			
+			String[] os = orders[i].trim().split(" ");
+			
+			String f = os[0];
+			if (f.equals("wfstatus")) {
+				f = "wf_status";
+			}
+			else
+			if (f.equals("created_time_show")) {
+				f = "created_time";
+			}
+			else
+			if (f.equals("requested_time_show")) {
+				f = "requested_time";
+			}
+			
+			orderBy.append(f);
+			orderBy.append((f.indexOf("_time")<0 
+						 && f.indexOf("_date")<0) 
+						 && !f.equalsIgnoreCase("order_field") 
+						 && !f.equalsIgnoreCase("total") 
+						 ? " collate \"C\" " : " "
+			);
+			if (os.length>1) {
+				orderBy.append(os[os.length-1]);
+			}
+		}
+		
+		log.info("orderBy:"+orderBy.toString());
+		params.put("orderBy", orderBy.toString());
+		
+		params.put("lang", lang!=null && lang.startsWith("th") ? "_th" : "");
 	  
+		MainMasterModel monitorUserModel = masterService.getSystemConfig(MainMasterConstant.SCC_MAIN_MONITOR_USER,false);
+		if (monitorUserModel!=null && monitorUserModel.getFlag1()!=null) {
+			String mu = ","+monitorUserModel.getFlag1()+",";
+			if (mu.indexOf(","+curUser+",") >= 0) {
+				params.put("monitorUser", "1");
+			}
+		}
+		
 		/*
 		 * Search
 		 */
 		String json = null;
 		
 		try {
-			List<PcmOrdModel> list = pcmOrdService.list(params);
-			json = PcmOrdUtil.jsonSuccess(list);
+			List<Map<String, Object>> list = pcmOrdService.list(params);
+			json = CommonUtil.jsonSuccess(list);
 			
 		} catch (Exception ex) {
 			log.error("", ex);
@@ -157,76 +220,21 @@ public class PcmOrdWebScript {
 	  }
   }
   
-  @Uri(method=HttpMethod.POST, value=URI_PREFIX+"/send")
-  public void handleSendToReview(@RequestParam(required=false) final String id
-						,@RequestParam(required=false) final String reqType
-		  				,@RequestParam(required=false) final String remark
-		  				,@RequestParam(required=false) final String costType
-		  				,@RequestParam(required=false) final String reqOu
-		  				,@RequestParam(required=false) final String total
-		  				,@RequestParam(required=false) final String requested_time
-		  				,@RequestParam(required=false) final String status
-		  				,@RequestParam(required=false) final String dtls
-		  				,@RequestParam(required=false) final String files
-		  				,final WebScriptResponse response) throws Exception {
-
-	String json = null;
-	
-	try {
-		PcmOrdModel model = null;
-		
-		if (CommonUtil.isValidId(id)) {
-			model = pcmOrdService.get(id);
-		}
-		
-		if (model==null) {
-			model = new PcmOrdModel();
-		}
-
-		model.setTotal(Double.parseDouble(total));
-
-		
-		JSONObject validateResult = pcmOrdService.validateAssignee(model);
-		if (!(Boolean)validateResult.get("valid")) {
-			json = CommonUtil.jsonFail(validateResult);
-		}
-		else {
-//			model = pcmOrdService.save(model, dtls, files, true);
-			
-			mainWorkflowService.startWorkflow(model);
-			
-			JSONObject jsObj = new JSONObject();
-			jsObj.put("id", model.getId());
-			json = CommonUtil.jsonSuccess(jsObj);
-		}
-		
-	} catch (Exception ex) {
-		log.error("", ex);
-		json = CommonUtil.jsonFail(ex.toString());
-		throw ex;
-	} finally {
-		CommonUtil.responseWrite(response, json);
-	}
-
-	  
-  }
-
-
   @Uri(URI_PREFIX+"/get")
-  public void handleGet(@RequestParam final String id, final WebScriptResponse response)
+  public void handleGet(@RequestParam final String id,
+		  				@RequestParam final String lang,
+		  				final WebScriptResponse response)
       throws Exception {
 		
 	String json = null;
 	 
 	try {
-	  PcmOrdModel model = pcmOrdService.get(id);
+	  PcmOrdModel model = pcmOrdService.get(id, lang);
 	  
 	  List<PcmOrdModel> list = new ArrayList<PcmOrdModel>();
 	  list.add(model);
 	  
-	  List<PcmOrdDtlModel> dtlList = pcmOrdService.listDtlByMasterId(id);	  
-		
-	  json = PcmOrdUtil.jsonSuccess(list, dtlList);
+	  json = PcmOrdUtil.jsonSuccess(list);
 		
 	} catch (Exception ex) {
 		log.error("", ex);
@@ -329,67 +337,68 @@ public class PcmOrdWebScript {
     
   }
   
-  @Uri(method=HttpMethod.POST, value=URI_PREFIX+"/finish")
-  public void handleFinish(@RequestParam(required=false) final String id
-		  				,@RequestParam(required=false) final String field1
-		  				,@RequestParam(required=false) final String field2
-		  				,@RequestParam(required=false) final String field3
-		  				,@RequestParam(required=false) final String field4
-		  				,@RequestParam(required=false) final String field5
-		  				,@RequestParam(required=false) final String field6
-		  				,@RequestParam(required=false) final String field7
-		  				,@RequestParam(required=false) final String field8
-		  				,@RequestParam(required=false) final String field9
-		  				,@RequestParam(required=false) final String field10
-		  				,@RequestParam(required=false) final String remark
-		  				,@RequestParam(required=false) final String requested_time
-		  				,@RequestParam(required=false) final String status
-		  				,@RequestParam final String content1
-		  				,@RequestParam final Long hId
-		  				,@RequestParam final Long format_id
-		  				,@RequestParam final String workflow_id
-		  				,@RequestParam final Long approval_matrix_id
-		  				,@RequestParam final String dtls
-		  				,@RequestParam(required=false) final String aug
-		  				,@RequestParam(required=false) final String rug
-		  				,@RequestParam(required=false) final String files
-		  				,final WebScriptResponse response) throws Exception {
-	
-	String json = null;
-	
-	try {
-		PcmOrdModel model = null;
-		
-		if (CommonUtil.isValidId(id)) {
-			model = pcmOrdService.get(id);
-		}
-		
-		if (model==null) {
-			model = new PcmOrdModel();
-		}
-		
-		JSONObject validateResult = pcmOrdService.validateAssignee(model);
-		if (!(Boolean)validateResult.get("valid")) {
-			json = CommonUtil.jsonFail(validateResult);
-		}
-		else {
-//			model = pcmOrdService.save(model, dtls, files, true);
-			mainWorkflowService.updateWorkflow(model, aug, rug);
-			
-			JSONObject jsObj = new JSONObject();
-			jsObj.put("id", model.getId());
-			json = CommonUtil.jsonSuccess(jsObj);
-		}
-		
-	} catch (Exception ex) {
-		log.error("", ex);
-		json = CommonUtil.jsonFail(ex.toString());
-		throw ex;
-	} finally {
-		CommonUtil.responseWrite(response, json);
-	}
-	  
-  }
+//  @Uri(method=HttpMethod.POST, value=URI_PREFIX+"/finish")
+//  public void handleFinish(@RequestParam(required=false) final String id
+//		  				,@RequestParam(required=false) final String field1
+//		  				,@RequestParam(required=false) final String field2
+//		  				,@RequestParam(required=false) final String field3
+//		  				,@RequestParam(required=false) final String field4
+//		  				,@RequestParam(required=false) final String field5
+//		  				,@RequestParam(required=false) final String field6
+//		  				,@RequestParam(required=false) final String field7
+//		  				,@RequestParam(required=false) final String field8
+//		  				,@RequestParam(required=false) final String field9
+//		  				,@RequestParam(required=false) final String field10
+//		  				,@RequestParam(required=false) final String remark
+//		  				,@RequestParam(required=false) final String requested_time
+//		  				,@RequestParam(required=false) final String status
+//		  				,@RequestParam final String content1
+//		  				,@RequestParam final Long hId
+//		  				,@RequestParam final Long format_id
+//		  				,@RequestParam final String workflow_id
+//		  				,@RequestParam final Long approval_matrix_id
+//		  				,@RequestParam final String dtls
+//		  				,@RequestParam(required=false) final String aug
+//		  				,@RequestParam(required=false) final String rug
+//		  				,@RequestParam(required=false) final String files
+//		  				,final WebScriptResponse response) throws Exception {
+//	
+//	String json = null;
+//	
+//	try {
+//		PcmOrdModel model = null;
+//		
+//		if (CommonUtil.isValidId(id)) {
+//			model = pcmOrdService.get(id);
+//		}
+//		
+//		if (model==null) {
+//			model = new PcmOrdModel();
+//		}
+//		
+//		JSONObject validateResult = pcmOrdService.validateAssignee(model);
+//		if (!(Boolean)validateResult.get("valid")) {
+//			json = CommonUtil.jsonFail(validateResult);
+//		}
+//		else {
+////			model = pcmOrdService.save(model, dtls, files, true);
+//			mainWorkflowService.setModuleService(pcmOrdService);
+//			mainWorkflowService.updateWorkflow(model, aug, rug);
+//			
+//			JSONObject jsObj = new JSONObject();
+//			jsObj.put("id", model.getId());
+//			json = CommonUtil.jsonSuccess(jsObj);
+//		}
+//		
+//	} catch (Exception ex) {
+//		log.error("", ex);
+//		json = CommonUtil.jsonFail(ex.toString());
+//		throw ex;
+//	} finally {
+//		CommonUtil.responseWrite(response, json);
+//	}
+//	  
+//  }
   
 	@Uri(URI_PREFIX + "/userTask")
 	public void handleUserTask(final WebScriptResponse response)
@@ -398,10 +407,10 @@ public class PcmOrdWebScript {
 		String json = null;
 
 		try {
-			MainMasterModel rptModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_RPT_TAB);
-			
 			JSONObject tasks = new JSONObject();
-			tasks.put("pcmOrdRptTab", rptModel!=null && rptModel.getFlag1()!=null && rptModel.getFlag1().equals("1"));
+
+//			MainMasterModel rptModel = masterService.getSystemConfig(MainMasterConstant.SCC_PCM_ORD_RPT_TAB);
+//			tasks.put("pcmOrdRptTab", rptModel!=null && rptModel.getFlag1()!=null && rptModel.getFlag1().equals("1"));
 			
 			JSONObject jsObj = new JSONObject();
 			jsObj.put("tasks", tasks);
@@ -414,6 +423,37 @@ public class PcmOrdWebScript {
 		} finally {
 			CommonUtil.responseWrite(response, json);
 		}
-	} 	
+	}
+	
+//	@Uri(URI_PREFIX + "/continue")
+//	@Transaction(readOnly=false)
+//	public void handleContinueTask(@RequestParam final String exeId
+//								,final WebScriptResponse response)
+//								throws Exception {
+//
+//		String json = null;
+//
+//		try {
+////
+////			ProcessInstance pi = runtimeService.startProcessInstanceByKey("NSTDAPcmPD");
+////			Execution execution = runtimeService.createExecutionQuery()
+////			  .processInstanceId(pi.getId())
+////			  .activityId("RequesterRemote")
+////			  .singleResult();
+//
+//			pcmOrdService.continueRequesterTask(exeId);
+//			
+//			JSONObject jsObj = new JSONObject();
+//			jsObj.put("tasks", "OK");
+//
+//			json = CommonUtil.jsonSuccess(jsObj);
+//		} catch (Exception ex) {
+//			log.error("", ex);
+//			json = CommonUtil.jsonFail(ex.toString());
+//		} finally {
+//			CommonUtil.responseWrite(response, json);
+//		}
+//	} 	
   
+
 }

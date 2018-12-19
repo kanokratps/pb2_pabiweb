@@ -8,12 +8,16 @@ public class PcmOrdModel extends SubModuleModel {
 	Integer sectionId;
 	String prId;
 	String docType;
+	String method;
 	String appBy;
+	String reqByName;
 	
 	Double total;
 	
-	String status;
+	String wfBy;
+	String wfByTime;
 	String wfStatus;
+	String orgName;
 	
 	public Integer getSectionId() {
 		return sectionId;
@@ -45,11 +49,17 @@ public class PcmOrdModel extends SubModuleModel {
 	public void setTotal(Double total) {
 		this.total = total;
 	}
-	public String getStatus() {
-		return status;
+	public String getWfBy() {
+		return wfBy;
 	}
-	public void setStatus(String status) {
-		this.status = status;
+	public void setWfBy(String wfBy) {
+		this.wfBy = wfBy;
+	}
+	public String getWfByTime() {
+		return wfByTime;
+	}
+	public void setWfByTime(String wfByTime) {
+		this.wfByTime = wfByTime;
 	}
 	public String getWfStatus() {
 		return wfStatus;
@@ -62,6 +72,24 @@ public class PcmOrdModel extends SubModuleModel {
 	}
 	public void setAppBy(String appBy) {
 		this.appBy = appBy;
+	}
+	public String getOrgName() {
+		return orgName;
+	}
+	public void setOrgName(String orgName) {
+		this.orgName = orgName;
+	}
+	public String getReqByName() {
+		return reqByName;
+	}
+	public void setReqByName(String reqByName) {
+		this.reqByName = reqByName;
+	}
+	public String getMethod() {
+		return method;
+	}
+	public void setMethod(String method) {
+		this.method = method;
 	}
 	
 }

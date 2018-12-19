@@ -31,14 +31,14 @@ public class AdminCostControlWebScript {
 	@Uri(URI_PREFIX+"/list")
 	public void handleList(@RequestParam String t,
 						   @RequestParam(required=false) String s,
+						   @RequestParam(required=false) Integer sid,
+						   @RequestParam(required=false) String lang,
 			 final WebScriptResponse response)  throws Exception {
 		
 		String json = null;
 
 		try {
-			List<Map<String, Object>> list = null;
-			
-			list = costControlService.list(Integer.parseInt(t),s);
+			List<Map<String, Object>> list = costControlService.list(Integer.parseInt(t!=null && !t.equals("") ? t : "0"),s,sid,lang);
 			
 			json = CommonUtil.jsonSuccess(list);
 		} catch (Exception ex) {
@@ -57,12 +57,13 @@ public class AdminCostControlWebScript {
 	}
 	
 	@Uri(URI_PREFIX+"/type/list")
-	public void handleTypeList(final WebScriptResponse response)  throws Exception {
+	public void handleTypeList(@RequestParam(required=false) String lang,
+							   final WebScriptResponse response)  throws Exception {
 		
 		String json = null;
 
 		try {
-			List<Map<String, Object>> list = costControlService.listType();
+			List<Map<String, Object>> list = costControlService.listType(lang);
 			
 			json = CommonUtil.jsonSuccess(list);
 		} catch (Exception ex) {

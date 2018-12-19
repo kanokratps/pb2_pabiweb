@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainPrototypeDAO">
+    <resultMap id="result" type="mainPrototypeModel">
+        <result property="id" column="id"/>
+        <result property="code" column="code"/>
+        <result property="name" column="name"/>
+        <result property="projectId" column="project_id"/>
+        <result property="prototypeType" column="prototype_type"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+       SELECT 		*
+	   FROM 		pb2_ext_res_project_prototype
+	   WHERE project_id=#{projectId}
+	   and prototype_type=#{type}
+	   ORDER BY name
+    </select>
+    
+    <select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+        select * from pb2_ext_res_project_prototype
+        where id=#{id}
+    </select>    
+    	
+</mapper>

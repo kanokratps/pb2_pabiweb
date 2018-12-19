@@ -7,4 +7,6 @@ public interface MainAccountTaxDAO {
 
 	public List<Map<String, Object>> list(Map<String,Object> params);
 	
+	public Map<String, Object> get(Integer id);
+
 }

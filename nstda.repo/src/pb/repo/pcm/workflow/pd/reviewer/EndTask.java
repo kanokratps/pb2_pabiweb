@@ -12,12 +12,11 @@ import org.springframework.stereotype.Component;
 
 import pb.repo.admin.service.AdminMasterService;
 import pb.repo.admin.service.AdminViewerService;
-import pb.repo.admin.service.MainWorkflowService;
 import pb.repo.pcm.constant.PcmOrdConstant;
 import pb.repo.pcm.constant.PcmOrdWorkflowConstant;
 import pb.repo.pcm.model.PcmOrdModel;
 import pb.repo.pcm.service.PcmOrdService;
-import pb.repo.pcm.service.PcmSignatureService;
+import pb.repo.pcm.service.PcmOrdWorkflowService;
 
 @Component("pb.pcm.workflow.pd.reviewer.EndTask")
 public class EndTask implements ExecutionListener {
@@ -25,7 +24,7 @@ public class EndTask implements ExecutionListener {
 	private static Logger log = Logger.getLogger(EndTask.class);
 
 	@Autowired
-	MainWorkflowService mainWorkflowService;
+	PcmOrdWorkflowService mainWorkflowService;
 	
 	@Autowired
 	AuthenticationService authenticationService;
@@ -43,9 +42,6 @@ public class EndTask implements ExecutionListener {
 	AdminViewerService viewerService;
 	
 	@Autowired
-	PcmSignatureService memoSignatureService;
-	
-	@Autowired
 	AdminMasterService adminMasterService;
 	
 	private static final String WF_PREFIX = PcmOrdWorkflowConstant.MODEL_PREFIX;
@@ -59,7 +55,7 @@ public class EndTask implements ExecutionListener {
 			String id = (String)ObjectUtils.defaultIfNull(execution.getVariable(WF_PREFIX+"id"), "");
 			log.info("  id:" + id);
 			
-			PcmOrdModel model = pcmOrdService.get(id.toString());
+			PcmOrdModel model = pcmOrdService.get(id.toString(), null);
 			model.setStatus(PcmOrdConstant.ST_CLOSED_BY_ACT);
 			pcmOrdService.updateStatus(model);
 		} catch (Exception ex) {

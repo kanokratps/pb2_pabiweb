@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainBankMasterDAO">
+    <resultMap id="result" type="mainBankMasterModel">
+        <result property="id" column="id"/>
+        <result property="code" column="code"/>
+        <result property="name" column="name"/>
+        <result property="abbrev" column="abbrev"/>
+        <result property="totalRowCount" column="totalRowCount"/>
+        
+    </resultMap>
+    
+    <select id="list" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+       SELECT * FROM (
+	       SELECT id,code,name,coalesce(ir.value,name) name_th
+		   FROM  pb2_ext_res_bank m
+		   LEFT JOIN
+			   (select res_id,value
+				from pb2_ext_ir_translation
+				where name = 'res.bank,name'
+				and type = 'model' and lang='th_TH') ir ON m.id = ir.res_id
+		   WHERE active=true
+	   ) qry
+	    <if test="terms != null">
+			<foreach item="item" index="index" collection="terms" open="WHERE (" separator=" AND " close=")">
+	    		concat(name,' ',name_th) ILIKE '%'||#{item}||'%'
+	   		</foreach>
+   		</if>  
+	   ORDER BY name${lang}
+    </select>
+    
+    <select id="get" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="int">
+        select * from pb2_ext_res_bank
+        where id=#{id}
+    </select>    
+    	
+</mapper>

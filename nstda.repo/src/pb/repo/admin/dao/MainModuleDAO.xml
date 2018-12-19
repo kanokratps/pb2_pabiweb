@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="pb.repo.admin.dao.MainModuleDAO">
+    
+    <select id="getTotalPreBudget" resultType="org.apache.commons.collections.map.CaseInsensitiveMap" parameterType="map">
+		select sum(total) pre
+		from ( 
+			select sum(total_cnv) as total
+			from pb2_pcm_req
+			where status in ('W1','W2','S')
+			and is_across_budget = '0'
+			and  budget_cc = #{budgetCc}
+			and  budget_cc_type= #{budgetCcType}
+			and  fund_id= #{fundId}
+			<if test="prId != null">
+			and  id!=#{prId}
+			</if>
+			union
+			select COALESCE(sum((d.total * currency_rate * vat) + (d.total * currency_rate)),0) total
+			from pb2_pcm_req r,pb2_pcm_req_dtl d,
+			(select cast(name as integer) cur_fiscalyer
+			from pb2_ext_account_fiscalyear
+			where now() between date_start and date_stop) f
+			where r.id = d.master_id
+			and d.fiscal_year = f.cur_fiscalyer
+			and is_across_budget = '1'
+			and r.status in ('W1','W2','S')
+			and budget_cc =#{budgetCc}
+			and budget_cc_type=#{budgetCcType}
+			and fund_id = #{fundId}
+			<if test="prId != null">
+				and r.id!=#{prId}
+			</if>
+			union
+			select sum(total) as total
+			from pb2_exp_use
+			where status in ('W1','W2','S')
+			and budget_cc = #{budgetCc}
+			and budget_cc_type= #{budgetCcType}
+			and fund_id= #{fundId}
+			and pay_type!='3'
+			<if test="exId != null">
+				and  id!=#{exId}
+			</if>
+		) qry
+    </select>    
+    	
+</mapper>

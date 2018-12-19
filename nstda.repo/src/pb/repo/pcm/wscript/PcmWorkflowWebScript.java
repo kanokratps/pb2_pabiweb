@@ -1,5 +1,8 @@
 package pb.repo.pcm.wscript;
 
+import javax.sql.DataSource;
+
+import org.apache.ibatis.session.SqlSession;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,8 +11,9 @@ import org.springframework.stereotype.Component;
 
 import pb.common.constant.CommonConstant;
 import pb.common.util.CommonUtil;
-import pb.repo.admin.service.MainWorkflowService;
+import pb.repo.common.mybatis.DbConnectionFactory;
 import pb.repo.pcm.service.PcmReqService;
+import pb.repo.pcm.service.PcmReqWorkflowService;
 
 import com.github.dynamicextensionsalfresco.webscripts.annotations.RequestParam;
 import com.github.dynamicextensionsalfresco.webscripts.annotations.Uri;
@@ -24,24 +28,28 @@ public class PcmWorkflowWebScript {
 	private static final String URI_PREFIX = CommonConstant.GLOBAL_URI_PREFIX + "/pcm/wf";
 	
 	@Autowired
-	MainWorkflowService workflowService;
+	PcmReqWorkflowService workflowService;
 	
 	@Autowired
 	PcmReqService pcmReqService;
 	
+	@Autowired
+	DataSource dataSource;
 	/*
 	 * id = pr id
 	 */
 	@Uri(URI_PREFIX + "/assignee/list")
-	public void handleAssigneeList(@RequestParam final String id
+	public void handleAssigneeList(@RequestParam final String id,
+								   @RequestParam(required=false) final String lang
 								, final WebScriptResponse response)
 								throws Exception {
 
 		String json = null;
 
+		SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
 		try {
 			workflowService.setModuleService(pcmReqService);
-			JSONArray jsArr = workflowService.listAssignee(id);
+			JSONArray jsArr = workflowService.listAssignee(session, id, lang);
 			
 			json = CommonUtil.jsonSuccess(jsArr);
 		} catch (Exception ex) {
@@ -49,6 +57,7 @@ public class PcmWorkflowWebScript {
 			json = CommonUtil.jsonFail(ex.toString());
 			throw ex;
 		} finally {
+			session.close();
 			CommonUtil.responseWrite(response, json);
 		}
 	}
@@ -57,14 +66,16 @@ public class PcmWorkflowWebScript {
 	 * id = pr id
 	 */
 	@Uri(URI_PREFIX + "/task/list")
-	public void handleTaskList(@RequestParam final String id
-								, final WebScriptResponse response)
+	public void handleTaskList(@RequestParam final String id,
+							   @RequestParam final String lang,
+							   final WebScriptResponse response)
 								throws Exception {
 
 		String json = null;
 
 		try {
-			JSONArray jsArr = workflowService.listTask(id);
+			workflowService.setModuleService(pcmReqService);
+			JSONArray jsArr = workflowService.listTask(id, lang);
 			json = CommonUtil.jsonSuccess(jsArr);
 
 		} catch (Exception ex) {
@@ -82,14 +93,16 @@ public class PcmWorkflowWebScript {
 	 * id = pr id
 	 */
 	@Uri(URI_PREFIX + "/dtl/list")
-	public void handleDetailList(@RequestParam final String id
+	public void handleDetailList(@RequestParam final String id,
+								 @RequestParam(required=false) final String lang
 								, final WebScriptResponse response)
 								throws Exception {
 
 		String json = null;
 
 		try {
-			JSONArray jsArr = workflowService.listDetail(id);
+			workflowService.setModuleService(pcmReqService);
+			JSONArray jsArr = workflowService.listDetail(id, lang);
 			json = CommonUtil.jsonSuccess(jsArr);
 
 		} catch (Exception ex) {

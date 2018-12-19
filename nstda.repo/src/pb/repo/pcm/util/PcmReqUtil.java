@@ -1,5 +1,6 @@
 package pb.repo.pcm.util;
 
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -13,7 +14,7 @@ import pb.common.constant.CommonConstant;
 import pb.common.constant.JsonConstant;
 import pb.common.util.CommonDateTimeUtil;
 import pb.common.util.CommonUtil;
-import pb.repo.pcm.constant.PcmReqConstant;
+import pb.repo.admin.constant.PcmReqConstant;
 import pb.repo.pcm.model.PcmReqDtlModel;
 import pb.repo.pcm.model.PcmReqModel;
 
@@ -32,8 +33,10 @@ public class PcmReqUtil {
 		
 		jsObj.put(PcmReqConstant.JFN_REQ_BY, model.getReqBy());
 		jsObj.put(PcmReqConstant.JFN_REQ_SECTION_ID, model.getReqSectionId());
+		jsObj.put(PcmReqConstant.JFN_REQ_BY_NAME, model.getReqByName());
 		
 		jsObj.put(PcmReqConstant.JFN_OBJECTIVE_TYPE, model.getObjectiveType());
+		jsObj.put(PcmReqConstant.JFN_OBJECTIVE_TYPE_NAME, model.getObjectiveTypeName());
 		jsObj.put(PcmReqConstant.JFN_OBJECTIVE, model.getObjective());
 		jsObj.put(PcmReqConstant.JFN_REASON, model.getReason());
 		
@@ -44,21 +47,28 @@ public class PcmReqUtil {
 		jsObj.put(PcmReqConstant.JFN_BUDGET_CC_NAME, model.getBudgetCcName());
 		jsObj.put(PcmReqConstant.JFN_BUDGET_CC_TYPE, model.getBudgetCcType());
 		jsObj.put(PcmReqConstant.JFN_BUDGET_CC_TYPE_NAME, model.getBudgetCcTypeName());
+
+		jsObj.put(PcmReqConstant.JFN_FUND_ID, model.getFundId());
+		jsObj.put(PcmReqConstant.JFN_FUND_NAME, model.getFundName());
 		
 		jsObj.put(PcmReqConstant.JFN_IS_STOCK, model.getIsStock());
 		jsObj.put(PcmReqConstant.JFN_STOCK_SECTION_ID, model.getStockSectionId());
 		
 		jsObj.put(PcmReqConstant.JFN_IS_PROTOTYPE, model.getIsPrototype());
-		jsObj.put(PcmReqConstant.JFN_PROTOTYPE, model.getPrototype());
-		jsObj.put(PcmReqConstant.JFN_PROTOTYPE_CONTRACT_NO, model.getPrototypeContractNo());
+		jsObj.put(PcmReqConstant.JFN_PROTOTYPE_TYPE, model.getPrototypeType());
+		jsObj.put(PcmReqConstant.JFN_PROTOTYPE_NO, model.getPrototypeNo());
 		
 		jsObj.put(PcmReqConstant.JFN_COST_CONTROL_ID, model.getCostControlId());
 		jsObj.put(PcmReqConstant.JFN_COST_CONTROL_NAME, model.getCostControlName());
 		jsObj.put(PcmReqConstant.JFN_COST_CONTROL_TYPE_ID, model.getCostControlTypeId());
 		jsObj.put(PcmReqConstant.JFN_COST_CONTROL_TYPE_NAME, model.getCostControlTypeName());
 		
+		jsObj.put(PcmReqConstant.JFN_CONTRACT_DATE, model.getContractDate());
+		
 		jsObj.put(PcmReqConstant.JFN_PCM_SECTION_ID, model.getPcmSectionId());
 		jsObj.put(PcmReqConstant.JFN_LOCATION, model.getLocation());
+		
+		jsObj.put(PcmReqConstant.JFN_IS_SMALL_AMOUNT, model.getIsSmallAmount());
 		
 		jsObj.put(PcmReqConstant.JFN_IS_ACROSS_BUDGET, model.getIsAcrossBudget());
 		jsObj.put(PcmReqConstant.JFN_ACROSS_BUDGET, model.getAcrossBudget());
@@ -66,15 +76,22 @@ public class PcmReqUtil {
 		jsObj.put(PcmReqConstant.JFN_IS_REF_ID, model.getIsRefId());
 		jsObj.put(PcmReqConstant.JFN_REF_ID, model.getRefId());
 		
-		jsObj.put(PcmReqConstant.JFN_METHOD, model.getMethod());
+		jsObj.put(PcmReqConstant.JFN_RID, model.getRid());
+		
+		jsObj.put(PcmReqConstant.JFN_PRWEB_METHOD_ID, model.getPrWebMethodId());
 		jsObj.put(PcmReqConstant.JFN_METHOD_COND2_RULE, model.getMethodCond2Rule());
-		jsObj.put(PcmReqConstant.JFN_METHOD_COND2, model.getMethodCond2());
+		jsObj.put(PcmReqConstant.JFN_METHOD_COND2, model.getMethodCond2()!=null && !model.getMethodCond2().equals("") ? Integer.parseInt(model.getMethodCond2()) :null);
 		jsObj.put(PcmReqConstant.JFN_METHOD_COND2_DTL, model.getMethodCond2Dtl());
 		
 		jsObj.put(PcmReqConstant.JFN_VAT, model.getVat());
 		jsObj.put(PcmReqConstant.JFN_VAT_ID, model.getVatId());
+		jsObj.put(PcmReqConstant.JFN_PRICE_INCLUDE, model.getPriceInclude());
+
+		jsObj.put(PcmReqConstant.JFN_FILE_NAME, model.getFileName());
 		
 		jsObj.put(PcmReqConstant.JFN_TOTAL, model.getTotal());
+		DecimalFormat df = new DecimalFormat(CommonConstant.MONEY_FORMAT);
+		jsObj.put(PcmReqConstant.JFN_TOTAL_SHOW, df.format(model.getTotal()!=null ? model.getTotal() : 0));
 		jsObj.put(PcmReqConstant.JFN_WORKFLOW_INS_ID, model.getWorkflowInsId());
 		jsObj.put(PcmReqConstant.JFN_DOC_REF, model.getDocRef());
 		jsObj.put(PcmReqConstant.JFN_FOLDER_REF, model.getFolderRef());
@@ -88,6 +105,8 @@ public class PcmReqUtil {
 		jsObj.put(PcmReqConstant.JFN_UPDATED_TIME, CommonDateTimeUtil.convertToGridDate(model.getUpdatedTime()));
 		jsObj.put(PcmReqConstant.JFN_UPDATED_BY, model.getUpdatedBy());
 		jsObj.put(PcmReqConstant.JFN_ACTION, getAction(model, showDelBtn));
+		
+		jsObj.put(PcmReqConstant.JFN_REQUESTED_TIME_SHOW, CommonDateTimeUtil.convertToGridDateTime(model.getRequestedTime()));
 		
 		return jsObj;
 	}
@@ -114,7 +133,10 @@ public class PcmReqUtil {
 		map.put(PcmReqConstant.JFN_BUDGET_CC, model.getBudgetCc());
 		map.put(PcmReqConstant.JFN_STOCK_SECTION_ID, model.getStockSectionId());
 		
-		map.put(PcmReqConstant.JFN_PROTOTYPE, model.getPrototype());
+		map.put(PcmReqConstant.JFN_FUND_ID, model.getFundId());
+		
+		map.put(PcmReqConstant.JFN_PROTOTYPE_TYPE, model.getPrototypeType());
+		map.put(PcmReqConstant.JFN_PROTOTYPE_NO, model.getPrototypeNo());
 		map.put(PcmReqConstant.JFN_COST_CONTROL_ID, model.getCostControlId());
 		map.put(PcmReqConstant.JFN_COST_CONTROL_TYPE_ID, model.getCostControlTypeId());
 		
@@ -124,7 +146,7 @@ public class PcmReqUtil {
 		map.put(PcmReqConstant.JFN_ACROSS_BUDGET, model.getAcrossBudget());
 		map.put(PcmReqConstant.JFN_REF_ID, model.getRefId());
 		
-		map.put(PcmReqConstant.JFN_METHOD, model.getMethod());
+		map.put(PcmReqConstant.JFN_PRWEB_METHOD_ID, model.getPrWebMethodId());
 		map.put(PcmReqConstant.JFN_METHOD_COND2_RULE, model.getMethodCond2Rule());
 		map.put(PcmReqConstant.JFN_METHOD_COND2, model.getMethodCond2());
 		map.put(PcmReqConstant.JFN_METHOD_COND2_DTL, model.getMethodCond2Dtl());
@@ -173,11 +195,40 @@ public class PcmReqUtil {
 		return action.toString();
 	}
 	
+	public static String getAction(Map<String,Object> map) {
+		StringBuffer action = new StringBuffer();
+		
+		action.append(PcmReqConstant.ACTION_COPY);
+		if (map.get(PcmReqConstant.JFN_STATUS).equals(PcmReqConstant.ST_DRAFT)) {
+			action.append(PcmReqConstant.ACTION_EDIT);
+			action.append(PcmReqConstant.ACTION_DELETE);
+		}
+		else {
+			action.append(PcmReqConstant.ACTION_SHOW_HISTORY);
+			if (map.get(PcmReqConstant.JFN_STATUS).equals(PcmReqConstant.ST_WAITING)) {
+				action.append(PcmReqConstant.ACTION_SHOW_DIAGRAM);
+			}
+			action.append(PcmReqConstant.ACTION_VIEW);
+		}
+		
+		if (map.get(PcmReqConstant.JFN_FOLDER_REF) != null && !((String)map.get(PcmReqConstant.JFN_FOLDER_REF)).trim().equals("")) {
+			action.append(PcmReqConstant.ACTION_GOTO_FOLDER);
+		}
+		
+		if (map.get(PcmReqConstant.JFN_DOC_REF) != null && !((String)map.get(PcmReqConstant.JFN_DOC_REF)).trim().equals("")) {
+			action.append(PcmReqConstant.ACTION_SHOW_DETAIL);
+		}
+		
+		return action.toString();
+	}
+	
 	public static JSONArray convertToJSONArray(List<PcmReqModel> inList, Boolean showDelBtn) throws Exception {
 		JSONArray jsArr = new JSONArray();
 		
-		for(PcmReqModel model : inList) {
-			jsArr.put(convertToJSONObject(model, showDelBtn));
+		if (inList!=null) {
+			for(PcmReqModel model : inList) {
+				jsArr.put(convertToJSONObject(model, showDelBtn));
+			}
 		}
 		
 		return jsArr;
@@ -198,7 +249,7 @@ public class PcmReqUtil {
 	
 	public static String jsonSuccess(List<PcmReqModel> list, List<PcmReqDtlModel> dtlList) throws Exception {
 		
-		Long total = list.size() > 0 ? list.get(0).getTotalRowCount() : 0;
+		Long total = list!=null && list.size() > 0 ? list.get(0).getTotalRowCount() : 0;
 
 		JSONObject jsonObj = new JSONObject();
 
@@ -207,10 +258,12 @@ public class PcmReqUtil {
 		jsonObj.put(JsonConstant.DATA, convertToJSONArray(list, false));
 		
 		JSONObject jsonObjDtl = new JSONObject();
-		for(PcmReqDtlModel model : dtlList) {
-			jsonObjDtl.put(model.getDescription(), model.getQuantity());
+		if (dtlList!=null) {
+			for(PcmReqDtlModel model : dtlList) {
+				jsonObjDtl.put(model.getDescription(), model.getQuantity());
+			}
+			jsonObj.put("dtls", jsonObjDtl);
 		}
-		jsonObj.put("dtls", jsonObjDtl);
 		
 		return jsonObj.toString();
 	}

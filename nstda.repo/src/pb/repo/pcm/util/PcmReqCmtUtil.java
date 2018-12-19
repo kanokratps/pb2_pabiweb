@@ -9,21 +9,20 @@ import org.apache.log4j.Logger;
 
 import pb.common.constant.JsonConstant;
 import pb.common.util.CommonUtil;
-import pb.repo.pcm.model.PcmReqCmtModel;
 
 public class PcmReqCmtUtil {
 	
 	private static Logger log = Logger.getLogger(PcmReqCmtUtil.class);
 	
-	public static String jsonSuccess(List<PcmReqCmtModel> list) {
+	public static String jsonSuccess(List<Map<String, Object>> list) {
 		
 		List<Map<String, Object>> cmbList = new ArrayList<Map<String, Object>>();
 		
-		for(PcmReqCmtModel model : list) {
+		for(Map<String, Object> model : list) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			
-			map.put(JsonConstant.COMBOBOX_ID, model.getId());
-			map.put(JsonConstant.COMBOBOX_NAME, model.getObjType() + " - " + model.getMethod() + " - " + model.getCond1());
+			map.put(JsonConstant.COMBOBOX_ID, model.get("id"));
+			map.put(JsonConstant.COMBOBOX_NAME, model.get("method"));
 			map.put(JsonConstant.COMBOBOX_DATA, model);
 			
 			cmbList.add(map);

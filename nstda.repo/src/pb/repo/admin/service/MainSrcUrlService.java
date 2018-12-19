@@ -36,6 +36,7 @@ import pb.common.constant.CommonConstant;
 import pb.common.constant.JsonConstant;
 import pb.common.util.PersonUtil;
 import pb.repo.admin.constant.MainMasterConstant;
+import pb.repo.admin.model.MainMasterModel;
 import pb.repo.common.mybatis.DbConnectionFactory;
 
 @Service
@@ -64,6 +65,9 @@ public class MainSrcUrlService {
 	@Autowired
 	NodeService nodeService;
 	
+	@Autowired
+	AdminHrEmployeeService employeeService;
+
 	private String selectMainMasterSql(String cond, String orderBy) {
 		BEGIN();
 		
@@ -94,7 +98,7 @@ public class MainSrcUrlService {
 		return SQL();
 	}
 	
-	public Map<String, Object> listMainMaster(String cond, String codeValue, String orderBy, Boolean all) throws Exception {
+	public Map<String, Object> listMainMaster(String cond, String codeValue, String orderBy, Boolean all, String lang) throws Exception {
 		
 		Map<String, Object> map = new LinkedHashMap<String, Object>();
 		Connection conn = dataSource.getConnection();
@@ -110,25 +114,84 @@ public class MainSrcUrlService {
     		
     		List<Map<String,Object>> tmpList = sqlRunner.selectAll(sql.getSql());
     		
+    		String allLbl = null;
+    		String name = null;
+    		if (lang!=null && lang.startsWith("th")) {
+    			name = MainMasterConstant.TFN_NAME;
+    			allLbl = "ทั้งหมด";
+    		} else {
+    			name = MainMasterConstant.TFN_FLAG2;
+    			allLbl = "All";
+    		}
+//    		log.info("lang name:"+name);
+    		
     		if (all!=null && all) {
-    			map.put("", "== ทั้งหมด ==");
+    			map.put("", "== "+allLbl+" ==");
     		}
     		
     		String codeField = (codeValue!=null) && (codeValue.toLowerCase().equals("n")) ? MainMasterConstant.TFN_NAME : MainMasterConstant.TFN_CODE;
     		for(Map<String,Object> tmpMap : tmpList) {
-	    		map.put((String)tmpMap.get(codeField), (String)tmpMap.get(MainMasterConstant.TFN_NAME));
+	    		map.put((String)tmpMap.get(codeField), (String)tmpMap.get(name));
     		}
 
-    		conn.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	conn.rollback();
         } finally {
         	conn.close();
         }
         
         return map;
 	}
+	
+	public Map<String, Object> listMainMaster3(String cond, String codeValue, String orderBy, Boolean all, String lang) throws Exception {
+		
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
+		Connection conn = dataSource.getConnection();
+		
+        try {
+        	
+    		SqlRunner sqlRunner = new SqlRunner(conn);
+    		TextSqlNode node = new TextSqlNode(selectMainMasterSql(cond, orderBy));
+    		DynamicSqlSource s = new DynamicSqlSource(DbConnectionFactory.getSqlSessionFactory(dataSource).getConfiguration(), node);
+    		BoundSql sql = s.getBoundSql(null);
+    		
+//    		log.info("SQL="+sql.getSql());
+    		
+    		List<Map<String,Object>> tmpList = sqlRunner.selectAll(sql.getSql());
+    		
+    		String allLbl = null;
+    		String name = null;
+    		String name2 = null;
+    		if (lang!=null && lang.startsWith("th")) {
+    			name = MainMasterConstant.TFN_NAME;
+    			name2 = MainMasterConstant.TFN_FLAG4;
+    			allLbl = "ทั้งหมด";
+    		} else {
+    			name = MainMasterConstant.TFN_FLAG2;
+    			name2 = MainMasterConstant.TFN_FLAG5;
+    			allLbl = "All";
+    		}
+//    		log.info("lang name:"+name);
+    		
+    		if (all!=null && all) {
+    			map.put("", "== "+allLbl+" ==");
+    		}
+    		
+    		String codeField = (codeValue!=null) && (codeValue.toLowerCase().equals("n")) ? MainMasterConstant.TFN_NAME : MainMasterConstant.TFN_CODE;
+    		for(Map<String,Object> tmpMap : tmpList) {
+    			StringBuffer nameVal = new StringBuffer(); 
+    			nameVal.append((String)tmpMap.get(name));
+    			if (tmpMap.get(name2)!=null && !tmpMap.get(name2).equals("")) {
+    				nameVal.append(" / ");
+    				nameVal.append(tmpMap.get(name2));
+    			}
+	    		map.put((String)tmpMap.get(codeField), nameVal.toString());
+    		}
+
+        } finally {
+        	conn.close();
+        }
+        
+        return map;
+	}	
 	
 	public List<Map<String, Object>> listMainMaster2(String cond, String codeValue, String orderBy, Boolean all) throws Exception {
 		
@@ -161,10 +224,6 @@ public class MainSrcUrlService {
     			list.add(0,map);
     		}
 
-    		conn.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	conn.rollback();
         } finally {
         	conn.close();
         }
@@ -191,13 +250,41 @@ public class MainSrcUrlService {
     		
 	    	map.put((String)tmpMap.get(resultField.toUpperCase()), "");
 
-    		conn.commit();
-        } catch (Exception ex) {
-			log.error("", ex);
-        	conn.rollback();
         } finally {
         	conn.close();
         }
+        
+        return map;
+	}
+	
+	public Map<String, Object> getMainMasterValue(String type, String code, String lang) throws Exception {
+		
+    	MainMasterModel model = masterService.getByTypeAndCode(type, code);
+    	
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
+		
+		if (model==null) {
+			map.put("data", code);
+		} else {
+	    	if (lang!=null && lang.startsWith("th")) {
+	    		map.put("data",model.getName());
+	    	} else {
+	    		map.put("data",model.getFlag2());
+	    	}
+		}
+        
+        return map;
+	}
+	
+	public Map<String, Object> getUserName(String code, String lang) throws Exception {
+		
+    	Map<String, Object> user = employeeService.getWithDtl(code, null);
+    	
+		Map<String, Object> map = new LinkedHashMap<String, Object>();
+		
+		lang = lang!=null && lang.startsWith("th") ? "_th" : "";
+		
+    	map.put("data", user.get("title"+lang) + " " + user.get("first_name"+lang) + " " + user.get("last_name"+lang));
         
         return map;
 	}

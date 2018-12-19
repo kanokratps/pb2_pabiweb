@@ -1,6 +1,7 @@
 package pb.repo.admin.service;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -36,14 +37,33 @@ public class AdminProductUomService {
             
             list = dao.list();
             
-            session.commit();
         } catch (Exception ex) {
-        	session.rollback();
+        	log.error(ex);
         } finally {
         	session.close();
         }
 		
 		return list;
 	}
+	
+	public Map<String, Object> get(Integer id) {
+		
+		Map<String, Object> map = null;
+		
+        SqlSession session = DbConnectionFactory.getSqlSessionFactory(dataSource).openSession();
+        try {
+        	MainProductUomDAO dao = session.getMapper(MainProductUomDAO.class);
+            
+            map = dao.get(id);
+            
+        } catch (Exception ex) {
+        	log.error(ex);
+        } finally {
+        	session.close();
+        }
+		
+		return map;
+	}
+	
 
 }

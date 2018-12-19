@@ -123,6 +123,10 @@
 		<deploy module="exp"/>
    </target>
 
+   <target name="Deploy.hr">
+		<deploy module="hr"/>
+   </target>
+	
    <!-- Modules End -->
 	
    <!--target name="Deploy All">

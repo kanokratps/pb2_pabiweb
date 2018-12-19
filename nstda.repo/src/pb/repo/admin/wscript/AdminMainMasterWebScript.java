@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.extensions.webscripts.WebScriptResponse;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,7 @@ public class AdminMainMasterWebScript {
   public void handleList(@RequestParam(required=true) final String t
 		  			   , @RequestParam(required=false) final String s
 		  			   , @RequestParam(required=false) final Boolean active
+		  			   , @RequestParam(required=false) final Boolean system
 		  			   , @RequestParam(required=false) final Integer start
 		  			   , @RequestParam(required=false) final Integer limit
 		  			   , final WebScriptResponse response)  throws Exception {
@@ -58,7 +60,7 @@ public class AdminMainMasterWebScript {
 		String json = null;
 		
 		try {
-			List<Map<String, Object>> list = masterService.listByType(t, s, active, start, limit);
+			List<Map<String, Object>> list = masterService.listByType(t, s, active, system, start, limit);
 			MainMasterUtil.addAction(list);
 			json = CommonUtil.jsonSuccess(list);
 			
@@ -151,6 +153,7 @@ public class AdminMainMasterWebScript {
 		  				,@RequestParam final String flag4
 		  				,@RequestParam final String flag5
 		  				,@RequestParam final Boolean active
+		  				,@RequestParam final Boolean system
 		  				,final WebScriptResponse response) throws IOException, JSONException {
 	
 	String json = null;
@@ -175,6 +178,7 @@ public class AdminMainMasterWebScript {
 		model.setFlag4(flag4);
 		model.setFlag5(flag5);
 		model.setActive(active);
+		model.setSystem(system);
 		
 		masterService.save(model);
 		
@@ -256,12 +260,13 @@ public class AdminMainMasterWebScript {
   @Uri(URI_PREFIX+"/listType")
   public void handleListType(@RequestParam final String t, 
 		  					 @RequestParam(required=false) final Boolean active,
+		  					 @RequestParam(required=false) final Boolean system,
 		  					final WebScriptResponse response) throws Exception {
 	
 	String json = null;
 	
 	try {
-		List<Map<String, Object>> list = masterService.listByType(t, null, active, null, null);
+		List<Map<String, Object>> list = masterService.listByType(t, null, active, system, null, null);
 		
 		JSONArray jsArr = MainMasterUtil.convertToJSONArray(list);
 		
@@ -301,4 +306,25 @@ public class AdminMainMasterWebScript {
 //
 //	}
 
+  @Uri(URI_PREFIX+"/showSystem")
+  public void handleShowSystem(final WebScriptResponse response) throws Exception, JSONException {
+	
+	String json = null;
+	
+	try {
+	  	MainMasterModel systemModel = masterService.getSystemConfig(MainMasterConstant.SCC_MAIN_SHOW_SYSTEM_VALUE,false);
+		
+	  	JSONObject jsObj = new JSONObject();
+	  	jsObj.put("showSystem", systemModel!=null && systemModel.getFlag1().equals("1"));
+	  	
+		json = CommonUtil.jsonSuccess(jsObj);
+	} catch (Exception ex) {
+		log.error("", ex);
+		json = CommonUtil.jsonFail(ex.toString());
+		throw ex;
+	} finally {
+		CommonUtil.responseWrite(response, json);
+	}
+	  
+  }
 }
