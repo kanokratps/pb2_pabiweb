@@ -3,6 +3,7 @@ Ext.define('PBPcmOrd.store.GridStore', {
     model: 'PBPcmOrd.model.GridModel',
     autoLoad:true,
     pageSize:PAGE_SIZE,
+    remoteSort:true,
 
     proxy: {
         type: 'ajax',

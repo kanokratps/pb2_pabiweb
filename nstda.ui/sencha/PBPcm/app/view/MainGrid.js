@@ -5,14 +5,15 @@ Ext.define('PBPcm.view.MainGrid', {
 	initComponent: function(config) {
 		var me = this;
 		
-		me.lang = getLanguage().split("-")[0].toLowerCase();
+		me.lang = getLang().split("_")[0].toLowerCase();
 	
 		var columns = [
 		      {
 	        	xtype: 'actioncolumn',
 	        	dataIndex: 'action',
 	        	text: '', 
-	            width: 100,
+	            width: 115,
+	            sortable:false,
 	            items: [{
 	                tooltip: 'Copy', 
 	                action : 'copy',
@@ -49,6 +50,12 @@ Ext.define('PBPcm.view.MainGrid', {
 	        	    getClass: function(v) {
 	        	    	return getActionIcon(v, "D", 'delete');
 	        	    }
+	            }, {
+	                tooltip: 'View', 
+	                action : 'view',
+	        	    getClass: function(v) {
+	        	    	return getActionIcon(v, "W", 'view_mode');
+	        	    }
 	            }]
 	          }
 		];
@@ -64,7 +71,7 @@ Ext.define('PBPcm.view.MainGrid', {
 					var d = data[i];
 					
 					var col = {
-						text: d.label,  
+						text: PBPcm.Label.m[d.label],  
 						dataIndex: d.field,
 						align:d.align
 					}
@@ -95,11 +102,10 @@ Ext.define('PBPcm.view.MainGrid', {
 		      async:false
 		}); 
 		
-		columns.push({ text: 'วันที่ขอ',  dataIndex: 'created_time_show', width:110});
-		columns.push({ text: 'สถานะ',  dataIndex: 'wfStatus', width:370,
+		columns.push({ text: PBPcm.Label.m.status,  dataIndex: 'wfstatus', width:370,
 		  	  renderer: function (v, m, r) {
 			
-					if (r.get("overDue")) {
+					if (r.get("overdue")) {
 						m.style = "background-color:#FFFF66";
 					}
 					
@@ -110,10 +116,10 @@ Ext.define('PBPcm.view.MainGrid', {
 			            Ext.defer(function () {
 			            	me.createIconViewHistory(id, v, r);
 			            }, 50);
-			            return Ext.String.format('<div><div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{2}" id="{1}"></div><div id="{0}"></div></div>', id, id1, me.indicator[status].color);
+			            return Ext.String.format('<div><div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{2}" id="{1}"></div><div id="{0}"></div></div>', id, id1, PBPcm.Label.s[status].color);
                     } else {
 			            var id = Ext.id();
-			            return Ext.String.format('<div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{1}" id="{0}"></div>', id, me.indicator[status].color);
+			            return Ext.String.format('<div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{1}" id="{0}"></div>', id, PBPcm.Label.s[status].color);
                     }
 		      }
 		 });
@@ -138,16 +144,9 @@ Ext.define('PBPcm.view.MainGrid', {
 	           	}
             },{
             	xtype: 'button',
-                text: "Search",
+                text: PB.Label.m.btnSearch,
                 iconCls: "icon_search",                
                 action: "search"
-            },
-                "->"
-            ,{ 
-            	xtype: 'button',
-                text: "New PR",
-                iconCls: "icon_add",
-                action: "add"
             }],
             
 			bbar : {
@@ -162,29 +161,43 @@ Ext.define('PBPcm.view.MainGrid', {
 	    this.callParent(arguments);
 	    
 		Ext.apply(me.store, {pageSize:PAGE_SIZE});
-		me.store.load();	    
+		me.store.load();
+		
+		me.addDocked({
+			xtype:'toolbar',
+			dock:'top',
+			items:[{
+            	xtype: 'button',
+	            text: PB.Label.m.btnNew,
+	            iconCls: "icon_add",
+	            action: "add"
+			}]
+		});
+
 	},
 	
-	indicator:{
-		"D":{color:"gray", text_th:"Draft", text_en:"Draft"},
-		"W1":{color:"yellow", text_th:"รอการอนุมัติ", text_en:"Wait for Approval"},
-		"W2":{color:"red", text_th:"ไม่อนุมัติ", text_en:"Rejected"},
-		"C1":{color:"green", text_th:"รอพัสดุรับงาน", text_en:"Wait for Acceptance"},
-		"C2":{color:"green", text_th:"พัสดุรับงาน", text_en:"Accepted"},
-		"X1":{color:"darkgray", text_th:"ผู้ขอยกเลิก", text_en:"Cancelled By Requester"},
-		"X2":{color:"darkgray", text_th:"พัสดุยกเลิก", text_en:"Cancelled By Procurement"},
-		"S":{color:"purple", text_th:"ขอคำปรึกษา", text_en:"Consulting"}
-	},
+//	indicator:{
+//		"D":{color:"gray", text_th:"Draft", text_en:"Draft"},
+//		"W1":{color:"yellow", text_th:"รอการอนุมัติ", text_en:"Wait for Approval"},
+//		"W2":{color:"red", text_th:"ไม่อนุมัติ", text_en:"Rejected"},
+//		"C1":{color:"green", text_th:"รอพัสดุรับงาน", text_en:"Wait for Acceptance"},
+//		"C2":{color:"green", text_th:"พัสดุรับงาน", text_en:"Accepted"},
+//		"C3":{color:"green", text_th:"พัสดุเห็นชอบให้ดำเนินการเอง", text_en:"Purchased by yourself"},
+//		"X1":{color:"darkgray", text_th:"ผู้ขอยกเลิก", text_en:"Cancelled By Requester"},
+//		"X2":{color:"darkgray", text_th:"พัสดุยกเลิก", text_en:"Cancelled By Procurement"},
+//		"S":{color:"purple", text_th:"ขอคำปรึกษา", text_en:"Consulting"}
+//	},
 	
 	createIconViewHistory:function(id, v, r) {
 		var me = this;
 		
-		var s = eval('me.indicator[r.get("status")].text_' +me.lang);
+//		var s = eval('me.indicator[r.get("status")].text_' +me.lang);
+		var s = eval('PBPcm.Label.s[r.get("status")].text_' +me.lang);
 		
 		if (Ext.get(id)) {
             Ext.widget('linkbutton', {
                 renderTo: id,
-                text: s+' (' + r.get("wfStatus") + ')',
+                text: s+' (' + r.get("wfstatus") + ')',
                 iconCls:'icon_postpone',
                 width: 75,
                 handler: function () { 

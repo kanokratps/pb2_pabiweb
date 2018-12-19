@@ -21,6 +21,29 @@ Ext.define('PBAdmin.controller.main.Settings', {
     init:function() {
 		var me = this;
 		
+		Ext.Ajax.request({
+		     url:ALF_CONTEXT+'/admin/main/master/showSystem',
+		     method: "GET",
+		     success: function(res){
+		    	 
+		    	 var json = Ext.decode(res.responseText);
+		      	  
+		    	 if(json.success){
+		    		 
+		    	    me.showSystem = json.data.showSystem;
+		    	  
+		    	 }else{
+		    		 PB.Dlg.error('ERR_'+me.MSG_KEY, MODULE_ADMIN);
+		    	 }
+		    	 
+		     },
+		     failure: function(response, opts){
+		    	 PB.Dlg.error('ERR_'+me.MSG_KEY, MODULE_ADMIN);
+		     },
+		     headers: getAlfHeader(),
+		     async:false
+		});        	
+		
 		me.control({
 			'adminMainSettingsMain [action=searchSettings]': {
 				click : me.search
@@ -50,6 +73,9 @@ Ext.define('PBAdmin.controller.main.Settings', {
     		t : me.getCmbType().getValue(),
  	   		s : me.getTxtSearch().getValue()
  	   	};
+		if (!me.showSystem) {
+			store.getProxy().extraParams.system = false; 
+		}
 		store.currentPage = 1;
     	store.load();
 	},
@@ -62,6 +88,11 @@ Ext.define('PBAdmin.controller.main.Settings', {
     		t : newValue,
  	   		s : me.getTxtSearch().getValue()
  	   	};
+		
+		if (!me.showSystem) {
+			store.getProxy().extraParams.system = false; 
+		}
+		
 		store.currentPage = 1;
 		store.load();
 		me.getBtnBack().setVisible(false);
@@ -109,7 +140,8 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		        	var store = me.getGrid().getStore();
 		        	
 		  	    	store.getProxy().extraParams = {
-		  	    		t : me.parentCode
+		  	    		t : me.parentCode,
+	  	    			s : me.getTxtSearch().getValue()  	    			  
 		  	 	   	};
 		  	    	store.load();
 		    		 
@@ -158,12 +190,14 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		    	form.down('field[name=flag4]').setValue(json.data[0].flag4=="null" ? "" : json.data[0].flag4);
 		    	form.down('field[name=flag5]').setValue(json.data[0].flag5=="null" ? "" : json.data[0].flag5);
 		    	form.down('field[name=active]').setValue(json.data[0].active=="null" ? "" : json.data[0].active);
+		    	form.down('field[name=system]').setValue(json.data[0].system=="null" ? "" : json.data[0].system);
 		        
 		      },
 		      failure: function(response, opts){
 		          alert("failed");
 		      },
-		      headers: getAlfHeader()
+		      headers: getAlfHeader(),
+		      async:false
 		}); 
 		
 		dialog.show();
@@ -190,7 +224,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		    xtype: 'textfield',
 		    fieldLabel : 'ประเภท', 
 		    labelWidth: 70,
-		    width : 360,
+		    anchor:"-10",
 		    hideTrigger:true,
 		    name : 'typeDesc',
 		    msgTarget: 'side',
@@ -201,7 +235,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     xtype: 'textfield',
 		     fieldLabel : 'รหัส', 
 		     labelWidth: 70,
-		     width : 360,
+		     anchor:"-10",
 		     hideTrigger:true,
 		     name : 'code',
 		     msgTarget: 'side',
@@ -211,7 +245,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     xtype: 'textfield',
 		     fieldLabel : 'ชื่อ', 
 		     labelWidth: 70,
-		     width : 360,
+		     anchor:"-10",
 		     hideTrigger:true,
 		     name : 'name',
 		     msgTarget: 'side',
@@ -221,7 +255,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     xtype     : 'textfield',
 		     fieldLabel : 'ค่า (1)', 
 		     labelWidth: 70,
-		     width : 360,
+		     anchor:"-10",
 		     hideTrigger:true,
 		     name : 'flag1',
 		     msgTarget: 'side',
@@ -231,7 +265,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     xtype     : 'textfield',
 		     fieldLabel : 'ค่า (2)', 
 		     labelWidth: 70,
-		     width : 360,
+		     anchor:"-10",
 		     hideTrigger:true,
 		     name : 'flag2',
 		     msgTarget: 'side',
@@ -241,7 +275,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     xtype     : 'textfield',
 		     fieldLabel : 'ค่า (3)', 
 		     labelWidth: 70,
-		     width : 360,
+		     anchor:"-10",
 		     hideTrigger:true,
 		     name : 'flag3',
 		     msgTarget: 'side',
@@ -251,7 +285,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     xtype     : 'textfield',
 		     fieldLabel : 'ค่า (4)', 
 		     labelWidth: 70,
-		     width : 360,
+		     anchor:"-10",
 		     hideTrigger:true,
 		     name : 'flag4',
 		     msgTarget: 'side',
@@ -261,7 +295,7 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     xtype     : 'textfield',
 		     fieldLabel : 'ค่า (5)', 
 		     labelWidth: 70,
-		     width : 360,
+		     anchor:"-10",
 		     hideTrigger:true,
 		     name : 'flag5',
 		     msgTarget: 'side',
@@ -276,6 +310,16 @@ Ext.define('PBAdmin.controller.main.Settings', {
 		     name : 'active',
 		     msgTarget: 'side',
 		     margin: '10 0 0 10'
+		 },{
+		     xtype     : 'checkbox',
+		     grow      : true,
+		     fieldLabel : 'System', 
+		     labelWidth: 70,
+		     width : 360,
+		     name : 'system',
+		     msgTarget: 'side',
+		     margin: '10 0 0 10',
+		     hidden:!me.showSystem
 		 });
 		
 		return dialog;

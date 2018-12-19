@@ -22,6 +22,11 @@ Ext.define('PBAdmin.view.main.settings.Main', {
 		settingsTypeStore.getProxy().extraParams = {
     		t : 'A'
  	   	};
+		
+		if (!me.showSystem) {
+			settingsTypeStore.getProxy().extraParams.system = false;
+		}
+		
 		settingsTypeStore.load();
 		
 		var columns = [
@@ -39,7 +44,8 @@ Ext.define('PBAdmin.view.main.settings.Main', {
 	          { text: 'ค่า (3)',  dataIndex: 'flag3', flex:1},
 	          { text: 'ค่า (4)',  dataIndex: 'flag4', flex:1},
 	          { text: 'ค่า (5)',  dataIndex: 'flag5', flex:1},
-	          { text: 'Active',  dataIndex: 'is_active', width:60, renderer:me.renderActive}
+	          { text: 'Active',  dataIndex: 'is_active', width:60, renderer:me.renderStatus},
+	          { text: 'System',  dataIndex: 'is_system', width:60, renderer:me.renderStatus, hidden:!me.showSystem}
 		];
 	
 		Ext.applyIf(me, {
@@ -54,7 +60,6 @@ Ext.define('PBAdmin.view.main.settings.Main', {
                margin: '0 0 0 10',
                labelWidth: 50,
                name : 'type',
-               editable : false,
                allowBlank : false,
                emptyText : EMTY_TEXT_COMBO,
                store: settingsTypeStore,
@@ -62,11 +67,22 @@ Ext.define('PBAdmin.view.main.settings.Main', {
                displayField: 'name',
                valueField: 'id',
                width: 450,
-     	       listeners: {
-    	       	   change : function(combo, newValue, oldValue, e){
-    	       		   me.fireEvent("selectType",combo, newValue, oldValue);
-    	       	   }
-               }
+		       listConfig : {
+					width:500,
+					resizable: true,
+				    getInnerTpl: function () {
+				        return '<div>{name}<tpl if="id != \'\'"> ({id})</tpl></div>';
+				    }
+			   },
+	 	       listeners: {
+				   beforequery : function(qe) {
+						qe.query = new RegExp(qe.query, 'i');
+		//				qe.forceAll = true;
+				   },
+		       	   change : function(combo, newValue, oldValue, e){
+		       		   me.fireEvent("selectType",combo, newValue, oldValue);
+		       	   }
+	           }
 			},{
 			   xtype:'button',
 			   hidden:true,
@@ -161,7 +177,7 @@ Ext.define('PBAdmin.view.main.settings.Main', {
 		
 	},
 	
-	renderActive : function(v) {
+	renderStatus : function(v) {
 		if (v) {
 			return '<div style="width:16px;height:16px;background-image: url('+MAIN_CONTEXT+'/res/page/img/icon/ok.png) !important;">&nbsp;</div>';
 		}

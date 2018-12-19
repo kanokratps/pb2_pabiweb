@@ -81,6 +81,10 @@
    <target name="Module.expuse" if="page.expuse.dir">
 		<sencha module="expuse"/>
    </target>
+	
+   <target name="Module.hrsal" if="page.hrsal.dir">
+		<sencha module="hrsal"/>
+   </target>
 		
    <!-- Modules End -->
 	

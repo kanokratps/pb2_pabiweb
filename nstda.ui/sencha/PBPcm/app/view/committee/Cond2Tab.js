@@ -21,7 +21,7 @@ Ext.define('PBPcm.view.committee.cond2Tab', {
 				fieldLabel:me.preCond2,
 		    	displayField:'name',
 		    	valueField:'id',
-		        emptyText : "โปรดเลือก",
+		        emptyText : PB.Label.m.select,
 		        store: me.store,
 		        queryMode: 'local',
 		        typeAhead:true,
@@ -45,7 +45,9 @@ Ext.define('PBPcm.view.committee.cond2Tab', {
 		//				qe.forceAll = true;
 					}
 				},
-		    	value:replaceIfNull(rec.method_cond2, null) 
+		    	value:replaceIfNull(rec.method_cond2, null),
+		    	readOnly:rec.viewing,
+		    	fieldStyle:rec.viewing ? READ_ONLY : ""
 		    },{
 		    	xtype:'textarea',
 		    	name:'methodCond2Dtl',
@@ -53,7 +55,10 @@ Ext.define('PBPcm.view.committee.cond2Tab', {
 		    	labelWidth:160,
 		    	anchor:"-10 -35",
 		    	margin:'5 0 0 10',
-		    	value:replaceIfNull(rec.method_cond2_dtl, null)
+		    	value:replaceIfNull(rec.method_cond2_dtl, null),
+		    	maxLength:255,
+		    	readOnly:rec.viewing,
+		    	fieldStyle:rec.viewing ? READ_ONLY : ""
 		    }]
 		});		
 		

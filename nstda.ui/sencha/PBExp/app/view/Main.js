@@ -1,26 +1,62 @@
+/*
+ * - MainGrid
+ * 		- workflow
+ * 			- DtlDlg
+ * 				- AssigneeGrid
+ * 				- CurTaskGrid
+ * 				- DtlGrid
+ * - MainForm
+ * 		- UserTab
+ * 		- InfoTab
+ * 		- AttendeeTab
+ * 		- FileTab
+ */
 Ext.define('PBExp.view.Main', {
-    extend: 'Ext.container.Container',
+    extend: 'Ext.tab.Panel',
     requires:[
-        'Ext.tab.Panel',
-        'Ext.layout.container.Border'
+        'PBExp.view.MainGrid',
+        'PBExp.view.MainForm'
     ],
     
-    xtype: 'app-main',
+    alias : 'widget.expBrwMain',
 
-    layout: {
-        type: 'border'
-    },
-
-    items: [{
-        region: 'west',
-        xtype: 'panel',
-        title: 'west',
-        width: 150
-    },{
-        region: 'center',
-        xtype: 'tabpanel',
-        items:[{
-            title: 'Center Tab 1'
-        }]
-    }]
+	initComponent: function(config) {
+		var me = this;
+		
+		var items = [];
+		
+		var store = Ext.create('PBExp.store.GridStore',{
+			storeId:'expBrwGridStore',
+			autoLoad:false
+		});
+		
+		store.getProxy().extraParams = {
+			lang : getLang()
+		}
+		
+		if (!ID) {
+			items.push({
+				xtype:'expBrwMainGrid',
+				title:PB.Label.m.search,
+				store:store
+			});
+			
+//			if (me.tasks.expBrwRptTab) {
+//				items.push({
+//					xtype:'reportForm',
+//					title:'Report'
+//				});
+//			}
+		}
+		
+		Ext.applyIf(me, {
+			
+			border : 0,
+	
+			items:items
+				
+		});		
+		
+	    this.callParent(arguments);
+	}
 });

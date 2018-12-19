@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Module Hr" default="dist">
+    <description>Do Module Hr Task</description>
+    
+    <target name="dist" description="Copy Module Hr Files">
+    	
+
+    </target>
+	
+</project>

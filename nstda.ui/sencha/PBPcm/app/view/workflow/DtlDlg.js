@@ -19,6 +19,11 @@ Ext.define('PBPcm.view.workflow.DtlDlg', {
 	            layout: 'border',
 	            resizable: true,
 	            title:'Workflow Detail',
+	            buttons:[{
+		          text: 'Close',
+		          handler:this.destroy,
+		          scope:this
+	            }],
 	            items : [{
 	            	region:'west',
 	            	layout:'border',

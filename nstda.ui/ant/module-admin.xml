@@ -11,6 +11,7 @@
 	    	<fileset dir="${common.config.dir}/shared/classes" includes="alfresco/web-extension/site-webscripts/org/*/**"/>
 	    	<fileset dir="${common.config.dir}/shared/classes" includes="alfresco/web-extension/site-webscripts/pb/*/**"/>
 	    	<fileset dir="${common.config.dir}/shared/classes" includes="alfresco/web-extension/messages/comment-grid.properties"/>
+	    	<fileset dir="${common.config.dir}/shared/classes" includes="alfresco/web-extension/messages/common_*.properties"/>
 	    </copy>
     	
     	<java classname="pb.build.alfresco.MenuGenerator">

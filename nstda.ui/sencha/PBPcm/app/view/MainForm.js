@@ -50,7 +50,7 @@ Ext.define('PBPcm.view.MainForm', {
 	            margin:'0 2 0 0'
 			},{
 				xtype : 'button',
-				text : 'Cancel',
+				text : 'Close',
 				action : 'cancel',
 				iconCls : 'icon_no',
 	            margin:'0 2 0 0'
@@ -63,8 +63,15 @@ Ext.define('PBPcm.view.MainForm', {
 	            margin:'0 2 0 0'
 			},{
 				xtype : 'button',
-				text : 'Cancel',
+				text : 'Close',
 				action : 'cancelEdit',
+				iconCls : 'icon_no',
+	            hidden:true,
+	            margin:'0 2 0 0'
+			},{
+				xtype : 'button',
+				text : 'Close',
+				action : 'close',
 				iconCls : 'icon_no',
 	            hidden:true,
 	            margin:'0 2 0 0'

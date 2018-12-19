@@ -22,6 +22,32 @@ Ext.define('PB.Util', {
 			}
 			
 			return srcUrl;
+		},
+		
+		checkSession:function(scope, url, fn) {
+			Ext.Ajax.request({
+		        url:url,
+		        method: "GET",
+		        params: {
+		            key: "INFO",
+		            lang:getLang()
+		        },
+		        success: function(response){
+		        	
+		        	var json = Ext.decode(response.responseText);
+		        	
+		        	if (json.success) {
+		        		fn(null);
+		        	} else {
+		        		alertInvalidSession();
+		        	}
+		        },
+		        failure: function(response, opts){
+		        	alertInvalidSession();
+				},
+		        headers: getAlfHeader(),
+		        async:false
+		    });
 	    }
 	}
 });

@@ -17,17 +17,12 @@ Ext.define('PBPcm.controller.file.Main', {
 				click : me.download
 			},
 			'combo': {
-				selectMiddlePrice : me.selectMiddlePrice
+				selectMediumPrice : me.selectMediumPrice
 			}
 		});
 	
 	},
 
-	MSG_KEY : 'DELETE_REQ_DETAIL',
-	URL : ALF_CONTEXT+'/pcm/req/dtl',
-	ADMIN_URL : ALF_CONTEXT+'/admin/pcm/dtl',
-	MSG_URL : ALF_CONTEXT+'/pcm/message',
-	
 	download:function() {
 		var me = this;
 
@@ -37,7 +32,7 @@ Ext.define('PBPcm.controller.file.Main', {
 		window.open(Alfresco.constants.PROXY_URI_RELATIVE+"api/node/content/workspace/SpacesStore/"+id+"/a.odt?a=true");
 	},
 	
-	selectMiddlePrice:function(cmb, rec) {
+	selectMediumPrice:function(cmb, rec) {
 		this.rec = rec[0].data;
 	}
 

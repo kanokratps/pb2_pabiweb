@@ -5,11 +5,11 @@ Ext.define('PB.view.common.SearchCostControlDlg', {
 	initComponent: function(config) {
 		var me = this;
 		
-		var lbw = 80;
+		var lbw = 100;
 		
 		var typeStore = Ext.create('PB.store.common.ComboBoxStore',{autoLoad:false});
 		typeStore.getProxy().api.read = ALF_CONTEXT+'/admin/main/costcontrol/type/list';
-		typeStore.load();
+		typeStore.load({params:{lang:getLang()}});
 		
 		var store = Ext.create('PB.store.common.CostControlStore');
 		
@@ -36,10 +36,10 @@ Ext.define('PB.view.common.SearchCostControlDlg', {
 					items:[{
 						xtype:'combo',
 						name:'type',
-						fieldLabel:'ประเภท',
+						fieldLabel:PB.Label.m.type,
 				    	displayField:'name',
 				    	valueField:'id',
-				        emptyText : "โปรดเลือก",
+				        emptyText : PB.Label.m.select,
 				        store: typeStore,
 				        queryMode: 'local',
 				        typeAhead:true,
@@ -49,6 +49,7 @@ Ext.define('PB.view.common.SearchCostControlDlg', {
 						labelWidth:lbw,
 						margin: '10 0 0 0',
 						allowBlank:false,
+						width:400,
 				        listConfig : {
 						    getInnerTpl: function () {
 								return '<div>{name}</div>';
@@ -72,7 +73,7 @@ Ext.define('PB.view.common.SearchCostControlDlg', {
 					items:[{
 			        	xtype:'textfield',
 			        	itemId:'searchTerm',
-			        	fieldLabel:'คำค้นหา',
+			        	fieldLabel:PB.Label.m.searchTerm,
 			        	labelWidth:lbw,
 			        	width:400,
 			        	margin:'5 0 0 0',
@@ -82,11 +83,16 @@ Ext.define('PB.view.common.SearchCostControlDlg', {
 			 	 				if(e.getKey() == e.ENTER){
 			 	 					this.fireEvent("searchCostControl",this);
 			 	 				}
-			 	 			}
+			 	 			},
+							afterrender:function(txt) {
+								Ext.defer(function(){
+									txt.focus();
+								},100);
+							}
 			           	}			        		
 					},{
 			        	xtype:'button',
-			        	text:'ค้นหา',
+			        	text:PB.Label.m.btnSearch,
 			        	iconCls:'icon_search',
 			        	margin:'5 0 0 10',
 		                listeners: {
@@ -106,13 +112,12 @@ Ext.define('PB.view.common.SearchCostControlDlg', {
 	        	    		return '<input type="radio" name="id" value="'+v+'"/>'; 
 	        	    	 }
 	        	     },
-	        	     { text:'ประเภท', dataIndex: 'type', width: 150 },
-	        	     { text:'ชื่อ', dataIndex: 'name', flex:1 }
+	        	     { text:PB.Label.m.name, dataIndex: 'name', flex:1 }
 	        	],
 	        	store:store
 	        }],
 	        buttons : [{
-	          text: 'ยืนยัน', 
+	          text: PB.Label.m.btnConfirm, 
 	          action : 'ok',
 	          iconCls:'icon_ok',
 	          listeners: {
@@ -121,7 +126,7 @@ Ext.define('PB.view.common.SearchCostControlDlg', {
 	               }
 	          }
 	        },{
-	          text: 'ยกเลิก',
+	          text: PB.Label.m.cancel,
 	          iconCls:'icon_no',
 	          handler:this.destroy,
 	          scope:this

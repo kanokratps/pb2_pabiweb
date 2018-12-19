@@ -5,7 +5,7 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 	initComponent: function(config) {
 		var me = this;
 		
-		me.lang = getLanguage().split("-")[0].toLowerCase();
+		me.lang = getLang().split("_")[0].toLowerCase();
 	
 		var columns = [
 		      {
@@ -13,6 +13,7 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 	        	dataIndex: 'action',
 	        	text: '', 
 	            width: 80,
+	            sortable:false,
 	            items: [{
 	                tooltip: 'Detail', 
 	                action : 'viewDetail',
@@ -26,8 +27,8 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 	        	    	return getActionIcon(v, "F", 'detail');
 	                }
 	            }]
-	          },
-			  { text: 'PD NO.', dataIndex:'id', width:150}
+	          }
+//			  { text: 'PD NO.', dataIndex:'id', width:150}
 		];
 		
 		Ext.Ajax.request({
@@ -41,7 +42,7 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 					var d = data[i];
 					
 					var col = {
-						text: d.label,  
+						text: PBPcmOrd.Label.m[d.label],  
 						dataIndex: d.field,
 						align:d.align
 					}
@@ -72,8 +73,8 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 		      async:false
 		}); 
 		
-		columns.push({ text: 'Requested Time',  dataIndex: 'created_time_show', width:130});
-		columns.push({ text: 'Status',  dataIndex: 'wfStatus', width:300,
+		//columns.push({ text: 'Requested Time',  dataIndex: 'created_time_show', width:130});
+		columns.push({ text: PBPcmOrd.Label.m.status,  dataIndex: 'wfstatus', width:300,
 		  	  renderer: function (v, m, r) {
 			
 					if (r.get("overDue")) {
@@ -87,10 +88,10 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 			            Ext.defer(function () {
 			            	me.createIconViewHistory(id, v, r);
 			            }, 50);
-			            return Ext.String.format('<div><div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{2}" id="{1}"></div><div id="{0}"></div></div>', id, id1, me.indicator[status].color);
+			            return Ext.String.format('<div><div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{2}" id="{1}"></div><div id="{0}"></div></div>', id, id1, PBPcmOrd.Label.s[status].color);
                     } else {
 			            var id = Ext.id();
-			            return Ext.String.format('<div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{1}" id="{0}"></div>', id, me.indicator[status].color);
+			            return Ext.String.format('<div style="float:left;margin:0;padding:0;width:12px;height:20px" class="icon_bar_{1}" id="{0}"></div>', id, PBPcmOrd.Label.s[status].color);
                     }
 		      }
 		 });
@@ -115,7 +116,7 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 	           	}
             },{
             	xtype: 'button',
-                text: "Search",
+                text: PB.Label.m.search,
                 iconCls: "icon_search",                
                 action: "search"
             }],
@@ -135,23 +136,24 @@ Ext.define('PBPcmOrd.view.MainGrid', {
 		me.store.load();	    
 	},
 	
-	indicator:{
-		"W1":{color:"yellow", text_th:"รอการอนุมัติ", text_en:"Wait for Approval"},
-		"W2":{color:"red", text_th:"ไม่อนุมัติ", text_en:"Rejected"},
-		"C1":{color:"green", text_th:"ออก PO", text_en:"PO"},
-		"X1":{color:"darkgray", text_th:"พัสดุยกเลิก", text_en:"Cancelled By Procurement"},
-		"S":{color:"purple", text_th:"ขอคำปรึกษา", text_en:"Consulting"}
-	},
+//	indicator:{
+//		"W1":{color:"yellow", text_th:"รอการอนุมัติ", text_en:"Wait for Approval"},
+//		"W2":{color:"red", text_th:"ไม่อนุมัติ", text_en:"Rejected"},
+//		"C1":{color:"green", text_th:"ออก PO", text_en:"PO Created"},
+//		"X1":{color:"darkgray", text_th:"พัสดุยกเลิก", text_en:"Cancelled By Procurement"},
+//		"S":{color:"purple", text_th:"ขอคำปรึกษา", text_en:"Consulting"}
+//	},
 	
 	createIconViewHistory:function(id, v, r) {
 		var me = this;
 		
-		var s = eval('me.indicator[r.get("status")].text_' +me.lang);
-
+//		var s = eval('me.indicator[r.get("status")].text_' +me.lang);
+		var s = eval('PBPcmOrd.Label.s[r.get("status")].text_' +me.lang);
+		
 		if (Ext.get(id)) {
             Ext.widget('linkbutton', {
                 renderTo: id,
-                text: s+'(' + r.get("wfStatus") + ')',
+                text: s+' (' + r.get("wfstatus") + ')',
                 iconCls:'icon_postpone',
                 width: 75,
                 handler: function () { 

@@ -10,6 +10,7 @@ Ext.define('PBAdmin.model.main.MasterGridModel', {
     		 , {name : 'flag4'}
     		 , {name : 'flag5'}
     		 , {name : 'is_active'}
+    		 , {name : 'is_system'}
     		 , {name : 'action'}
     ]
 });

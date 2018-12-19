@@ -12,37 +12,68 @@ Ext.define('PB.view.common.upload.Grid', {
 			    	xtype: 'actioncolumn',
 		        	dataIndex: 'action',
 		        	itemId : 'actionGrid',
-		        	text: 'Action',
-		            width: 60,
+		        	text: '',
+		            width: 70,
+		            align: 'center',
 		            items: [{
+		                tooltip: 'Edit Description',
+		        	    getClass: function(v) {
+		        	    	return getActionIcon(v, "E", 'edit');
+		                }, 
+		                handler: function(grid, rowIndex, colIndex) {
+		                    me.fireEvent('editFile',me, rowIndex, colIndex);
+			            },
+			            disabled:me.viewing
+		            },{
 		                tooltip: 'Delete',
 		        	    getClass: function(v) {
 		        	    	return getActionIcon(v, "D", 'delete');
 		                }, 
 		                handler: function(grid, rowIndex, colIndex) {
 		                    me.fireEvent('deleteFile',me, rowIndex, colIndex);
-			            }
+			            },
+			            disabled:me.viewing
 		            }]
 			     },
-			     {xtype: 'rownumberer', text: 'NO.', width:60},
-			     {text: 'File Name', dataIndex: 'name', flex: 1 }
+			     {text: PB.Label.u.number, xtype: 'rownumberer', width:60},
+			     {text: PB.Label.u.name, dataIndex: 'name', flex: 0.5, renderer:me.fileNameRenderer},
+			     {text: PB.Label.u.desc, dataIndex: 'desc', flex: 1}
 			    ],
 			    tbar:[{
 		    	    xtype:'label',
-		    	    html:"&nbsp;&nbsp;<b>File</b>"
+		    	    html:"&nbsp;&nbsp;"+PB.Label.u.file+":"
+//		        },{
+//            		xtype: 'filefield',
+//	            	padding: '0px 0px 0px 5px',
+//	                name: 'file',
+//	                msgTarget: 'side',
+//	                width : 335,
+//	                buttonConfig: {
+//	                    text: PB.Label.u.browse,
+//                        iconCls: "icon_search"               
+//	                }
 		        },{
-            		xtype: 'filefield',
+            		xtype: 'multifilefield',
 	            	padding: '0px 0px 0px 5px',
 	                name: 'file',
 	                msgTarget: 'side',
-	                width : 350,
+	                flex : 1,
 	                buttonConfig: {
-	                    text: 'เลือก',
+	                    text: PB.Label.u.browse,
                         iconCls: "icon_search"               
-	                }
+	                },
+	                disabled:me.viewing
+//            	},{
+//            		xtype:'textfield',
+//            		fieldLabel:PB.Label.u.desc,
+//            		labelWidth:80,
+//            		name:'desc',
+//            		width:335,
+//            		maxLength:100,
+//            		margin:'0 0 0 20'
             	},{
             		xtype: 'button',
-	                text: "Upload",
+	                text: PB.Label.u.upload,
 	                iconCls: "icon_upload",
 	                listeners: {
 	                    click: function(){
@@ -52,7 +83,8 @@ Ext.define('PB.view.common.upload.Grid', {
 	                    	}
 	                    	
 	                    }
-	                }
+	                },
+	                disabled:me.viewing
             	},{
              	    xtype:'hiddenfield',
             	    name:'uuid'
@@ -61,6 +93,21 @@ Ext.define('PB.view.common.upload.Grid', {
 		});		
 				
         this.callParent(arguments);
+	},
+	
+	fileNameRenderer:function(v, m, r) {
+		var me = this;
+		var val = v;
+		
+		if(me.editMode) {
+//			val = '<a href="'+MAIN_CONTEXT+"/page/document-details?nodeRef="+r.get("nodeRef")+'" target="_new">'+v+'</a>';
+			var nodeRef = r.get("nodeRef").replace(":/","");
+			if (nodeRef) {
+				val = '<a href="'+MAIN_CONTEXT+"/proxy/alfresco/api/node/content/"+nodeRef+'/'+encodeURI(r.get("name")).replace("#","")+'" target="_new">'+v+'</a>';
+			}
+		}
+
+		return val;
 	}
 
 });		

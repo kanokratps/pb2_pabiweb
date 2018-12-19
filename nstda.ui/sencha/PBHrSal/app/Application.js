@@ -1,0 +1,156 @@
+Ext.define('PBHrSal.Application', {
+    name: 'PBHrSal',
+
+    extend: 'Ext.app.Application',
+    
+    requires: [
+        'Ext.util.Cookies',
+        'Ext.grid.Panel',
+        'Ext.grid.column.Number',
+        'Ext.MessageBox',
+        'Ext.tip.QuickTipManager',
+        'Ext.picker.Color',
+        'Ext.Toolbar.Item',
+        'Ext.toolbar.Toolbar',
+        'Ext.Toolbar.Separator',
+        'Ext.Toolbar.Spacer',
+        'Ext.util.Format',
+        'Ext.layout.container.Card',
+        'Ext.layout.container.Form',
+        'Ext.layout.container.Border',
+        'Ext.form.field.Hidden',
+        'Ext.form.field.Text',
+        'Ext.form.field.TextArea',
+        'Ext.form.field.Date',
+        'Ext.tab.Panel',
+        'Ext.overrides.grid.column.Action',
+        'Ext.ux.form.NumericField',
+        'Ext.ux.form.TimePickerField',
+        'Ext.ux.DateTimePicker',
+        'Ext.ux.form.DateTimeField',
+        'Ext.ux.DateTimeMenu',
+        
+        'PB.Util',
+        'PB.Dlg',
+        'PB.Label',
+        'PB.button.LinkButton',
+        'PB.store.common.ComboBoxStore',
+        'PB.model.common.ComboBoxModel',
+        'PB.vtype.Validation',
+
+        'PBHrSal.view.Main',
+        
+        'PBHrSal.controller.Main',
+        'PBHrSal.controller.common.FolderDtl',
+
+        'PBHrSal.Label'
+	],
+
+    views: [
+        'Main'
+    ],
+
+    controllers: [
+        'Main',
+        'common.FolderDtl'
+    ],
+
+    stores: [
+    ],
+    
+	launch: function () {
+		Ext.apply(Ext.QuickTips.getQuickTip(), {
+		    dismissDelay: 0
+		});
+	
+	 	Ext.Ajax.request({
+		      url:ALF_CONTEXT+"/util/getPageSize",
+		      method: "GET",
+		      success: function(response){
+		    	  
+		    	var data = Ext.decode(response.responseText).data;
+		    	
+		    	PAGE_SIZE = data.pageSize;
+		    	
+		      },
+		      failure: function(response, opts){
+		          // do nothing
+		      },
+		      headers: getAlfHeader(),
+		      async:false
+		});
+	 	
+	 	Ext.Ajax.request({
+		      url:ALF_CONTEXT+"/hr/sal/userTask",
+		      method: "GET",
+		      success: function(response){
+		    	  
+		    	var data = Ext.decode(response.responseText).data;
+		    	
+		    	TASKS = data.tasks;
+		    	
+		      },
+		      failure: function(response, opts){
+		          // do nothing
+		      },
+		      headers: getAlfHeader(),
+		      async:false
+		});
+	 	
+	 	Ext.Ajax.request({
+		      url:ALF_CONTEXT+"/hr/message/sal",
+		      method: "GET",
+		      params:{
+				 lang:getLang()
+			  },
+		      success: function(response){
+		    	  
+		    	var data = Ext.decode(response.responseText);
+			 	Ext.apply(PBHrSal.Label, data);
+		      },
+		      failure: function(response, opts){
+		          // do nothing
+		      },
+		      headers: getAlfHeader(),
+		      async:false
+		});
+	 	
+	 	Ext.Ajax.request({
+		      url:ALF_CONTEXT+"/admin/message/lbl",
+		      method: "GET",
+		      params:{
+	 			 lang:getLang()
+	 		  },
+		      success: function(response){
+		    	  
+		    	var data = Ext.decode(response.responseText);
+			 	Ext.apply(PB.Label, data);
+			 	//alert(PBPcm.Label.a);
+		      },
+		      failure: function(response, opts){
+		          // do nothing
+		      },
+		      headers: getAlfHeader(),
+		      async:false
+		});	 	
+	
+		HEIGHT = Ext.get(HTML_ID).getHeight();
+		WIDTH = Ext.get(HTML_ID).getWidth();
+		
+	 	view = Ext.create('PBHrSal.view.Main',{
+		  renderTo: Ext.Element.get(MAIN_ID),
+	 	  height:(HEIGHT-H_OFFSET)+'px',
+	 	  width:(WIDTH-W_OFFSET)+'px',
+	 	  tasks:TASKS
+	 	});
+	 	
+	 	Ext.EventManager.onWindowResize(function() {
+			HEIGHT = Ext.get(HTML_ID).getHeight();
+			WIDTH = Ext.get(HTML_ID).getWidth();
+	 		view.setHeight(HEIGHT-H_OFFSET);
+	 		view.setWidth(WIDTH-W_OFFSET);
+	 		view.doLayout();
+	 	});
+	
+	}
+});

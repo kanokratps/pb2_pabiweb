@@ -37,6 +37,11 @@
 			<location>/home/osboxes/workspace/nstda/nstda.ui/sencha/PBExpUse/.sencha/app/sencha.cfg</location>
 		</link>
 		<link>
+			<name>sencha/PBHrSal/sencha.cfg</name>
+			<type>1</type>
+			<location>/home/osboxes/workspace/nstda/nstda.ui/sencha/PBPcmOrd/.sencha/app/sencha.cfg</location>
+		</link>
+		<link>
 			<name>sencha/PBPcm/sencha.cfg</name>
 			<type>1</type>
 			<location>/home/osboxes/workspace/nstda/nstda.ui/sencha/PBPcm/.sencha/app/sencha.cfg</location>

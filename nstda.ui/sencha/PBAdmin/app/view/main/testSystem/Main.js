@@ -14,9 +14,9 @@ Ext.define('PBAdmin.view.main.testSystem.Main', {
 			}],
 			
 			tbar : [{
-                text: "User Signature",
+                text: "Current User",
                 iconCls: "icon_ok",                
-                action: "testUserSignature"
+                action: "currentUser"
 			},{
                 text: "Version",
                 iconCls: "icon_ok",                

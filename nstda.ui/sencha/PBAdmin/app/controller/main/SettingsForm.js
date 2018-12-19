@@ -40,7 +40,13 @@ Ext.define('PBAdmin.controller.main.SettingsForm', {
     },{
         ref: 'chkActive',     
         selector: '#formSettings> field[name=active]'
-    }],
+    },{
+        ref: 'chkSystem',     
+        selector: '#formSettings> field[name=system]'
+ 	},{
+    	ref:'txtSearch',
+		selector:'adminMainSettingsMain [itemId=txtSearchSettings]'
+   }],
  
     init : function() {
 	
@@ -91,7 +97,8 @@ Ext.define('PBAdmin.controller.main.SettingsForm', {
 	    	  flag3:me.getTxtFlag3().getValue(),
 	    	  flag4:me.getTxtFlag4().getValue(),
 	    	  flag5:me.getTxtFlag5().getValue(),
-  	    	  active:me.getChkActive().getValue()
+  	    	  active:me.getChkActive().getValue(),
+  	    	  system:me.getChkSystem().getValue()
   	      },
   	      success: function(response){
   	    	  
@@ -104,7 +111,8 @@ Ext.define('PBAdmin.controller.main.SettingsForm', {
   	    		  var store = me.getGrid().getStore();
             	
   	    		  store.getProxy().extraParams = {
-  	    			  t : me.getHidType().getValue()
+  	    			  t : me.getHidType().getValue(),
+  	    			  s : me.getTxtSearch().getValue()  	    			  
   	    		  };
   	    		  store.load();
   	    	  } else {
@@ -112,7 +120,7 @@ Ext.define('PBAdmin.controller.main.SettingsForm', {
   	    	  }
   	    	  
   	    	  dlg.destroy();
-  	    	  myMask.hide();	
+  	    	  myMask.hide();
   	      },
   	      failure: function(response, opts){
   	    	  PB.Dlg.error('ERR_'+me.MSG_KEY, MODULE_ADMIN);

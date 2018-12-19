@@ -7,7 +7,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 	initComponent: function(config) {
 		var me = this;
 	
-		var lbw = 120;
+		var lbw = parseInt(PBPcm.Label.u.lbw);
 
 		Ext.applyIf(me, {
 			items:[{
@@ -17,7 +17,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 				items:[{
 					xtype:'trigger',
 					name:'reqBy',
-					fieldLabel:'พนักงานผู้ขอเบิก',
+					fieldLabel:PBPcm.Label.u.reqBy,
 					labelWidth:lbw,
 					margin:"5 0 0 10",
 					width:250,
@@ -25,8 +25,47 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 					onTriggerClick:function(evt) {
 						me.fireEvent("selectReqBy");
 					},
+					listeners: {
+						specialkey: function(field, e){
+		                    // e.HOME, e.END, e.PAGE_UP, e.PAGE_DOWN,
+		                    // e.TAB, e.ESC, arrow keys: e.LEFT, e.RIGHT, e.UP, e.DOWN
+		                    if (e.getKey() == e.ESC) {
+		                    	this.spckey = 0;
+		                    	me.fireEvent("hideAM");
+		                    }
+		                    else
+		                    if (e.getKey() == e.LEFT && (this.spckey==0 || !this.spckey)) {
+		                    	this.spckey=1;
+		                    }
+		                    else
+		                    if (e.getKey() == e.UP && this.spckey==1) {
+		                    	this.spckey=2;
+		                    }
+		                    else
+		                    if (e.getKey() == e.RIGHT && this.spckey==2) {
+		                    	this.spckey=3;
+		                    }
+		                    else
+		                    if (e.getKey() == e.DOWN && this.spckey==3) {
+		                    	this.spckey=4;
+		                    }
+		                    else
+		                    if (e.getKey() == e.TAB && this.spckey==4) {
+		                    	this.spckey=99;
+		                    } else {
+		                    	this.spckey=0;
+		                    }
+		                    
+		                    if (this.spckey==99) {
+		                    	me.fireEvent("showAM");
+		                    	this.spckey = 0;
+		                    }
+						}
+	                },
 					value:replaceIfNull(me.rec.req_by, null),
-					editable:false
+					editable:false,
+					readOnly:me.rec.viewing,
+					fieldStyle:me.rec.viewing ? READ_ONLY : ""
 				},{
 					xtype:'textfield',
 					name:'reqByName',
@@ -34,6 +73,17 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 					margin:"5 0 0 10",
 					flex:1,
 					value:replaceIfNull(me.rec.req_by_name, null),
+					readOnly:true,
+					fieldStyle:READ_ONLY
+				},{
+					xtype:'textfield',
+					name:'reqTelNo',
+					hideLabel:true,
+//					fieldLabel:'โทรศัพท์',
+//					labelWidth:lbw,
+					margin:"5 0 0 10",
+					width:300,
+					value:replaceIfNull(me.rec.req_tel_no, null),
 					readOnly:true,
 					fieldStyle:READ_ONLY
 				},{
@@ -53,7 +103,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 				items:[{
 					xtype:'textfield',
 					name:'reqBu',
-					fieldLabel:'ศูนย์',
+					fieldLabel:PBPcm.Label.u.reqBu,
 					labelWidth:lbw,
 					margin:"5 0 0 10",
 					flex:1,
@@ -68,7 +118,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 				items:[{
 					xtype:'textfield',
 					name:'reqOuName',
-					fieldLabel:'หน่วยงาน',
+					fieldLabel:PBPcm.Label.u.reqOu,
 					labelWidth:lbw,
 					margin:"5 0 0 10",
 					flex:1,
@@ -83,7 +133,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 			},{
 				xtype:'datefield',
 				name:'createdTime',
-				fieldLabel:'วันที่บันทึกรายการ',
+				fieldLabel:PBPcm.Label.u.createdTime,
 				labelWidth:lbw,
 				margin:"5 0 0 10",
 				width:250,
@@ -98,7 +148,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 			},{
 				xtype:'textfield',
 				name:'createdByShow',
-				fieldLabel:'ผู้บันทึกรายการ',
+				fieldLabel:PBPcm.Label.u.createdBy,
 				labelWidth:lbw,
 				margin:"5 0 0 10",
 				width:600,
@@ -108,7 +158,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 			},{
 				xtype:'textfield',
 				name:'telNo',
-				fieldLabel:'โทรศัพท์',
+				fieldLabel:PBPcm.Label.u.telNo,
 				labelWidth:lbw,
 				margin:"5 0 0 10",
 				width:600,
@@ -119,6 +169,7 @@ Ext.define('PBPcm.view.MainFormUserTab', {
 		});		
 		
 	    this.callParent(arguments);
+
 	}
     
 });

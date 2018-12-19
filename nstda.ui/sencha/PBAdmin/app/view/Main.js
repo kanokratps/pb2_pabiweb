@@ -50,7 +50,7 @@ Ext.define('PBAdmin.view.Main', {
 		var tabPanel = this.down("tabpanel");
 		tabPanel.removeAll(true);
 		
-		var language = getLanguage()
+		var language = getLang()
 		
 		var firstTab;
 		

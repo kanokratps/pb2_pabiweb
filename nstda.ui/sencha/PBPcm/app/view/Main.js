@@ -26,21 +26,28 @@ Ext.define('PBPcm.view.Main', {
 		
 		var items = [];
 		
-		var store = Ext.create('PBPcm.store.GridStore',{storeId:'pcmReqGridStore',autoLoad:true});
+		var store = Ext.create('PBPcm.store.GridStore',{
+			storeId:'pcmReqGridStore',
+			autoLoad:false
+		});
+
+		store.getProxy().extraParams = {
+			lang : getLang()
+		}
 		
 		if (!ID) {
 			items.push({
 				xtype:'pcmReqMainGrid',
-				title:'Search',
+				title:PB.Label.m.search,
 				store:store
 			});
 			
-			if (me.tasks.pcmReqRptTab) {
-				items.push({
-					xtype:'reportForm',
-					title:'Report'
-				});
-			}
+//			if (me.tasks.pcmReqRptTab) {
+//				items.push({
+//					xtype:'reportForm',
+//					title:'Report'
+//				});
+//			}
 		}
 		
 		Ext.applyIf(me, {

@@ -23,19 +23,24 @@ Ext.define('PBPcm.Application', {
         'Ext.form.field.Date',
         'Ext.tab.Panel',
         'Ext.overrides.grid.column.Action',
+        'Ext.ux.form.MultiFile',
         'Ext.ux.form.NumericField',
         'Ext.ux.form.TimePickerField',
         'Ext.ux.DateTimePicker',
         'Ext.ux.form.DateTimeField',
         'Ext.ux.DateTimeMenu',
+        'Ext.EventManager',
         
         'PB.Util',
         'PB.Dlg',
+        'PB.Label',
         'PB.button.LinkButton',
+        'PB.store.common.UserStore',
+        'PB.model.common.UserModel',
         'PB.store.common.CostControlStore',
         'PB.model.common.CostControlModel',
-        'PB.store.common.SectionProjectStore',
-        'PB.model.common.SectionProjectModel',
+        'PB.store.common.BudgetSrcStore',
+        'PB.model.common.BudgetSrcModel',
         'PB.store.common.ComboBoxStore',
         'PB.model.common.ComboBoxModel',
         'PB.vtype.Validation',
@@ -44,13 +49,17 @@ Ext.define('PBPcm.Application', {
         
         'PBPcm.controller.Main',
         'PBPcm.controller.Form',
+        'PBPcm.controller.common.User',
         'PBPcm.controller.common.CostControl',
-        'PBPcm.controller.common.SectionProject',
+        'PBPcm.controller.common.BudgetSrc',
+        'PBPcm.controller.common.EmployeeUser',
+        'PBPcm.controller.common.OtherUser',
         'PBPcm.controller.common.UserGroup',
         'PBPcm.controller.common.Upload',
+        'PBPcm.controller.common.EditFile',
+        'PBPcm.controller.common.FolderDtl',
         'PBPcm.controller.item.Main',
         'PBPcm.controller.item.Form',
-        'PBPcm.controller.committee.Main',
         'PBPcm.controller.committee.Form',
         'PBPcm.controller.file.Main',
         'PBPcm.controller.Report',
@@ -65,14 +74,18 @@ Ext.define('PBPcm.Application', {
     controllers: [
         'Main',
         'Form',
+        'common.User',
         'common.CostControl',
-        'common.SectionProject',
+        'common.BudgetSrc',
+        'common.EmployeeUser',
+        'common.OtherUser',
         'common.UserGroup',
         'common.Upload',
+        'common.EditFile',
+        'common.FolderDtl',
         'Report',
         'item.Main',
         'item.Form',
-        'committee.Main',
         'committee.Form',
         'file.Main'
     ],
@@ -81,6 +94,11 @@ Ext.define('PBPcm.Application', {
     ],
     
 	launch: function () {
+		Ext.apply(Ext.QuickTips.getQuickTip(), {
+		    dismissDelay: 0,
+			maxWidth:600
+		});
+		
 	 	Ext.Ajax.request({
 		      url:ALF_CONTEXT+"/util/getPageSize",
 		      method: "GET",
@@ -118,10 +136,32 @@ Ext.define('PBPcm.Application', {
 	 	Ext.Ajax.request({
 		      url:ALF_CONTEXT+"/pcm/message/req",
 		      method: "GET",
+		      params:{
+	 			 lang:getLang()
+	 		  },
 		      success: function(response){
 		    	  
 		    	var data = Ext.decode(response.responseText);
 			 	Ext.apply(PBPcm.Label, data);
+			 	//alert(PBPcm.Label.a);
+		      },
+		      failure: function(response, opts){
+		          // do nothing
+		      },
+		      headers: getAlfHeader(),
+		      async:false
+		});
+	 	
+	 	Ext.Ajax.request({
+		      url:ALF_CONTEXT+"/admin/message/lbl",
+		      method: "GET",
+		      params:{
+	 			 lang:getLang()
+	 		  },
+		      success: function(response){
+		    	  
+		    	var data = Ext.decode(response.responseText);
+			 	Ext.apply(PB.Label, data);
 			 	//alert(PBPcm.Label.a);
 		      },
 		      failure: function(response, opts){
@@ -139,6 +179,14 @@ Ext.define('PBPcm.Application', {
 	 	  height:(HEIGHT-H_OFFSET)+'px',
 	 	  width:(WIDTH-W_OFFSET)+'px',
 	 	  tasks:TASKS
+	 	});
+	 	
+	 	Ext.EventManager.onWindowResize(function() {
+			HEIGHT = Ext.get(HTML_ID).getHeight();
+			WIDTH = Ext.get(HTML_ID).getWidth();
+	 		view.setHeight(HEIGHT-H_OFFSET);
+	 		view.setWidth(WIDTH-W_OFFSET);
+	 		view.doLayout();
 	 	});
 	
 	}

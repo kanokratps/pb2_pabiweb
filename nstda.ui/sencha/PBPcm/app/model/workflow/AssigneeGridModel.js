@@ -4,5 +4,6 @@ Ext.define('PBPcm.model.workflow.AssigneeGridModel', {
     		 , {name : 'assignee'}
     		 , {name : 'user'}
     		 , {name : 'current'}
+    		 , {name : 'color'}
     ]
 });

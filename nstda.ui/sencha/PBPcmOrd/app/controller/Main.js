@@ -65,7 +65,8 @@ Ext.define('PBPcmOrd.controller.Main', {
 							store.getProxy().extraParams = {
 								p1 : params[0],
 								orderBy : 'code',
-								all : true
+								all : true,
+								lang : getLang()
 							}
 							if (params.length>1) {
 								store.getProxy().extraParams.p2 = params[1];
@@ -129,7 +130,8 @@ Ext.define('PBPcmOrd.controller.Main', {
 			      url:me.URL+"/get",
 			      method: "GET",
 			      params: {
-			    	  id : ID
+			    	  id : ID,
+			    	  lang : getLang()
 			      },
 			      success: function(response){
 			    	  
@@ -151,89 +153,99 @@ Ext.define('PBPcmOrd.controller.Main', {
 	
 	search:function() {
 		var me = this;
-		var store = me.getMainGrid().getStore();
 		
-		var params = {
-			s : me.getTxtSearch().getValue()
-		}
-		
-		var fields = {};
-		
-		var tbar = me.getMainGrid().getDockedComponent(1);
-		for(var i=0; i<10; i++) {
-			var c = tbar.down("[itemId=cri"+i+"]");
-			if (c) {
-				var d = c.bgData;
-				fields[d.field] = c.getValue();
+		PB.Util.checkSession(this, me.MSG_URL+"/get", function() {
+
+			var store = me.getMainGrid().getStore();
+			
+			var params = {
+				s : me.getTxtSearch().getValue(),
+				lang:getLang()
 			}
-		}
+			
+			var fields = {};
+			
+			var tbar = me.getMainGrid().getDockedComponent(1);
+			for(var i=0; i<10; i++) {
+				var c = tbar.down("[itemId=cri"+i+"]");
+				if (c) {
+					var d = c.bgData;
+					fields[d.field] = c.getValue();
+				}
+			}
+			
+			params.fields = Ext.JSON.encode(fields);
+			
+			store.getProxy().extraParams = params;
+			store.currentPage = 1;
+			store.load();
 		
-		params.fields = Ext.JSON.encode(fields);
-		
-		store.getProxy().extraParams = params;
-		store.currentPage = 1;
-		store.load();
+		});
 	},
 	
 	add:function() {
 		var me = this;
 		
-		var grid = me.getMainGrid();
+		PB.Util.checkSession(this, me.MSG_URL+"/get", function() {
 		
-		var myMask = new Ext.LoadMask({
-			target:me.getMain(), 
-			msg:"Please wait..."
-		});
-		
-		myMask.show();
-		
-		var params = {
-				total:224700,
-				requested_time:'2016-03-20T12:00:00',
-				files:Ext.JSON.encode([]),
-				reqOu:'105015'
-		};
-		
-		Ext.Ajax.request({
-		    url:me.URL+"/send",
-		    method: "POST",
-		    params: params,
-		    success: function(response){
-		  	  
-			  	var json = Ext.decode(response.responseText);
-				  
-			   	if (json.success) {
-			   		PB.Dlg.info('SUCC_'+me.SEND_MSG_KEY, MODULE_PCM, {msg:'ID:'+json.data.id, fn:me.closeForm, scope:me});
-			   	} else {
-			   		if (json.data.valid != undefined && !json.data.valid) {
-			   			
-			   			var msg;
-			   			
-			   			if (json.data.msg) {
-			   				msg = json.data.msg;
+			var grid = me.getMainGrid();
+			
+			var myMask = new Ext.LoadMask({
+				target:me.getMain(), 
+				msg:"Please wait..."
+			});
+			
+			myMask.show();
+			
+			var params = {
+					total:224700,
+					requested_time:'2016-03-20T12:00:00',
+					files:Ext.JSON.encode([]),
+					reqOu:'105015'
+			};
+			
+			Ext.Ajax.request({
+			    url:me.URL+"/send",
+			    method: "POST",
+			    params: params,
+			    success: function(response){
+			  	  
+				  	var json = Ext.decode(response.responseText);
+					  
+				   	if (json.success) {
+				   		PB.Dlg.info('SUCC_'+me.SEND_MSG_KEY, MODULE_PCM, {msg:'ID:'+json.data.id, fn:me.closeForm, scope:me});
+				   	} else {
+				   		if (json.data.valid != undefined && !json.data.valid) {
+				   			
+				   			var msg;
+				   			
+				   			if (json.data.msg) {
+				   				msg = json.data.msg;
+					   		}
+					   		
+				   			PB.Dlg.error(null, MODULE_PCM, {msg:msg});
 				   		}
-				   		
-			   			PB.Dlg.error(null, MODULE_PCM, {msg:msg});
-			   		}
-			   		else {
-				   		PB.Dlg.error('ERR_'+me.SEND_MSG_KEY, MODULE_PCM);
-			   		}
-			   	}
-			   	 
-		   	 	myMask.hide();
+				   		else {
+					   		PB.Dlg.error('ERR_'+me.SEND_MSG_KEY, MODULE_PCM);
+				   		}
+				   	}
+				   	 
+			   	 	myMask.hide();
+			
+			    },
+			    failure: function(response, opts){
+			    	try {
+			    		var json = Ext.decode(response.responseText);
+				    	PB.Dlg.error('ERR_'+me.SEND_MSG_KEY+" ("+json.message+")", MODULE_PCM);
+			    	}
+			    	catch (err) {
+				    	alert(response.responseText);
+			    	}
+				    myMask.hide();
+			    },
+			    headers: getAlfHeader()
+			});
 		
-		    },
-		    failure: function(response, opts){
-		    	try {
-		    		var json = Ext.decode(response.responseText);
-			    	PB.Dlg.error('ERR_'+me.SEND_MSG_KEY+" ("+json.message+")", MODULE_PCM);
-		    	}
-		    	catch (err) {
-			    	alert(response.responseText);
-		    	}
-			    myMask.hide();
-		    },
-		    headers: getAlfHeader()
 		});
 	},
 
@@ -241,7 +253,20 @@ Ext.define('PBPcmOrd.controller.Main', {
 		this.getMainGrid().getStore().load();
 	},
 	
-	gotoFolder:function(r) {
+	gotoFolder : function(r) {
+		var me = this;
+		
+		PB.Util.checkSession(this, me.MSG_URL+"/get", function() {
+	
+			var dlg = Ext.create("PB.view.common.FolderDtlDlg",{
+				rec : r
+			});
+			dlg.show();
+		
+		});
+	},
+	
+	_gotoFolder:function(r) {
 		Ext.Ajax.request({
 	        url:ALF_CONTEXT+"/util/getFolderName",
 	        async : false,
@@ -270,32 +295,72 @@ Ext.define('PBPcmOrd.controller.Main', {
 	    });
 	},
 	
-	viewDetail:function() {
+	viewDetail:function(r) {
+		var me = this;
+		
+		var win = window.open("", "_new");
+		
+		PB.Util.checkSession(this, me.MSG_URL+"/get", function() {
+
+//			window.open(Alfresco.constants.PROXY_URI_RELATIVE+"api/node/content/"+nodeRef2Url(r.get("doc_ref")),"_new");
+			win.location.href = Alfresco.constants.PROXY_URI_RELATIVE+"api/node/content/"+nodeRef2Url(r.get("doc_ref"));
+		});
 	},
 	
 	viewHistory:function(r) {
-		var dlg = Ext.create("PBPcmOrd.view.workflow.DtlDlg");
-		var id = r.get("id");
-	
-		var store = dlg.items.items[0].getStore(); 
-		store.getProxy().extraParams = {
-			id : id
-		}
-		store.load();
+		var me = this;
 		
-		store = dlg.items.items[1].items.items[0].getStore();
-		store.getProxy().extraParams = {
-		   	id : id
-		};
-		store.load();
+		PB.Util.checkSession(this, me.MSG_URL+"/get", function() {
+
+			var dlg = Ext.create("PBPcmOrd.view.workflow.DtlDlg");
+			var id = r.get("id");
 		
-		store = dlg.items.items[1].items.items[1].getStore();
-		store.getProxy().extraParams = {
-		   	id : id
-		};
-		store.load();
+			// Current Task
+			Ext.Ajax.request({
+			      url:me.URL+'/wf/task/list',
+			      method: "GET",
+			      params: {
+			    	  id : id,
+			    	  lang:getLang()
+			      },
+			      success: function(response) {
+					  var data = Ext.decode(response.responseText).data[0];
+					  var curTask;
+					  if (data && r.get("status")!="X1") {
+						  curTask = data.type+(data.assignedTo ? " : " : "")+data.assignedTo;
+					  } else {
+						  curTask = "";
+					  }
+					  dlg.items.items[0].items.items[0].items.items[0].setText('<font color="blue">'+curTask+'</font>',false);
+					  
+				  },
+			      failure: function(response, opts){
+			          alert("failed");
+			      },
+			      headers: getAlfHeader()
+			});
+			
+			
+			// Path
+			var store = dlg.items.items[0].items.items[1].getStore(); 
+			store.getProxy().extraParams = {
+				id : id,
+				lang : getLang()
+			}
+			store.load();
+			
+			// History
+			store = dlg.items.items[1].getStore();
+			store.getProxy().extraParams = {
+			   	id : id,
+			   	lang : getLang()
+			};
+			store.load();
+			
+			// Show
+			dlg.show();
 		
-		dlg.show();
+		});
 	}
 
 });

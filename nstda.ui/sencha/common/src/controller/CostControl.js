@@ -34,14 +34,20 @@ Ext.define('PB.controller.common.CostControl', {
 		return sender.up("window").down("field[name=type]");
 	},
 	
+	getSectionId:function(sender) {
+		return sender.up("window").sectionId;
+	},
+	
     search : function(sender) {
 		var me = this;
 	
     	var store = me.getGrid(sender).getStore();
     	
     	store.getProxy().extraParams = {
-    			s:me.getSearchTerm(sender).getValue(),
-    			t:me.getType(sender).getValue()
+			s:me.getSearchTerm(sender).getValue(),
+			t:me.getType(sender).getValue(),
+			sid:me.getSectionId(sender),
+			lang:getLang()
     	}
     	
     	store.load();
@@ -50,7 +56,14 @@ Ext.define('PB.controller.common.CostControl', {
 	ok:function(btn) {
 		var me = this;
 		
-		var ids = getRadioValue("id").split("|");
+		var id = getRadioValue("id");
+		var name;
+		var store = me.getGrid(btn).getStore();
+		store.each(function(rec){
+			if (rec.get("id")==id) {
+				name = rec.get("name");
+			}
+		});
 		
 		var cmbType = me.getType(btn); 
 		var type = cmbType.getValue();
@@ -61,7 +74,7 @@ Ext.define('PB.controller.common.CostControl', {
 			}
 		});
 		
-		me.getDlg().callback(ids, type, typeName);
+		me.getDlg().callback(id, name, type, typeName);
 		me.getDlg().close();
 	}
 

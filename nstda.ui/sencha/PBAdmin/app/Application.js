@@ -15,27 +15,41 @@ Ext.define('PBAdmin.Application', {
         'Ext.util.Format',
         'Ext.layout.container.Card',
         'Ext.layout.container.Form',
+        'Ext.layout.container.HBox',
         'Ext.form.field.Hidden',
         'Ext.form.field.Text',
+        'Ext.form.field.Trigger',
         'Ext.tab.Panel',
         'Ext.grid.column.CheckColumn',
         'Ext.form.field.Checkbox',
         'Ext.form.field.Date',
         'Ext.overrides.grid.column.Action',
+        'Ext.ux.form.MultiFile',
         
         'PB.Util',
         'PB.Dlg',
+        'PB.Label',
         'PB.button.LinkButton',
+        'PB.model.common.UserModel',
+        'PB.store.common.UserStore',
+        'PB.view.common.SearchUserDlg',
         
         'PBAdmin.view.Main',
+        'PBAdmin.view.main.workflow.Main',
         'PBAdmin.view.main.settings.Main',
         'PBAdmin.view.main.testSystem.Main',
+        'PBAdmin.view.main.util.Main',
+        'PBAdmin.view.main.log.Main',
         
         'PBAdmin.controller.Main',
+        'PBAdmin.controller.common.User',
         'PBAdmin.controller.main.Settings',
         'PBAdmin.controller.main.SettingsForm',
         'PBAdmin.controller.main.TestSystem',
-        
+        'PBAdmin.controller.main.Util',
+        'PBAdmin.controller.main.Workflow',
+        'PBAdmin.controller.main.Log',
+
         'PBAdmin.store.main.SettingsGridStore',
         'PBAdmin.store.main.AuthMasterTypeCmbStore',
         'PBAdmin.store.main.ModuleCmbStore'
@@ -46,11 +60,15 @@ Ext.define('PBAdmin.Application', {
     ],
 
     controllers: [
+        'common.User',
         'Main',
         'main.Settings',
         'main.SettingsForm',
         'main.Group',
-        'main.TestSystem'
+        'main.TestSystem',
+        'main.Util',
+        'main.Workflow',
+        'main.Log'
     ],
 
     stores: [
@@ -59,6 +77,10 @@ Ext.define('PBAdmin.Application', {
     ],
     
 	launch: function () {
+		Ext.apply(Ext.QuickTips.getQuickTip(), {
+		    dismissDelay: 0
+		});
+	
 		if (typeof TASKS !== 'undefined') {
 			HEIGHT = Ext.get(HTML_ID).getHeight();
 			WIDTH = Ext.get(HTML_ID).getWidth();
@@ -107,6 +129,26 @@ Ext.define('PBAdmin.Application', {
 			      },
 			      headers: getAlfHeader()
 			});
+		 	
+		 	Ext.Ajax.request({
+			      url:ALF_CONTEXT+"/admin/message/lbl",
+			      method: "GET",
+			      params:{
+		 			 lang:getLang()
+		 		  },
+			      success: function(response){
+			    	  
+			    	var data = Ext.decode(response.responseText);
+				 	Ext.apply(PB.Label, data);
+				 	//alert(PBPcm.Label.a);
+			      },
+			      failure: function(response, opts){
+			          // do nothing
+			      },
+			      headers: getAlfHeader(),
+			      async:false
+			});	 	
+		 	
 		}
 
 	}

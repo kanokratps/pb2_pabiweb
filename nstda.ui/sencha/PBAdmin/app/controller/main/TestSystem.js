@@ -13,8 +13,8 @@ Ext.define('PBAdmin.controller.main.TestSystem', {
 		var me = this;
 		
 		me.control({
-			'adminMainTestSystemMain [action=testUserSignature]': {
-				click : me.testUserSignature
+			'adminMainTestSystemMain [action=currentUser]': {
+				click : me.currentUser
 			},
 			'adminMainTestSystemMain [action=version]': {
 				click : me.version
@@ -69,6 +69,42 @@ Ext.define('PBAdmin.controller.main.TestSystem', {
 		    headers: getAlfHeader()
 		});	
 	},
+	
+	currentUser:function(){
+		var me = this;
+	
+		var myMask = new Ext.LoadMask({
+			target:me.getMain(),
+			msg:"Please wait..."
+		});
+		myMask.show();
+		
+		Ext.Ajax.request({
+		    url:me.URL+'/currentUser',
+		    method: "GET",
+		    success: function(response){
+		  	  
+		  	  var json = Ext.decode(response.responseText);
+			  
+		  	  if(json.success){
+		  		 var msg = "Count : " + json.data.cnt
+		   				 + "\nUsers : "+json.data.users;
+		   		 
+		   		 me.getTextArea().setValue(msg);
+		
+		  	  } else {
+		  		  PB.Dlg.error('ERR_'+me.MSG_KEY, MODULE_ADMIN);
+		  	  }
+		  	  
+		  	  myMask.hide();	
+		    },
+		    failure: function(response, opts){
+		  	  PB.Dlg.error('ERR_'+me.MSG_KEY, MODULE_ADMIN);
+		  	  myMask.hide();
+		    },
+		    headers: getAlfHeader()
+		});	
+	},	
 
 	version:function(){
 		var me = this;

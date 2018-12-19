@@ -10,9 +10,9 @@ Ext.define('PBPcmOrd.view.workflow.DtlGrid', {
 			
 			   columns: [ 
 			    { text: 'Date-Time',width: 120, dataIndex: 'time'},
-			    { text: 'By',width: 70, dataIndex: 'by'},
-			    { text: 'Status',width: 70, dataIndex: 'status'},
+			    { text: 'By',width: 110, dataIndex: 'by'},
 			    { text: 'Task',width: 100, dataIndex: 'task'},
+			    { text: 'Status',width: 80, dataIndex: 'status'},
 			    { text: 'Comment', dataIndex: 'comment', tdCls: 'wrap',flex: 1}
 			   ]
 		});		

@@ -147,6 +147,10 @@
    <target name="Deploy.expuse">
 		<deploy module="expuse"/>
    </target>
+	
+   <target name="Deploy.hrsal">
+		<deploy module="hrsal"/>
+   </target>
 		
    <!-- Modules End -->
 	

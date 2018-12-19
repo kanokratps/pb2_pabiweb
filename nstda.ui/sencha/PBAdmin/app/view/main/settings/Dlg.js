@@ -16,6 +16,7 @@ Ext.define('PBAdmin.view.main.settings.Dlg', {
 		        	xtype : 'form',
 			        itemId : 'formSettings',
 			        border : 0,
+			        layout:'anchor',
 			        buttons : [{
 			          text: 'บันทึก', 
 //			          disabled : true,

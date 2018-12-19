@@ -60,6 +60,12 @@
 		</antcall>
    </target>
 			
+   <target name="Module.hrsal" if="page.hrsal.dir">
+		<antcall target="module">
+			<param name="module" value="hrsal"/>
+		</antcall>
+   </target>
+				
    <!-- Modules End -->
 	
 </project>	
