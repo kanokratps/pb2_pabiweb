@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <page>
    <title>Expenses Use</title>
-   <title-id>Expenses Use</title-id>
+   <title-id>page.expUseHome.title</title-id>
    <description>Expenses Use Page</description>
    <description-id>page.expUseHome.description</description-id>
    <template-instance>exp-use-template</template-instance>

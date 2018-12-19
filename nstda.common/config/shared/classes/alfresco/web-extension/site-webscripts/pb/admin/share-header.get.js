@@ -35,6 +35,16 @@ if (headerBar != null)
 	      }
     });
 	
+	widgets.push({
+	  	  name: "alfresco/header/AlfMenuItem",
+	      config:
+	      {
+		      label: "header.menu.pb-hr.label",
+		      iconClass: "alf-pb-hr-icon",
+		      targetUrl: "hr"
+	      }
+    });
+	
    headerBar.config.widgets.splice(1, 0, {
        id: "HEADER_PB",
 	   name: "alfresco/header/AlfMenuBarPopup",

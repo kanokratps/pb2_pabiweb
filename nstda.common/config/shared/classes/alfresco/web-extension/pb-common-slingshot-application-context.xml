@@ -8,6 +8,7 @@
 		<property name="resourceBundles">
 			<list>
 				<value>alfresco.web-extension.messages.comment-grid</value>
+				<value>alfresco.web-extension.messages.common</value>
 			</list>
 		</property>
 	</bean>

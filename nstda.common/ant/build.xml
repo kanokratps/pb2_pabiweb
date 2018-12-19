@@ -15,7 +15,14 @@
 			<arg value="-o"/>
 			<arg value="config/share/web/components/dashlets/my-tasks-min.js"/>
 		</java>
-
+   </target>
+	
+   <target name="Compress Html Upload">
+		<java jar="ant/yuicompressor-2.4.7.jar" fork="true">
+			<arg value="config/share/web/components/upload/html-upload.js"/>
+			<arg value="-o"/>
+			<arg value="config/share/web/components/upload/html-upload-min.js"/>
+		</java>
    </target>
 	
    <target name="Zip">

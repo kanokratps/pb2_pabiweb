@@ -75,11 +75,11 @@ function main()
         else
         {
             // Doy+ {
-            if (msg.indexOf("|BG_ERR|") != -1) {
-            	var pos = msg.indexOf("|BG_ERR|");
+            if (msg.indexOf("|PB_ERR|") != -1) {
+            	var pos = msg.indexOf("|PB_ERR|");
             	msg = msg.substring(pos+8);
             }
-	    // Doy+ }
+            // Doy+ }
             
             status.setCode(500, msg);
           

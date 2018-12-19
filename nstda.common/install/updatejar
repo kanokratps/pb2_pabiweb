@@ -1,0 +1,2 @@
+cp ../../nstda.repo/build/dist/* jar
+cp ../../nstda.ui/build/dist/* jar

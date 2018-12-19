@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<template-instance>
+   <template-type>pb/page/hr-sal</template-type>
+   <properties>
+   		<pageFamily>hrSal</pageFamily>
+   		<container>hrSal</container>
+   </properties>
+   
+   <components>
+      <!-- Home Pages -->
+      <component>
+         <region-id>hrSalPage</region-id>
+         <url>/pb/hr/sal</url>
+      </component>
+   </components>
+   
+</template-instance>

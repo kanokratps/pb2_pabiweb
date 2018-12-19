@@ -53,29 +53,43 @@
 				<show id="pcmreqwf:total"/>
 				
 				<show id="pcmreqwf:document"/>
+				<show id="pcmreqwf:refDocument"/>
 				<show id="pcmreqwf:attachDocument"/>
-				<show id="pcmreqwf:commentHistory"/> 
 				
+				<show id="pcmreqwf:description"/>
 				<show id="bpm:comment" />
 				<show id="pcmreqwf:reSubmitOutcome" />
 				<show id="pcmreqwf:folderRef"/>
+				
+				<show id="pcmreqwf:lang"/>
+				
+				<!-- show id="pcmreqwf:consultant"/-->
+				
 			</field-visibility>
 			
 			<appearance>
 			    <set id="docInfo" appearance="e-panel" label-id="workflow.pcm.set.docInfo" />		
 				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.document.pr" />
+				<set id="pnlRefDocument" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.document.pr.ref" />
 				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.attachment" />	
 				<set id="pnlComment" appearance="panel" parent="docInfo"  label-id="workflow.pcm.set.comment" />
+				<!-- set id="pnlConsult" appearance="panel" label-id="workflow.pcm.set.consult" /-->
 				<set id="response" appearance="title" label-id="workflow.pcm.set.response" />
 				 
 				<field id="pcmreqwf:id" set="docInfo">
 					<control template="/org/alfresco/components/form/controls/hidden.ftl">
 					</control>
 				</field>
+				
+				<field id="pcmreqwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
 				 
 				<field id="pcmreqwf:objectiveType" set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
+					<control template="/pb/components/form/controls/info.ftl">
 					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/pcm/objType/value?id=</control-param> 
 					</control> 
 				</field>
 				
@@ -86,20 +100,24 @@
 				</field>				
 				
 				<field id="pcmreqwf:reason"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
+					<control template="/pb/components/form/controls/info.ftl">
 					 <control-param name="style">width: 99%</control-param> 
+					 <control-param name="dsUrl">pb/srcUrl/main/masterValue?t=PR_RSN&amp;c=</control-param> 
 				  </control>
 				</field>
 								
 				<field id="pcmreqwf:budgetCc"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					 <control-param name="style">width: 99%</control-param> 
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
 				  </control>
 				</field>
 								
 				<field id="pcmreqwf:total"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					 <control-param name="style">width: 99%</control-param> 
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/srcUrl/pcm/field/total?id=</control-param> 
+					 <control-param name="fromName">prop_pcmreqwf_id</control-param> 
 				  </control>
 				</field>
 				
@@ -109,31 +127,53 @@
 						<!-- control-param name="buttons">u</control-param -->
 						<control-param name="removeAction">false</control-param>  
 						<control-param name="showLabel">false</control-param>
-					</control>
-				</field> 
-				<field id="pcmreqwf:attachDocument" set="pnlAttachment">
-					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
-						<control-param name="style">width:100%</control-param>
-						<control-param name="buttons">u</control-param>
-						<control-param name="removeAction">false</control-param>  
-						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
 					</control>
 				</field> 
 				
-				<field id="pcmreqwf:commentHistory" set="pnlComment">
-					<control template="/pb/components/form/controls/commentgridExt.ftl">
-						<control-param name="cols">time,user,task,action,comment</control-param>
+				<field id="pcmreqwf:refDocument" set="pnlRefDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems_ref.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="removeAction">false</control-param>  
 						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
 					</control>
 				</field>
 				
-				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+				<field id="pcmreqwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="pcmreqwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">pcm-req</control-param>
+						<control-param name="dsFieldValue">prop_pcmreqwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
 					<control template="/org/alfresco/components/form/controls/textarea.ftl">
 					 <control-param name="style">width: 99%</control-param>
 					 <control-param name="rows">5</control-param>
 				  </control>
 				</field>
 				
+				<!-- field id="pcmreqwf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field-->
+                
 				<field id="pcmreqwf:reSubmitOutcome" label-id="workflow.field.outcome" set="response">
                   <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
                 </field>
@@ -159,30 +199,43 @@
 				<show id="pcmreqwf:total"/>
 				
 				<show id="pcmreqwf:document"/>
+				<show id="pcmreqwf:refDocument"/>
 				<show id="pcmreqwf:attachDocument"/>
-				<show id="pcmreqwf:commentHistory"/> 
 				
+				<show id="pcmreqwf:description" />
 				<show id="bpm:comment" />
 				<show id="pcmreqwf:reviewOutcome" />
 				<show id="pcmreqwf:folderRef"/>
+				
+				<show id="pcmreqwf:consultant"/>
+				
+				<show id="pcmreqwf:lang"/>
 				
 			</field-visibility>
 			
 			<appearance>
 				<set id="docInfo" appearance="panel" label-id="workflow.pcm.set.docInfo"/>		
 				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.document.pr" />
+				<set id="pnlRefDocument" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.document.pr.ref" />
 				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.attachment" />	
 				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.pcm.set.comment" />
+				<set id="pnlConsult" appearance="panel" label-id="workflow.pcm.set.consult" />
 				<set id="response" appearance="title" label-id="workflow.pcm.set.response" />
 				 
 				<field id="pcmreqwf:id" set="docInfo">
 					<control template="/org/alfresco/components/form/controls/hidden.ftl">
 					</control>
 				</field>
+				
+				<field id="pcmreqwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
 				 
 				<field id="pcmreqwf:objectiveType" set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					 	<control-param name="style">width:40%</control-param> 
+					<control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 40%</control-param> 
+					 <control-param name="dsUrl">pb/srcUrl/pcm/objType/value?id=</control-param> 
 					</control> 
 				</field>
 				
@@ -193,60 +246,91 @@
 				</field>				
 				
 				<field id="pcmreqwf:reason"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
+					<control template="/pb/components/form/controls/info.ftl">
 					 <control-param name="style">width: 99%</control-param> 
+					 <control-param name="dsUrl">pb/srcUrl/main/masterValue?t=PR_RSN&amp;c=</control-param> 
 				  </control>
 				</field>
 								
+				<!-- field id="pcmreqwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field-->
+				
 				<field id="pcmreqwf:budgetCc"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					 <control-param name="style">width: 99%</control-param> 
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
 				  </control>
 				</field>
-								
+				
 				<field id="pcmreqwf:total"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					 <control-param name="style">width: 99%</control-param> 
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/srcUrl/pcm/field/total?id=</control-param> 
+					 <control-param name="fromName">prop_pcmreqwf_id</control-param> 
 				  </control>
 				</field>
 								
 				<field id="pcmreqwf:document" set="pnlDocument">
 					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
 						<control-param name="style">width:100%</control-param>
-						<control-param name="removeAction">false</control-param>  
+						<control-param name="removeAction">false</control-param>
 						<control-param name="showLabel">false</control-param>
-					</control>
-				</field> 
-				<field id="pcmreqwf:attachDocument" set="pnlAttachment">
-					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
-						<control-param name="style">width:100%</control-param>
-						<control-param name="buttons">u</control-param>
-						<control-param name="removeAction">false</control-param>  
-						<control-param name="showLabel">false</control-param>
-					</control>
-				</field> 
-				
-				<field id="pcmreqwf:commentHistory" set="pnlComment">
-					<control template="/pb/components/form/controls/commentgrid.ftl">
-						<control-param name="cols">time,user,task,action,comment</control-param>
-						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>
 					</control>
 				</field>
 				
-				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+				<field id="pcmreqwf:refDocument" set="pnlRefDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems_ref.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>
+					</control>
+				</field>
+				 
+				<field id="pcmreqwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="pcmreqwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_pcmreqwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
 					<control template="/org/alfresco/components/form/controls/textarea.ftl">
 					 <control-param name="style">width: 99%</control-param>
 					 <control-param name="rows">5</control-param>
 				  </control>
 				</field>
 				
+				<field id="pcmreqwf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field>
+                
 				<field id="pcmreqwf:reviewOutcome" label-id="workflow.field.outcome" set="response">
                   <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
                 </field>
                 
                 <field id="pcmreqwf:folderRef">
 					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
-				</field>				
+				</field>
 				
 			</appearance>
 		 </form>
@@ -265,18 +349,22 @@
 				<show id="pcmreqwf:total"/>
 
 				<show id="pcmreqwf:document"/>
+				<show id="pcmreqwf:refDocument"/>
 				<show id="pcmreqwf:attachDocument"/>
-				<show id="pcmreqwf:commentHistory"/> 
 				
+				<show id="pcmreqwf:description"/>
 				<show id="bpm:comment" />
 				<show id="pcmreqwf:consultOutcome" />
 				<show id="pcmreqwf:folderRef"/>
+				
+				<show id="pcmreqwf:lang"/>
 				
 			</field-visibility>
 			
 			<appearance>
 				<set id="docInfo" appearance="panel" label-id="workflow.pcm.set.docInfo"/>		
 				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.document.pr" />
+				<set id="pnlRefDocument" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.document.pr.ref" />
 				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.attachment" />	
 				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.pcm.set.comment" />
 				<set id="response" appearance="title" label-id="workflow.pcm.set.response" />
@@ -286,9 +374,15 @@
 					</control>
 				</field>
 				 
+				<field id="pcmreqwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
 				<field id="pcmreqwf:objectiveType" set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					 	<control-param name="style">width:40%</control-param> 
+					<control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 40%</control-param> 
+					 <control-param name="dsUrl">pb/srcUrl/pcm/objType/value?id=</control-param> 
 					</control> 
 				</field>
 				
@@ -299,14 +393,16 @@
 				</field>				
 				
 				<field id="pcmreqwf:reason"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
+					<control template="/pb/components/form/controls/info.ftl">
 					 <control-param name="style">width: 99%</control-param> 
+					 <control-param name="dsUrl">pb/srcUrl/main/masterValue?t=PR_RSN&amp;c=</control-param> 
 				  </control>
 				</field>
 								
 				<field id="pcmreqwf:budgetCc"  set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					 <control-param name="style">width: 99%</control-param> 
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
 				  </control>
 				</field>
 								
@@ -322,25 +418,37 @@
 						<!-- control-param name="buttons">u</control-param -->
 						<control-param name="removeAction">false</control-param>  
 						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
 					</control>
-				</field> 
+				</field>
+				<field id="pcmreqwf:refDocument" set="pnlRefDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems_ref.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field>
 				<field id="pcmreqwf:attachDocument" set="pnlAttachment">
 					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
 						<control-param name="style">width:100%</control-param>
-						<control-param name="buttons">u</control-param>
+						<control-param name="buttons">ue</control-param>
 						<control-param name="removeAction">false</control-param>  
 						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
 					</control>
 				</field> 
 				
-				<field id="pcmreqwf:commentHistory" set="pnlComment">
+				<field id="pcmreqwf:description" set="pnlComment">
 					<control template="/pb/components/form/controls/commentgrid.ftl">
 						<control-param name="cols">time,user,task,action,comment</control-param>
 						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_pcmreqwf_id</control-param>
 					</control>
 				</field>
 				
-				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+				<field id="bpm:comment" set="pnlComment">
 					<control template="/org/alfresco/components/form/controls/textarea.ftl">
 					 <control-param name="style">width: 99%</control-param>
 					 <control-param name="rows">5</control-param>
@@ -408,18 +516,21 @@
 		 <form>
 			<field-visibility>
 				<show id="pcmordwf:id"/>
-				<show id="pcmordwf:requester"/>
+				<!-- show id="pcmordwf:requester"/-->
 				<show id="pcmordwf:objective"/>
 				<show id="pcmordwf:method"/>
 				<show id="pcmordwf:total"/>
 				
 				<show id="pcmordwf:document"/>
 				<show id="pcmordwf:attachDocument"/>
-				<show id="pcmordwf:commentHistory"/> 
 				
+				<show id="pcmordwf:description"/>
 				<show id="bpm:comment" />
 				<show id="pcmordwf:reSubmitOutcome" />
 				<show id="pcmordwf:folderRef"/>
+				
+				<show id="pcmordwf:lang"/>
+				
 			</field-visibility>
 			
 			<appearance>
@@ -434,10 +545,17 @@
 					</control>
 				</field>
 				 
-				<field id="pcmordwf:requester" set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					</control> 
+				<field id="pcmordwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
 				</field>
+				 
+				<!-- field id="pcmordwf:requester" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:99%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/userName?c=</control-param> 
+					</control> 
+				</field-->
 				
 				<field id="pcmordwf:objective" set="docInfo">
 					<control template="/org/alfresco/components/form/controls/info.ftl">
@@ -466,20 +584,22 @@
 				<field id="pcmordwf:attachDocument" set="pnlAttachment">
 					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
 						<control-param name="style">width:100%</control-param>
-						<control-param name="buttons">u</control-param>
+						<control-param name="buttons">ue</control-param>
 						<control-param name="removeAction">false</control-param>  
 						<control-param name="showLabel">false</control-param>
 					</control>
 				</field> 
 				
-				<field id="pcmordwf:commentHistory" set="pnlComment">
+				<field id="pcmordwf:description" set="pnlComment">
 					<control template="/pb/components/form/controls/commentgridExt.ftl">
 						<control-param name="cols">time,user,task,action,comment</control-param>
 						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/ord/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_pcmordwf_id</control-param>
 					</control>
 				</field>
 				
-				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+				<field id="bpm:comment" set="pnlComment">
 					<control template="/org/alfresco/components/form/controls/textarea.ftl">
 					 <control-param name="style">width: 99%</control-param>
 					 <control-param name="rows">5</control-param>
@@ -504,19 +624,22 @@
 		 <form>
 			<field-visibility>
 				<show id="pcmordwf:id"/>
-				<show id="pcmordwf:requester"/>
+				<!-- show id="pcmordwf:requester"/-->
 				<show id="pcmordwf:objective"/>
 				<show id="pcmordwf:method"/>
 				<show id="pcmordwf:total"/>
 				
 				<show id="pcmordwf:document"/>
 				<show id="pcmordwf:attachDocument"/>
-				<show id="pcmordwf:commentHistory"/> 
 				
+				<show id="pcmordwf:description"/>
 				<show id="bpm:comment" />
 				<show id="pcmordwf:reviewOutcome" />
 				<show id="pcmordwf:folderRef"/>
 				
+				<show id="pcmordwf:consultant"/>
+
+				<show id="pcmordwf:lang"/>
 			</field-visibility>
 			
 			<appearance>
@@ -524,6 +647,7 @@
 				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.document.pd" />
 				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.pcm.set.attachment" />	
 				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.pcm.set.comment" />
+				<set id="pnlConsult" appearance="panel" label-id="workflow.pcm.set.consult" />
 				<set id="response" appearance="title" label-id="workflow.pcm.set.response" />
 				 
 				<field id="pcmordwf:id" set="docInfo">
@@ -531,10 +655,17 @@
 					</control>
 				</field>
 				 
-				<field id="pcmordwf:requester" set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					</control> 
+				<field id="pcmordwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
 				</field>
+				 
+				<!-- field id="pcmordwf:requester" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:99%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/userName?c=</control-param> 
+					</control> 
+				</field-->
 				
 				<field id="pcmordwf:objective" set="docInfo">
 					<control template="/org/alfresco/components/form/controls/info.ftl">
@@ -562,26 +693,35 @@
 				<field id="pcmordwf:attachDocument" set="pnlAttachment">
 					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
 						<control-param name="style">width:100%</control-param>
-						<control-param name="buttons">u</control-param>
+						<control-param name="buttons">ue</control-param>
 						<control-param name="removeAction">false</control-param>  
 						<control-param name="showLabel">false</control-param>
 					</control>
 				</field> 
 				
-				<field id="pcmordwf:commentHistory" set="pnlComment">
+				<field id="pcmordwf:description" set="pnlComment">
 					<control template="/pb/components/form/controls/commentgrid.ftl">
 						<control-param name="cols">time,user,task,action,comment</control-param>
 						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/ord/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_pcmordwf_id</control-param>
 					</control>
 				</field>
 				
-				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+				<field id="bpm:comment" set="pnlComment">
 					<control template="/org/alfresco/components/form/controls/textarea.ftl">
 					 <control-param name="style">width: 99%</control-param>
 					 <control-param name="rows">5</control-param>
 				  </control>
 				</field>
 				
+				<field id="pcmordwf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field>
+                
 				<field id="pcmordwf:reviewOutcome" label-id="workflow.field.outcome" set="response">
                   <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
                 </field>
@@ -600,18 +740,20 @@
 		 <form>
 			<field-visibility>
 				<show id="pcmordwf:id"/>
-				<show id="pcmordwf:requester"/>
+				<!-- show id="pcmordwf:requester"/-->
 				<show id="pcmordwf:objective"/>
 				<show id="pcmordwf:method"/>
 				<show id="pcmordwf:total"/>
 
 				<show id="pcmordwf:document"/>
 				<show id="pcmordwf:attachDocument"/>
-				<show id="pcmordwf:commentHistory"/> 
 				
+				<show id="pcmordwf:description"/>
 				<show id="bpm:comment" />
 				<show id="pcmordwf:consultOutcome" />
 				<show id="pcmordwf:folderRef"/>
+				
+				<show id="pcmordwf:lang"/>
 				
 			</field-visibility>
 			
@@ -627,10 +769,17 @@
 					</control>
 				</field>
 				 
-				<field id="pcmordwf:requester" set="docInfo">
-					<control template="/org/alfresco/components/form/controls/info.ftl">
-					</control> 
+				<field id="pcmordwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
 				</field>
+				 
+				<!--field id="pcmordwf:requester" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:99%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/userName?c=</control-param> 
+					</control> 
+				</field-->
 				
 				<field id="pcmordwf:objective" set="docInfo">
 					<control template="/org/alfresco/components/form/controls/info.ftl">
@@ -659,20 +808,22 @@
 				<field id="pcmordwf:attachDocument" set="pnlAttachment">
 					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
 						<control-param name="style">width:100%</control-param>
-						<control-param name="buttons">u</control-param>
+						<control-param name="buttons">ue</control-param>
 						<control-param name="removeAction">false</control-param>  
 						<control-param name="showLabel">false</control-param>
 					</control>
 				</field> 
 				
-				<field id="pcmordwf:commentHistory" set="pnlComment">
+				<field id="pcmordwf:description" set="pnlComment">
 					<control template="/pb/components/form/controls/commentgrid.ftl">
 						<control-param name="cols">time,user,task,action,comment</control-param>
 						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/ord/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_pcmordwf_id</control-param>
 					</control>
 				</field>
 				
-				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+				<field id="bpm:comment" set="pnlComment">
 					<control template="/org/alfresco/components/form/controls/textarea.ftl">
 					 <control-param name="style">width: 99%</control-param>
 					 <control-param name="rows">5</control-param>

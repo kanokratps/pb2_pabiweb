@@ -9,6 +9,9 @@
 </#if>
 <#assign controlId = fieldHtmlId + "-cntrl"/>
 <#if field.control.params.ds?exists><#assign cols=field.control.params.cols><#else><#assign cols=''></#if>
+<#if field.control.params.dsUrl?exists><#assign dsUrl=field.control.params.dsUrl><#else><#assign dsUrl=''></#if>
+<#if field.control.params.pbmodule?exists><#assign pbmodule=field.control.params.pbmodule><#else><#assign pbmodule=''></#if>
+<#if field.control.params.dsFieldValue?exists><#assign dsFieldValue=field.control.params.dsFieldValue><#else><#assign dsFieldValue=''></#if>
 
 <div class="form-field">
    <#if form.mode == "view">
@@ -32,20 +35,20 @@
 		      <div class="details form-field" id="${controlId}">
 			  <div class="details-datatable" id="${controlId}-details">
 			  </div>
-			  <input id="${fieldHtmlId}-h" name="${field.name}" type="hidden" value="${fieldValue?html}"/>
+			  <!--input id="${fieldHtmlId}-h" name="${field.name}" type="hidden" value="${fieldValue?html}"/-->
 		      </div>
          </#if></span>
       </div>
    <#else>
       <#if field.control.params.showLabel?? && field.control.params.showLabel == "true">
       	<label for="${fieldHtmlId}">${field.label?html}:<#if field.mandatory><span class="mandatory-indicator">${msg("form.required.fields.marker")}</span></#if></label>
-      </#if>	
+      </#if>
       <#if field.value == ""><!--empty--><#else>
       <span class="viewmode-value">
 		      <div class="details form-field" id="${controlId}">
 			  <div class="details-datatable" id="${controlId}-details">
 			  </div>
-			  <input id="${fieldHtmlId}-h" name="${field.name}" type="hidden" value="${field.value?html}"/>
+			  <!--input id="${fieldHtmlId}-h" name="${field.name}" type="hidden" value="${field.value?html}"/-->
 		      </div>
       </#if></span>
       <@formLib.renderFieldHelp field=field />
@@ -55,7 +58,7 @@
 <script type="text/javascript">
 
 YAHOO.util.Event.onDOMReady(function(){
-   new Alfresco.UserDataTable("${controlId}", "${fieldHtmlId}-h").setMessages(${messages});
+   new Alfresco.UserDataTable("${controlId}", "${dsFieldValue}", "${dsUrl}", "&lang="+getLang()).setMessages(${messages});
    			/*
    		var divs = document.getElementsByTagName("div");
     	for(var i = 0; i < divs.length; i++){
@@ -72,32 +75,39 @@ YAHOO.util.Event.onDOMReady(function(){
     		}
     	}
     	*/
-    	var div = document.getElementById('ext-edit-btn');
-    	var oImg=document.createElement("img");
-		oImg.setAttribute('src', '../res/page/img/icon/edit.png');
-		oImg.setAttribute('id','oImg');
-		oImg.setAttribute('alt', 'edit');
-		oImg.style.height= '15px';
-		oImg.style.width= '15px';
-			oImg.onclick = function () {
-				var hid = document.getElementsByName("prop_pcmreqwf_id")[0];
-				if (!hid) alert("Test");
-				var pf = hid.value.substring(0,2);
-				var u = {
-					"PR":"pcm-req",
-					"PD":"pcm-ord",
-					"AV":"exp-brw",
-					"AP":"exp-use"
-				}
-	    		window.location = "${url.context}/page/"+u[pf]+"?id="+hid.value+"&tid=${taskId}";
-			};
-		div.appendChild(oImg);                    // Append <button> to <body>
-		
+    	
    		var myReferrer = window.location.origin+Alfresco.constants.URL_PAGECONTEXT+"user/"+Alfresco.constants.USERNAME+"/dashboard";
 		window.document.__defineGetter__('referrer', function () {
 			return myReferrer;
 		});
-			   		
+    	
+    	var div = document.getElementById('ext-edit-btn');
+    	if (div) {
+	    	var oImg=document.createElement("img");
+			oImg.setAttribute('src', '../res/page/img/icon/edit.png');
+			oImg.setAttribute('id','oImg');
+			oImg.setAttribute('alt', 'edit');
+			oImg.style.height= '15px';
+			oImg.style.width= '15px';
+			oImg.onclick = function () {
+				var pbmodule = "${pbmodule}";
+				console.log("pbmodule:"+pbmodule);
+				var pbmodule2 = pbmodule.replace("-","");
+				console.log("pbmodule2:"+pbmodule2);
+			
+				var hid = document.getElementsByName("prop_"+pbmodule2+"wf_id")[0];
+				if (!hid) alert("Test");
+//				var pf = hid.value.substring(0,2);
+//				var u = {
+//					"PR":"pcm-req",
+//					"PD":"pcm-ord",
+//					"AV":"exp-brw",
+//					"AP":"exp-use"
+//				}
+	    		window.location = "${url.context}/page/"+pbmodule+"?id="+hid.value+"&tid=${taskId}";
+			};
+			div.appendChild(oImg);                    // Append <button> to <body>
+		}
 });
 
 </script>

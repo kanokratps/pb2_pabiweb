@@ -98,44 +98,6 @@ function compareDate(from,to){
 	}
 }
 
-function compareTime(from,to){
-	
-	var timeFrom = Ext.Date.format(from.getValue(), 'H:i A');
-	var timeTo = Ext.Date.format(to.getValue(), 'H:i A');
-	
-	var min =  parseInt(Ext.Date.format(from.getValue(), 'i'));
-	var hour =  parseInt(Ext.Date.format(from.getValue(), 'H'));
-	var duration = Ext.Date.format(from.getValue(), 'A');
-	var increase = parseInt(MEETING_INCREMENT_TIME);
-	
-	if(min == 0){
-		min = min + increase;
-	}else if((min+increase) >= 60){
-		min = 0;
-		hour = hour+=1;
-	}else{
-		min = min + increase;
-	}
-	
-	if(hour < 10){
-		hour = '0'+hour;
-	}
-	if(min < 10){
-		min = '0'+min;
-	}
-	
-	var minDate = Ext.String.format('{0}:{1} {2}',hour, min, duration);
-
-    if(to.getValue() == null){
-		to.setMinValue(minDate);
-		to.validate();
-	}else{
-		to.setMinValue(minDate);
-		to.validate();
-	}
-
-}
-
 function getLanguage() {
 	var req = new XMLHttpRequest();
 	req.open('GET', document.location, false);
@@ -146,15 +108,20 @@ function getLanguage() {
 	    return contentLanguage[0].split(":")[1].trim().toUpperCase();
 	}	    
 }
-
+function getCookie(name) {
+  match = document.cookie.match(new RegExp(name + '=([^;]+)'));
+  if (match) return match[1];
+}
+function getLang() {
+	var v = getCookie(ALF_LANG_COOKIE);
+	return v ? v : "en";
+}
 function mandatoryLabel(lbl) {
 	return lbl + '<font color="red">*</font>';
 }
-
 function replaceIfNull(v, dv) {
 	return (v ? v : dv);
 }
-
 function getRadioValue(name) {
     var el = document.getElementsByName(name);
     for (var i=0, l=el.length; i<l; i++)
@@ -165,7 +132,37 @@ function getRadioValue(name) {
         }
     }
 }
-
 function setValue(f,n,v) {
 	f.down('field[name='+n+']').setValue(v);
-}	
+}
+function nodeRef2Url(n) {
+	return n.replace("://","/");
+}
+function getScrSize() {
+    var winW = 0, winH = 0;
+    if (document.body && document.body.offsetWidth) {
+        winW = document.body.offsetWidth;
+        winH = document.body.offsetHeight;
+    }
+    if (document.compatMode=='CSS1Compat' && document.documentElement && document.documentElement.offsetWidth ) {
+        winW = document.documentElement.offsetWidth;
+        winH = document.documentElement.offsetHeight;
+    }
+    if (window.innerWidth && window.innerHeight) {
+        winW = window.innerWidth;
+        winH = window.innerHeight;
+    }   
+    return { width: winW, height: winH };
+}
+function cvtDateValue(v) {
+	if (v) {
+		return Ext.Date.parse(v.split("T").join(" "), "Y-m-d H:i:s");
+	} else {
+		return null;
+	}
+}
+function alertInvalidSession() {
+	var lang = getLang();
+	var msg = lang.indexOf("th") >= 0 ? INVALID_SES_TH : INVALID_SES;
+	Ext.MessageBox.alert("ERROR", msg);
+}

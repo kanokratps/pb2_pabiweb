@@ -2,6 +2,8 @@ package pb.common.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -273,8 +275,6 @@ public class CommonUtil {
 		
 		String lang = localeArr[0];
 		
-		log.info("lang:"+lang);
-		
 		if (!lang.startsWith(CommonConstant.ENGLISH)) {
 			resName += "_"+lang;
 		}
@@ -293,4 +293,41 @@ public class CommonUtil {
 		return key+",Invalid Key : "+key;
 	}
 	
+	public static String getValidLang(String lang) {
+		if (lang!=null) {
+			String[] ls = lang.split("_");
+			lang = ls[0];
+		} else {
+			lang = "en";
+		}
+		  
+		return lang;
+	}
+	
+	public static Map removeThElement(Map<String, Object> map) {
+		List<String> list = new ArrayList<String>();
+		for (String key : map.keySet()) {
+			if (key.endsWith("_th")) {
+				list.add(key);
+			}
+		}
+		
+		for(String key : list) {
+			map.remove(key);
+		}
+		
+		return map;
+	}
+	
+	public static String formatMoney(Double money) {
+		DecimalFormat df = new DecimalFormat(CommonConstant.MONEY_FORMAT);
+		return df.format(money != null ? money : null);
+	}
+	
+	public static void checkNull(Object obj, String msg) throws Exception {
+		if (obj==null) {
+			log.info(msg);
+			throw new Exception(msg);
+		}
+	}
 }

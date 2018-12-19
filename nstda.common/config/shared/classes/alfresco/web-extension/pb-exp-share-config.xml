@@ -1,3 +1,933 @@
 <alfresco-config> 
+<!--
+*
+* Exp Brw = AV
+* 
+ -->   
+	<config evaluator="string-compare" condition="activiti$PBExpAV">
+	 <forms>
+		 <form>
+			<field-visibility>
+				<show id="expbrwwf:remark"/>
+				
+				<show id="bpm:comment" />
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.exp.set.docInfo"/>		
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.exp.set.comment" />
+				
+				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+
+	<config evaluator="task-type" condition="expbrwwf:submitStartTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="expbrwwf:remark"/>
+				
+				<show id="bpm:comment" />
+			</field-visibility>
+			
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="expbrwwf:requesterResubmitTask">
+	 <forms>
+		 <form>
+			<field-visibility>
+				<show id="expbrwwf:id"/>
+				<show id="expbrwwf:objectiveType"/>
+				<show id="expbrwwf:objective"/>
+				<show id="expbrwwf:budgetCc"/>
+				<show id="expbrwwf:total"/>
+				
+				<show id="expbrwwf:document"/>
+				<show id="expbrwwf:attachDocument"/>
+				
+				<show id="expbrwwf:description"/>
+				<show id="bpm:comment" />
+				<show id="expbrwwf:reSubmitOutcome" />
+				<show id="expbrwwf:folderRef"/>
+				
+				<show id="expbrwwf:lang"/>
+				
+				<!-- show id="expbrwwf:consultant"/-->
+				
+			</field-visibility>
+			
+			<appearance>
+			    <set id="docInfo" appearance="e-panel" label-id="workflow.exp.set.docInfo" />		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.exp.set.document.av" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.exp.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent="docInfo"  label-id="workflow.exp.set.comment" />
+				<!-- set id="pnlConsult" appearance="panel" label-id="workflow.exp.set.consult" /-->
+				<set id="response" appearance="title" label-id="workflow.exp.set.response" />
+				 
+				<field id="expbrwwf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				
+				<field id="expbrwwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="expbrwwf:objectiveType" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/masterValue?t=BRW_TYPE&amp;c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="expbrwwf:objective"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>				
+				
+				<field id="expbrwwf:budgetCc"  set="docInfo">
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expbrwwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+				
+				<field id="expbrwwf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<!-- control-param name="buttons">u</control-param -->
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expbrwwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expbrwwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">exp-brw</control-param>
+						<control-param name="dsFieldValue">prop_expbrwwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<!-- field id="expbrwwf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field-->
+                
+				<field id="expbrwwf:reSubmitOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="expbrwwf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="expbrwwf:accepterAcceptTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="expbrwwf:id"/>
+				<show id="expbrwwf:objectiveType"/>
+				<show id="expbrwwf:objective"/>
+				<show id="expbrwwf:budgetCc"/>
+				<show id="expbrwwf:total"/>
+				
+				<show id="expbrwwf:document"/>
+				<show id="expbrwwf:attachDocument"/>
+				
+				<show id="expbrwwf:description"/>
+				<show id="bpm:comment" />
+				<show id="expbrwwf:acceptOutcome" />
+				<show id="expbrwwf:folderRef"/>
+				
+				<show id="expbrwwf:lang"/>
+				
+				<show id="expbrwwf:accept"/>
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.exp.set.docInfo"/>		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.exp.set.document.av" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.exp.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.exp.set.comment" />
+				<set id="response" appearance="title" label-id="workflow.exp.set.response" />
+				 
+				<field id="expbrwwf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				
+				<field id="expbrwwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="expbrwwf:objectiveType" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/masterValue?t=BRW_TYPE&amp;c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="expbrwwf:objective"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>				
+				
+				<field id="expbrwwf:budgetCc"  set="docInfo">
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expbrwwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expbrwwf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field>
+				
+				<field id="expbrwwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expbrwwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">exp-brw</control-param>
+						<control-param name="dsFieldValue">prop_expbrwwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				    </control>
+				</field>
+				
+				<field id="expbrwwf:accept" set="pnlComment">
+                  <control template="/pb/components/form/controls/label.ftl">
+				  	<control-param name="style">color:red</control-param>
+				  </control>
+                </field>
+                
+				<field id="expbrwwf:acceptOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="expbrwwf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="expbrwwf:reviewerReviewTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="expbrwwf:id"/>
+				<show id="expbrwwf:objectiveType"/>
+				<show id="expbrwwf:objective"/>
+				<show id="expbrwwf:budgetCc"/>
+				<show id="expbrwwf:total"/>
+				
+				<show id="expbrwwf:document"/>
+				<show id="expbrwwf:attachDocument"/>
+				
+				<show id="expbrwwf:description"/>
+				<show id="bpm:comment" />
+				<show id="expbrwwf:reviewOutcome" />
+				<show id="expbrwwf:folderRef"/>
+				
+				<show id="expbrwwf:consultant"/>
+				
+				<show id="expbrwwf:lang"/>
+				
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.exp.set.docInfo"/>		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.exp.set.document.av" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.exp.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.exp.set.comment" />
+				<set id="pnlConsult" appearance="panel" label-id="workflow.exp.set.consult" />
+				<set id="response" appearance="title" label-id="workflow.exp.set.response" />
+				 
+				<field id="expbrwwf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				
+				<field id="expbrwwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="expbrwwf:objectiveType" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/masterValue?t=BRW_TYPE&amp;c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="expbrwwf:objective"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>				
+				
+				<field id="expbrwwf:budgetCc"  set="docInfo">
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expbrwwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expbrwwf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field>
+				
+				<field id="expbrwwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expbrwwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">exp-brw</control-param>
+						<control-param name="dsFieldValue">prop_expbrwwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<field id="expbrwwf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field>
+                
+				<field id="expbrwwf:reviewOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="expbrwwf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="expbrwwf:consultantConsultTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="expbrwwf:id"/>
+				<show id="expbrwwf:objectiveType"/>
+				<show id="expbrwwf:objective"/>
+				<show id="expbrwwf:budgetCc"/>
+				<show id="expbrwwf:total"/>
+
+				<show id="expbrwwf:document"/>
+				<show id="expbrwwf:attachDocument"/>
+				
+				<show id="expbrwwf:description"/>
+				<show id="bpm:comment" />
+				<show id="expbrwwf:consultOutcome" />
+				<show id="expbrwwf:folderRef"/>
+				
+				<show id="expbrwwf:lang"/>
+				
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.exp.set.docInfo"/>		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.exp.set.document.av" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.exp.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.exp.set.comment" />
+				<set id="response" appearance="title" label-id="workflow.exp.set.response" />
+				 
+				<field id="expbrwwf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				 
+				<field id="expbrwwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="expbrwwf:objectiveType" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/masterValue?t=BRW_TYPE&amp;c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="expbrwwf:objective"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>				
+				
+				<field id="expbrwwf:budgetCc"  set="docInfo">
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expbrwwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+				
+				<field id="expbrwwf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<!-- control-param name="buttons">u</control-param -->
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field>
+				<field id="expbrwwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expbrwwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">exp-brw</control-param>
+						<control-param name="dsFieldValue">prop_expbrwwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<field id="expbrwwf:consultOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="expbrwwf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+
+<!--
+*
+* Exp Use = AP
+* 
+ -->   
+	<config evaluator="string-compare" condition="activiti$PBExpAP">
+	 <forms>
+		 <form>
+			<field-visibility>
+				<show id="expusewf:remark"/>
+				
+				<show id="bpm:comment" />
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.exp.set.docInfo"/>		
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.exp.set.comment" />
+				
+				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+
+	<config evaluator="task-type" condition="expusewf:submitStartTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="expusewf:remark"/>
+				
+				<show id="bpm:comment" />
+			</field-visibility>
+			
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="expusewf:requesterResubmitTask">
+	 <forms>
+		 <form>
+			<field-visibility>
+				<show id="expusewf:id"/>
+				<show id="expusewf:payType"/>
+				<show id="expusewf:objective"/>
+				<show id="expusewf:budgetCc"/>
+				<show id="expusewf:total"/>
+				
+				<show id="expusewf:document"/>
+				<show id="expusewf:attachDocument"/>
+				
+				<show id="expusewf:description"/>
+				<show id="bpm:comment" />
+				<show id="expusewf:reSubmitOutcome" />
+				<show id="expusewf:folderRef"/>
+				
+				<show id="expusewf:lang"/>
+				
+				<!-- show id="expusewf:consultant"/-->
+				
+			</field-visibility>
+			
+			<appearance>
+			    <set id="docInfo" appearance="e-panel" label-id="workflow.exp.set.docInfo" />		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.exp.set.document.ex" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.exp.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent="docInfo"  label-id="workflow.exp.set.comment" />
+				<!-- set id="pnlConsult" appearance="panel" label-id="workflow.exp.set.consult" /-->
+				<set id="response" appearance="title" label-id="workflow.exp.set.response" />
+				 
+				<field id="expusewf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				
+				<field id="expusewf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="expusewf:payType" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/masterValue?t=EXP_TYPE&amp;c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="expusewf:objective"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>				
+				
+				<field id="expusewf:budgetCc"  set="docInfo">
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expusewf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+				
+				<field id="expusewf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<!-- control-param name="buttons">u</control-param -->
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expusewf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expusewf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">exp-use</control-param>
+						<control-param name="dsFieldValue">prop_expusewf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<!-- field id="expusewf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field-->
+                
+				<field id="expusewf:reSubmitOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="expusewf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="expusewf:reviewerReviewTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="expusewf:id"/>
+				<show id="expusewf:payType"/>
+				<show id="expusewf:objective"/>
+				<show id="expusewf:budgetCc"/>
+				<show id="expusewf:total"/>
+				
+				<show id="expusewf:document"/>
+				<show id="expusewf:attachDocument"/>
+				
+				<show id="expusewf:description"/>
+				<show id="bpm:comment" />
+				<show id="expusewf:reviewOutcome" />
+				<show id="expusewf:folderRef"/>
+				
+				<show id="expusewf:consultant"/>
+				
+				<show id="expusewf:lang"/>
+				
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.exp.set.docInfo"/>		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.exp.set.document.ex" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.exp.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.exp.set.comment" />
+				<set id="pnlConsult" appearance="panel" label-id="workflow.exp.set.consult" />
+				<set id="response" appearance="title" label-id="workflow.exp.set.response" />
+				 
+				<field id="expusewf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				
+				<field id="expusewf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="expusewf:payType" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/masterValue?t=EXP_TYPE&amp;c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="expusewf:objective"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>				
+				
+				<field id="expusewf:budgetCc"  set="docInfo">
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expusewf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expusewf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field>
+				
+				<field id="expusewf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expusewf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">exp-use</control-param>
+						<control-param name="dsFieldValue">prop_expusewf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<field id="expusewf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field>
+                
+				<field id="expusewf:reviewOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="expusewf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="expusewf:consultantConsultTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="expusewf:id"/>
+				<show id="expusewf:payType"/>
+				<show id="expusewf:objective"/>
+				<show id="expusewf:budgetCc"/>
+				<show id="expusewf:total"/>
+
+				<show id="expusewf:document"/>
+				<show id="expusewf:attachDocument"/>
+				
+				<show id="expusewf:description"/>
+				<show id="bpm:comment" />
+				<show id="expusewf:consultOutcome" />
+				<show id="expusewf:folderRef"/>
+				
+				<show id="expusewf:lang"/>
+				
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.exp.set.docInfo"/>		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.exp.set.document.ex" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.exp.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.exp.set.comment" />
+				<set id="response" appearance="title" label-id="workflow.exp.set.response" />
+				 
+				<field id="expusewf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				 
+				<field id="expusewf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="expusewf:payType" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:40%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/masterValue?t=EXP_TYPE&amp;c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="expusewf:objective"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>				
+				
+				<field id="expusewf:budgetCc"  set="docInfo">
+				  <control template="/pb/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="dsUrl">pb/admin/main/budgetSrc/get?v=</control-param> 
+				  </control>
+				</field>
+								
+				<field id="expusewf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+				
+				<field id="expusewf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<!-- control-param name="buttons">u</control-param -->
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field>
+				<field id="expusewf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="expusewf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/pcm/wf/dtl/list?id=</control-param>
+						<control-param name="pbmodule">exp-use</control-param>
+						<control-param name="dsFieldValue">prop_expusewf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<field id="expusewf:consultOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="expusewf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
 
 </alfresco-config>

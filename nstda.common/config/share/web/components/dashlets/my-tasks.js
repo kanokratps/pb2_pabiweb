@@ -169,7 +169,7 @@
          var webscript = YAHOO.lang.substitute("api/task-instances?authority={authority}&properties={properties}&exclude={exclude}",
          {
             authority: encodeURIComponent(Alfresco.constants.USERNAME),
-            properties: ["bpm_priority", "bpm_status", "bpm_dueDate", "bpm_description"].join(","),
+            properties: ["bpm_priority", "bpm_status", "bpm_dueDate", "bpm_description","pcmreqwf_description","pcmordwf_description","expbrwwf_description","expusewf_description","hrsalwf_description"].join(","),
             exclude: this.options.hiddenTaskTypes.join(",")
          });
 
@@ -198,8 +198,9 @@
                columnDefinitions:
                [
                   { key: "isPooled", sortable: false, formatter: this.bind(this.renderCellIcons), width: 24 },
-                  { key: "title", sortable: false, formatter: this.bind(this.renderCellTaskInfo) },
-                  { key: "name", sortable: false, formatter: this.bind(this.renderCellActions), width: 65 }
+                  { key: "title", sortable: false, formatter: this.bind(this.renderCellTaskInfo) }
+//                  ,
+//                  { key: "name", sortable: false, formatter: this.bind(this.renderCellActions), width: 65 }
                ],
                config:
                {
@@ -262,7 +263,7 @@
            failure: function(o) {alert("failure")},
            /* ... */
          };
-         var transaction = YAHOO.util.Connect.asyncRequest('GET', url, myCallback);
+         //var transaction = YAHOO.util.Connect.asyncRequest('GET', url, myCallback);
          
          // Override DataTable function to set custom empty message
          var me = this,
@@ -436,22 +437,60 @@
                status = data.propertyLabels["bpm_status"];
             }
             
+            var v = YAHOO.util.Cookie.get("alf_share_locale");
+            v = v ? v : "en";
+            var isThai = v.indexOf("th")==0;
+            
+            if (!isThai) {
+            	message = data.properties["pcmreqwf_description"];
+            	if (!message) {
+                	message = data.properties["pcmordwf_description"];
+                	if (!message) {
+                    	message = data.properties["expbrwwf_description"];
+                    	if (!message) {
+                        	message = data.properties["expusewf_description"];
+                        	if (!message) {
+                            	message = data.properties["hrsalwf_description"];
+                        	}
+                    	}
+                	}
+            	}
+            }
+            
+            if (type) {
+	            if(type.indexOf("Preparer") > -1){
+	            	type = isThai ? "ผู้บันทึก" : "Preparer";
+	            }
+	            else if(type.indexOf("Requester") > -1){
+	            	type = isThai ? "ผู้ขอ" : "Requester";
+	            }
+	            else if(type.indexOf("Approver") > -1){
+	            	var p = type.indexOf("Approver");
+	            	var suf = type.substring(p+8);
+	            	type = isThai ? "ผู้อนุมัติขั้นที่" : "Approver";
+	            	type += suf;
+	            }
+	            else if(type.indexOf("Consultant") > -1){
+	            	type = isThai ? "ที่ปรึกษา" : "Consultant";
+	            }
+            }
+            
             if (status) {
 	            if(status.indexOf("REJECT") > -1){
-	            	status ="ไม่อนุมัติ";
+	            	status = isThai ? "ไม่อนุมัติ" : "Rejected";
 	            }
 	            else if(status.indexOf("RESUBMIT") > -1){
-	            	status ="รอการอนุมัติ";
+	            	status = isThai ? "รอการอนุมัติ" : "Waiting for Approval";
 	            }
 	            else if(status.indexOf("WAPPR") > -1){
-	            	status ="รอการอนุมัติ";
+	            	status = isThai ? "รอการอนุมัติ" : "Waiting for Approval";
 	            }
 	            else if(status.indexOf("CONSULT") > -1){
-	            	status ="ขอคำปรึกษา";
+	            	status = isThai ? "ขอคำปรึกษา" : "Consulting";
 	            }
-            }            
-//            status ="<b>สถานะ:&nbsp;</b>รอการอนุมัติ";
-			status ="<b>สถานะ:&nbsp;</b>"+ status;
+            }
+            
+			status ="<b>"+(isThai ? "สถานะ" : "Status")+":&nbsp;</b>"+ status;
             
             // if message is the same as the task type show the <no message> label
             if (message == type)

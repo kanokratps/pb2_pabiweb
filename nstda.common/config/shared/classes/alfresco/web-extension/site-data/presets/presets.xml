@@ -64,8 +64,37 @@
             <template-instance>dashboard-3-columns</template-instance>
             <authentication>user</authentication>
             <properties>
-               <sitePages>[{"pageId":"admin"},{"pageId":"pcm-req"},{"pageId":"exp-brw"},{"pageId":"pcm-ord"},{"pageId":"exp-use"},{"pageId":"wiki-page"}, {"pageId":"blog-postlist"}, {"pageId":"documentlibrary"}, {"pageId":"calendar"},{"pageId":"links"},{"pageId":"discussions-topiclist"}]</sitePages>
+               <sitePages>[{"pageId":"admin"},{"pageId":"pcm-req"},{"pageId":"exp-brw"},{"pageId":"pcm-ord"},{"pageId":"exp-use"},{"pageId":"hr-sal"},{"pageId":"wiki-page"}, {"pageId":"blog-postlist"}, {"pageId":"documentlibrary"}, {"pageId":"calendar"},{"pageId":"links"},{"pageId":"discussions-topiclist"}]</sitePages>
             </properties>
+         </page>
+      </pages>
+   </preset>
+   
+   <preset id="user-dashboard">
+      <components>
+         <!-- title -->
+         <component>
+            <scope>page</scope>
+            <region-id>title</region-id>
+            <source-id>user/${userid}/dashboard</source-id>
+            <url>/components/title/user-dashboard-title</url>
+         </component>
+         <!-- dashboard components -->
+         <component>
+            <scope>page</scope>
+            <region-id>full-width-dashlet</region-id>
+            <source-id>user/${userid}/dashboard</source-id>
+            <url>/components/dashlets/my-tasks</url>
+         </component>
+      </components>
+      <pages>
+         <page id="user/${userid}/dashboard">
+            <title>User Dashboard</title>
+            <title-id>page.userDashboard.title</title-id>
+            <description>Users dashboard page</description>
+            <description-id>page.userDashboard.description</description-id>
+            <template-instance>dashboard-1-column</template-instance>
+            <authentication>user</authentication>
          </page>
       </pages>
    </preset>

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<page>
+   <title>Human Resource Salary</title>
+   <title-id>page.hrSalHome.title</title-id>
+   <description>Salary Page</description>
+   <description-id>page.hrSalHome.description</description-id>
+   <template-instance>hr-sal-template</template-instance>
+   <authentication>user</authentication>
+</page>

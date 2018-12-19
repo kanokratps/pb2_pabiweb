@@ -2,3 +2,9 @@
 16/02/2016
 ==========
 	- Initial
+	
+==========
+03/09/2016
+==========
+	- /share/WEB-INF/classes/alfresco/site-webscripts/org/alfresco/share/imports/share-header.lib.js
+	- /share/WEB-INF/classes/alfresco/messages/common_th.properties

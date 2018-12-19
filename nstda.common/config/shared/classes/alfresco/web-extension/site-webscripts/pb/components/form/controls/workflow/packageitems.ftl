@@ -1,13 +1,21 @@
 
 <#include "/pb/components/form/controls/association.ftl" />
+<@markup id="css" >
+   <#-- CSS Dependencies -->
+		<@link rel="stylesheet" type="text/css" href="${url.context}/res/page/PBAdmin/resources/PBAdmin-all.css" />
+	
+</@>
+<@markup id="js">
+   <#-- JavaScript Dependencies -->
+	<@script type="text/javascript" src="${url.context}/res/page/common/constant.js"></@script>
+	<@script type="text/javascript" src="${url.context}/res/page/common/util.js"></@script>
+	<@script type="text/javascript" src="${url.context}/res/page/PBAdmin/app.js"></@script>
+</@>
 <#macro setPackageItemOptions field>
 
-   <#local documentLinkResolver>function(item){ return Alfresco.util.siteURL("document-details?nodeRef=" + item.nodeRef, { site: item.site }); }</#local>
+   <#local documentLinkResolver>function(item){ return Alfresco.constants.PROXY_URI_RELATIVE+"api/node/content/" + item.nodeRef.replace("://","/")+"/"+item.name; }</#local>
    <#local allowAddAction = false>
    <#local allowRemoveAllAction = false>
-   <#-- qs
-   <#local allowRemoveAction = false>
-   -->
    <#-- qs -->
    <#local allowRemoveAction = false>
    <#local allowUploadAction = false>
@@ -16,11 +24,17 @@
    <#local allowWatermarkAction = false>
    <#local allowDownloadAction = false>
    <#local allowGenDocAction = false>
+   <#local allowEditDescAction = false>
 
    <#assign buttons="">
    <#if field.control.params.buttons??>
 	<#local buttons = field.control.params.buttons>	
    </#if>
+   
+   <#assign moreAction="">
+   <#if field.control.params.moreAction??>
+	<#local moreAction = field.control.params.moreAction>
+   </#if>   
    
    <#assign targetFolder="">
    <#if form.data['prop_pcmreqwf_folderRef']??>
@@ -29,8 +43,14 @@
    <#if form.data['prop_pcmordwf_folderRef']??>
    		<#assign targetFolder=form.fields["prop_pcmordwf_folderRef"].value>
    </#if>
-   <#if form.data['prop_cpwf_folderRef']??>
-   		<#assign targetFolder=form.fields["prop_cpwf_folderRef"].value>
+   <#if form.data['prop_expbrwwf_folderRef']??>
+   		<#assign targetFolder=form.fields["prop_expbrwwf_folderRef"].value>
+   </#if>
+   <#if form.data['prop_expusewf_folderRef']??>
+   		<#assign targetFolder=form.fields["prop_expusewf_folderRef"].value>
+   </#if>
+   <#if form.data['prop_hrsalwf_folderRef']??>
+   		<#assign targetFolder=form.fields["prop_hrsalwf_folderRef"].value>
    </#if>
    
    <#assign fieldID="">
@@ -49,69 +69,11 @@
 	<#assign pdFolder=form.fields["prop_sd_pdFolderNodeRef"].value>
    </#if>
    
-   <#assign urdFolder="">
-   <#if form.data['prop_sd_urdFolderNodeRef']??>
-	<#assign urdFolder=form.fields["prop_sd_urdFolderNodeRef"].value>
-   </#if>
-
-   <#assign designFolder="">
-   <#if form.data['prop_sd_designFolderNodeRef']??>
-	<#assign designFolder=form.fields["prop_sd_designFolderNodeRef"].value>
-   </#if>
-   
-   <#assign constructionFolder="">
-   <#if form.data['prop_sd_constructionFolderNodeRef']??>
-	<#assign constructionFolder=form.fields["prop_sd_constructionFolderNodeRef"].value>
-   </#if>
-   
-   <#assign trainingFolder="">
-   <#if form.data['prop_sd_trainingFolderNodeRef']??>
-	<#assign trainingFolder=form.fields["prop_sd_trainingFolderNodeRef"].value>
-   </#if>
-	
-   <#assign uatFolder="">
-   <#if form.data['prop_sd_uatFolderNodeRef']??>
-	<#assign uatFolder=form.fields["prop_sd_uatFolderNodeRef"].value>
-   </#if>
-   
-   <#assign deploymentFolder="">
-   <#if form.data['prop_sd_deploymentFolderNodeRef']??>
-	<#assign deploymentFolder=form.fields["prop_sd_deploymentFolderNodeRef"].value>
-   </#if>
-
-   <#assign goliveFolder="">
-   <#if form.data['prop_sd_goliveFolderNodeRef']??>
-	<#assign goliveFolder=form.fields["prop_sd_goliveFolderNodeRef"].value>
-   </#if>
-
-   <#assign postImpFolder="">
-   <#if form.data['prop_sd_postFolderNodeRef']??>
-	<#assign postImpFolder=form.fields["prop_sd_postFolderNodeRef"].value>
-   </#if>
-
    <#assign srcNodeRef="">
    <#if form.data["${fieldID}"]??>
 	<#assign srcNodeRef=form.fields["${fieldID}"].value>
    </#if>
 	
-   <#assign pdfTempFolderNodeRef="">
-   <#if form.data['prop_isowf_pdfNodeRef']??>
-	<#assign pdfTempFolderNodeRef=form.fields["prop_isowf_pdfNodeRef"].value>
-   </#if>
-	
-   <#assign docNumber="">
-   <#if form.data['prop_isowf_docNumber']??>
-	<#assign docNumber=form.fields["prop_isowf_docNumber"].value>
-   </#if>
-   
-   <#assign effectiveDate="">
-   <#if form.data['prop_isowf_effectiveDate']??>
-	<#assign effectiveDate=form.fields["prop_isowf_effectiveDate"].value>
-   </#if>
-   
-
-   <#local actions = []>
-
    <#if form.data['prop_bpm_packageActionGroup']?? && form.data['prop_bpm_packageActionGroup']?is_string && form.data['prop_bpm_packageActionGroup']?length &gt; 0>
       <#local allowAddAction = true>
    </#if>
@@ -139,6 +101,12 @@
    		<#local allowGenDocAction = true>
    </#if>
    
+   <#if buttons?contains("e")>
+   		<#local allowEditDescAction = true>
+   </#if>
+   
+   <#local actions = []>
+   
    <#assign removeAction="">
    <#if field.control.params.removeAction??>
 	 <#local allowRemoveAction = field.control.params.removeAction>
@@ -146,16 +114,20 @@
    
    <#if form.data['prop_bpm_packageItemActionGroup']?? && form.data['prop_bpm_packageItemActionGroup']?is_string && form.data['prop_bpm_packageItemActionGroup']?length &gt; 0>
       <#local packageItemActionGroup = form.data['prop_bpm_packageItemActionGroup']>
-      <#local viewMoreAction = { "name": "view_more_actions", "label": "form.control.object-picker.workflow.view_more_actions", "link": documentLinkResolver }>
+      <#if moreAction=="true">
+      	<#local viewMoreAction = [{ "name": "view_more_actions", "label": "form.control.object-picker.workflow.view_more_actions", "link": documentLinkResolver }]>
+      <#else>
+      	<#local viewMoreAction = []>
+      </#if>
       <#if packageItemActionGroup == "read_package_item_actions" || packageItemActionGroup == "edit_package_item_actions">
-         <#local actions = actions + [viewMoreAction]>
+         <#local actions = actions + viewMoreAction>
       <#elseif packageItemActionGroup == "remove_package_item_actions" || packageItemActionGroup == "start_package_item_actions" || packageItemActionGroup == "edit_and_remove_package_item_actions">
-         <#local actions = actions + [viewMoreAction]>
+         <#local actions = actions + viewMoreAction>
          <#local allowRemoveAllAction = true>
          <#local allowRemoveAction = true>
       <#elseif packageItemActionGroup >
       <#else>
-         <#local actions = actions + [viewMoreAction]>      
+         <#local actions = actions + viewMoreAction>      
       </#if>
    </#if>
 
@@ -199,28 +171,18 @@
 	 allowWatermarkAction: ${allowWatermarkAction?string},
 	 allowDownloadAction: ${allowDownloadAction?string},
 	 allowGenDocAction: ${allowGenDocAction?string},
+	 allowEditDescAction: ${allowEditDescAction?string},
          selectActionLabel: "${field.control.params.selectActionLabel!msg("button.add")}",
-		 controlId:"${fieldHtmlId}",
 		 pdFolder:"${pdFolder}",
-		 urdFolder:"${urdFolder}",
-		 designFolder:"${designFolder}",
-		 constructionFolder:"${constructionFolder}",
-		 trainingFolder:"${trainingFolder}",
-		 uatFolder:"${uatFolder}",
-		 deploymentFolder:"${deploymentFolder}",
-		 goliveFolder:"${goliveFolder}",
 		 srcNodeRef:"${srcNodeRef}",
-		 pdfTempFolderNodeRef:"${pdfTempFolderNodeRef}",
-		 docNumber:"${docNumber}",
-		 effectiveDate:"${effectiveDate}",
 	 <#if field.control.params.targetFolder??>
 		targetFolder:"${field.control.params.targetFolder}",
 	 </#if>
 	 <#if targetFolder??>
 		targetFolder:"${targetFolder}",
+		destination:"${targetFolder}",
 	 </#if>
-
-	 postImpFolder:"${postImpFolder}"
+		 controlId:"${fieldHtmlId}"
 
       });
    })();
@@ -228,104 +190,48 @@
    
 <#-- qs -->
 <#if allowUploadAction == true || allowUploadNewAction == true || allowWatermarkAction == true>
-	<#-- qs <#assign el=args.htmlid?html> -->
 	<#-- qs -->
 	<#assign el=fieldHtmlId>
 	<#-- qs - end -->
 	
-	<#-- lt added -->
-	<#assign contentTypes = [{"id":"cm:content","value":"cm_content"}]>
-
-	<div id="${el}-dialog" class="flash-upload hidden">
-	   <div class="hd">
-		  <span id="${el}-title-span"></span>
-	   </div>
-	   <div class="bd">
-		  <div class="browse-wrapper">
-			 <div class="center">
-				<div id="${el}-flashuploader-div" class="browse"></div>
-				<div class="label">Select PD File to Upload</div>
-			 </div>
-		  </div>
-		  <div class="tip-wrapper">
-			 <span id="${el}-multiUploadTip-span">${msg("label.multiUploadTip")}</span>
-			 <span id="${el}-singleUpdateTip-span">${msg("label.singleUpdateTip")}</span>
-		  </div>
-
-		  <div id="${el}-filelist-table" class="fileUpload-filelist-table"></div>
-
-		  <div class="status-wrapper">
-			 <span id="${el}-status-span" class="status"></span>
-		  </div>
-
-		  <div id="${el}-versionSection-div"> 
-			 <div class="yui-g">
-				<h2>${msg("section.version")}</h2>
-			 </div>
-			 <div class="yui-gd">
-				<div class="yui-u first">
-				   <span>${msg("label.version")}</span>
-				</div>
-				<div class="yui-u">
-				   <input id="${el}-minorVersion-radioButton" type="radio" name="majorVersion" checked="checked" tabindex="0"/>
-				   <label for="${el}-minorVersion-radioButton" id="${el}-minorVersion">${msg("label.minorVersion")}</label>
-				</div>
-			 </div>
-			 <div class="yui-gd">
-				<div class="yui-u first">&nbsp;
-				</div>
-				<div class="yui-u">
-				   <input id="${el}-majorVersion-radioButton" type="radio" name="majorVersion" tabindex="0"/>
-				   <label for="${el}-majorVersion-radioButton" id="${el}-majorVersion">${msg("label.majorVersion")}</label>
-				</div>
-			 </div>
-			 <div class="yui-gd">
-				<div class="yui-u first">
-				   <label for="${el}-description-textarea">${msg("label.comments")}</label>
-				</div>
-				<div class="yui-u">
-				   <textarea id="${el}-description-textarea" name="description" cols="80" rows="4" tabindex="0"></textarea>
-				</div>
-			 </div>
-		  </div>
-
-		  <!-- Templates for a file row -->
-		  <div style="display:none">
-			 <div id="${el}-left-div" class="fileupload-left-div">
-				<span class="fileupload-percentage-span hidden">&nbsp;</span>
-				<#if (contentTypes?size == 1)>
-				<input class="fileupload-contentType-input" type="hidden" value="${contentTypes[0].id}"/>
-				<#elseif (contentTypes?size > 1)>
-				<select class="fileupload-contentType-select" tabindex="0">
-				   <#if (contentTypes?size > 0)>
-					  <#list contentTypes as contentType>
-						 <option value="${contentType.id}">${msg(contentType.value)}</option>
-					  </#list>
-				   </#if>
-				</select>
-				</#if>
-			 </div>
-			 <div id="${el}-center-div" class="fileupload-center-div">
-				<span class="fileupload-progressSuccess-span">&nbsp;</span>
-				<img src="${url.context}/res/components/images/generic-file-32.png" class="fileupload-docImage-img" alt="file" />
-				<span class="fileupload-progressInfo-span"></span>
-			 </div>
-			 <div id="${el}-right-div" class="fileupload-right-div">
-				<span class="fileupload-fileButton-span">
-				   <button class="fileupload-file-button" value="DDDDDDDDDD" disabled="true" tabindex="0">${msg("button.remove")}</button>
-				</span>
-			 </div>
-		  </div>
-			 <div class="bdft">
-				<input id="${el}-upload-button" type="button" value="AAAAA1" tabindex="0"/>
-				<input id="${el}-cancelOk-button" type="button" value="BBBBB2" tabindex="0"/>
-			 </div>
-	   </div>
-	</div>
+	<div id="${el}-dialog" class="html-upload hidden">
+         <div class="hd">
+            <span id="${el}-title-span"></span>
+         </div>
+         <div class="bd" id="${el}-bd1">
+            <p id="${el}-singleUploadTip-span">&nbsp;Click "Browse" button to select file(s) to upload.<br/>&nbsp;Use CTRL or SHIFT to select multiple file.</p>
+            <p id="${el}-singleUpdateTip-span">${msg("label.singleUpdateTip")}</p>
+            <script type="text/javascript">
+               <#assign callback>onAlfrescoHtmlUploadComponent_${el?replace("-", "__")}</#assign>
+               var ${callback}_success = function(response)
+               {
+                  var component = Alfresco.util.ComponentManager.get('${el}');
+                  component.onUploadSuccess.call(component, response)
+               };
+               var ${callback}_failure= function(response)
+               {
+                  var component = Alfresco.util.ComponentManager.get('${el}');
+                  component.onUploadFailure.call(component, response)
+               };
+            </script>
+               <div>
+                  <div class="yui-g">
+	                  <div id="${el}-file" style="width:370px;height:40px">
+	                  </div>
+                  </div>
+               </div>
+               <div class="bdft">
+                  <input id="${el}-upload-button" type="button" value="${msg("button.upload")}" tabindex="0" />
+                  <input id="${el}-cancel-button" type="button" value="Cancel" tabindex="0" />
+               </div>
+         </div>
+    </div>
+		
 	<script type="text/javascript">//<![CDATA[
-	new Alfresco.FlashUpload("${el}").setMessages(
+	new Alfresco.ExtUpload("${el}").setMessages(
 	   ${messages}
 	);
+
 	//]]></script>
 </#if>
 <#-- qs - end -->

@@ -26,6 +26,7 @@ public class FileUtil {
 		JSONObject jsObj = new JSONObject();
 		
 		jsObj.put(FileConstant.JFN_NAME, model.getName());
+		jsObj.put(FileConstant.JFN_DESC, model.getDesc());
 		jsObj.put(FileConstant.JFN_PATH, model.getPath());
 		jsObj.put(FileConstant.JFN_NODE_REF, model.getNodeRef());
 		jsObj.put(FileConstant.JFN_ACTION, "ED");
@@ -77,4 +78,14 @@ public class FileUtil {
 
 	    return null;
 	}
+	
+	public static void validateFileName(String fileName) throws Exception {
+		if (fileName!=null) {
+//			if (fileName.matches("(.*[\"\*\\\>\<\?\/\:\|]+.*)|(.*[\.]?.*[\.]+$)|(.*[ ]+$)")) {
+			if (fileName.matches("(.*[\\\"\\*\\\\\\>\\<\\?\\/\\:\\|]+.*)|(.*[\\.]?.*[\\.]+$)|(.*[ ]+$)")) {
+				throw new Exception("Invalid File Name (Invalid characters:\" * < > ? / : |):"+fileName);
+			}
+		}
+	}
+
 }

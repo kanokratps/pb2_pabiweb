@@ -49,6 +49,10 @@ public class MenuGenerator {
 							if (key.equals("module.exp")) {
 								expModule(writer);
 							}
+							else
+							if (key.equals("module.hr")) {
+								hrModule(writer);
+							}
 						} // if (value)
 					} // for
 
@@ -82,6 +86,11 @@ public class MenuGenerator {
 	    writer.write("exp=1\n");
 	}
 
+	private void hrModule(Writer writer) throws Exception {
+		System.out.println("+ hr");
+	    writer.write("hr=1\n");
+	}
+	
 	public static void main(String[] args) {
 		
 //		URL location = MenuGenerator.class.getProtectionDomain().getCodeSource().getLocation();

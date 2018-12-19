@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <page>
    <title>Procurement Order</title>
-   <title-id>Procurement Order</title-id>
+   <title-id>page.pcmOrdHome.title</title-id>
    <description>Procurement Order Page</description>
    <description-id>page.pcmOrdHome.description</description-id>
    <template-instance>pcm-ord-template</template-instance>

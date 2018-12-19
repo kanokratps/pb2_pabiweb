@@ -31,4 +31,9 @@ public class NodeUtil {
 	public static String trimNodeRef(String nodeRef) {
 		return nodeRef.replace("workspace://SpacesStore/", "");
 	}
+	
+	public static String fullNodeRef(String id) {
+		return "workspace://SpacesStore/" + id;
+	}
+
 }

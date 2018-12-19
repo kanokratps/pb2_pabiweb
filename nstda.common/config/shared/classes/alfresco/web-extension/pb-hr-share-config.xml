@@ -1,0 +1,382 @@
+<alfresco-config> 
+<!--
+*
+* Hr Sal = Salary
+* 
+ -->   
+	<config evaluator="string-compare" condition="activiti$PBHrSal">
+	 <forms>
+		 <form>
+			<field-visibility>
+				<show id="hrsalwf:remark"/>
+				
+				<show id="bpm:comment" />
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.hr.set.docInfo"/>		
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.hr.set.comment" />
+				
+				<field id="bpm:comment" set="pnlComment" label-id="Comment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+
+	<config evaluator="task-type" condition="hrsalwf:submitStartTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="hrsalwf:remark"/>
+				
+				<show id="bpm:comment" />
+			</field-visibility>
+			
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="hrsalwf:requesterResubmitTask">
+	 <forms>
+		 <form>
+			<field-visibility>
+				<show id="hrsalwf:id"/>
+				<!-- show id="hrsalwf:requester"/-->
+				<show id="hrsalwf:objective"/>
+				<show id="hrsalwf:method"/>
+				<show id="hrsalwf:total"/>
+				
+				<show id="hrsalwf:document"/>
+				<show id="hrsalwf:attachDocument"/>
+				
+				<show id="hrsalwf:description"/>
+				<show id="bpm:comment" />
+				<show id="hrsalwf:reSubmitOutcome" />
+				<show id="hrsalwf:folderRef"/>
+				
+				<show id="hrsalwf:lang"/>
+				
+			</field-visibility>
+			
+			<appearance>
+			    <set id="docInfo" appearance="e-panel" label-id="workflow.hr.set.docInfo" />		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.hr.set.document.sal" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.hr.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent="docInfo"  label-id="workflow.hr.set.comment" />
+				<set id="response" appearance="title" label-id="workflow.hr.set.response" />
+				 
+				<field id="hrsalwf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				 
+				<field id="hrsalwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<!-- field id="hrsalwf:requester" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:99%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/userName?c=</control-param> 
+					</control> 
+				</field-->
+				
+				<field id="hrsalwf:objective" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					</control> 
+				</field>
+				
+				<field id="hrsalwf:method" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					</control> 
+				</field>
+				
+				<field id="hrsalwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+				
+				<field id="hrsalwf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<!-- control-param name="buttons">u</control-param -->
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				<field id="hrsalwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				
+				<field id="hrsalwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgridExt.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/hr/sal/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_hrsalwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment" label-id="workflow.hr.field.bpm_comment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<field id="hrsalwf:reSubmitOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="hrsalwf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="hrsalwf:reviewerReviewTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="hrsalwf:id"/>
+				<show id="hrsalwf:requester"/>
+				<show id="hrsalwf:objective"/>
+				<!--show id="hrsalwf:method"/-->
+				<show id="hrsalwf:total"/>
+				
+				<show id="hrsalwf:document"/>
+				<show id="hrsalwf:attachDocument"/>
+				
+				<show id="hrsalwf:description"/>
+				<show id="bpm:comment" />
+				<show id="hrsalwf:reviewOutcome" />
+				<show id="hrsalwf:folderRef"/>
+				
+				<show id="hrsalwf:consultant"/>
+
+				<show id="hrsalwf:lang"/>
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.hr.set.docInfo"/>		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.hr.set.document.sal" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.hr.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.hr.set.comment" />
+				<set id="pnlConsult" appearance="panel" label-id="workflow.hr.set.consult" />
+				<set id="response" appearance="title" label-id="workflow.hr.set.response" />
+				 
+				<field id="hrsalwf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				 
+				<field id="hrsalwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<field id="hrsalwf:requester" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:99%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/userName?c=</control-param> 
+					</control> 
+				</field>
+				
+				<field id="hrsalwf:objective" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					</control> 
+				</field>
+				
+				<!--field id="hrsalwf:method" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					</control> 
+				</field-->
+				
+				<field id="hrsalwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+				
+				<field id="hrsalwf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>
+					</control>
+				</field> 
+				<field id="hrsalwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>
+					</control>
+				</field> 
+				
+				<field id="hrsalwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/hr/sal/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_hrsalwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment" label-id="workflow.hr.field.bpm_comment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<field id="hrsalwf:consultant" set="pnlConsult">
+                  	<control template="/pb/components/form/controls/consultant.ftl">
+						<control-param name="width">80</control-param>
+						<control-param name="fieldName">consultant</control-param>
+				  	</control>
+                </field>
+                
+				<field id="hrsalwf:reviewOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="hrsalwf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>				
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+	
+	<config evaluator="task-type" condition="hrsalwf:consultantConsultTask">
+	<forms>
+		 <form>
+			<field-visibility>
+				<show id="hrsalwf:id"/>
+				<!-- show id="hrsalwf:requester"/-->
+				<show id="hrsalwf:objective"/>
+				<show id="hrsalwf:method"/>
+				<show id="hrsalwf:total"/>
+
+				<show id="hrsalwf:document"/>
+				<show id="hrsalwf:attachDocument"/>
+				
+				<show id="hrsalwf:description"/>
+				<show id="bpm:comment" />
+				<show id="hrsalwf:consultOutcome" />
+				<show id="hrsalwf:folderRef"/>
+				
+				<show id="hrsalwf:lang"/>
+				
+			</field-visibility>
+			
+			<appearance>
+				<set id="docInfo" appearance="panel" label-id="workflow.hr.set.docInfo"/>		
+				<set id="pnlDocument" appearance="panel" parent="docInfo" label-id="workflow.hr.set.document.sal" />
+				<set id="pnlAttachment" appearance="panel" parent="docInfo" label-id="workflow.hr.set.attachment" />	
+				<set id="pnlComment" appearance="panel" parent = "docInfo"  label-id="workflow.hr.set.comment" />
+				<set id="response" appearance="title" label-id="workflow.hr.set.response" />
+				 
+				<field id="hrsalwf:id" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl">
+					</control>
+				</field>
+				 
+				<field id="hrsalwf:lang" set="docInfo">
+					<control template="/pb/components/form/controls/lang.ftl">
+					</control>
+				</field>
+				 
+				<!--field id="hrsalwf:requester" set="docInfo">
+					<control template="/pb/components/form/controls/info.ftl">
+					 	<control-param name="style">width:99%</control-param> 
+					 	<control-param name="dsUrl">pb/srcUrl/main/userName?c=</control-param> 
+					</control> 
+				</field-->
+				
+				<field id="hrsalwf:objective" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					</control> 
+				</field>
+				
+				<field id="hrsalwf:method" set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					</control> 
+				</field>
+				
+				<field id="hrsalwf:total"  set="docInfo">
+					<control template="/org/alfresco/components/form/controls/info.ftl">
+					 <control-param name="style">width: 99%</control-param> 
+				  </control>
+				</field>
+				
+				<field id="hrsalwf:document" set="pnlDocument">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<!-- control-param name="buttons">u</control-param -->
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field> 
+				<field id="hrsalwf:attachDocument" set="pnlAttachment">
+					<control template="/pb/components/form/controls/workflow/packageitems.ftl">
+						<control-param name="style">width:100%</control-param>
+						<control-param name="buttons">ue</control-param>
+						<control-param name="removeAction">false</control-param>  
+						<control-param name="showLabel">false</control-param>
+						<control-param name="moreAction">false</control-param>  
+					</control>
+				</field>
+				
+				<field id="hrsalwf:description" set="pnlComment">
+					<control template="/pb/components/form/controls/commentgrid.ftl">
+						<control-param name="cols">time,user,task,action,comment</control-param>
+						<control-param name="showLabel">false</control-param>
+						<control-param name="dsUrl">pb/hr/sal/wf/dtl/list?id=</control-param>
+						<control-param name="dsFieldValue">prop_hrsalwf_id</control-param>
+					</control>
+				</field>
+				
+				<field id="bpm:comment" set="pnlComment" label-id="workflow.hr.field.bpm_comment">
+					<control template="/org/alfresco/components/form/controls/textarea.ftl">
+					 <control-param name="style">width: 99%</control-param>
+					 <control-param name="rows">5</control-param>
+				  </control>
+				</field>
+				
+				<field id="hrsalwf:consultOutcome" label-id="workflow.field.outcome" set="response">
+                  <control template="/org/alfresco/components/form/controls/workflow/activiti-transitions.ftl" />
+                </field>
+                
+                <field id="hrsalwf:folderRef">
+					<control template="/org/alfresco/components/form/controls/hidden.ftl"/>
+				</field>
+				
+			</appearance>
+		 </form>
+		</forms>
+	</config>
+
+</alfresco-config>

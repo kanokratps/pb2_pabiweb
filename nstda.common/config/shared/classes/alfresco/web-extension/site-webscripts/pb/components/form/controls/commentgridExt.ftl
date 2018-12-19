@@ -20,6 +20,7 @@
 </#if>
 <#assign controlId = fieldHtmlId + "-cntrl"/>
 <#if field.control.params.ds?exists><#assign cols=field.control.params.cols><#else><#assign cols=''></#if>
+<#if field.control.params.dsUrl?exists><#assign dsUrl=field.control.params.dsUrl><#else><#assign dsUrl=''></#if>
 
 <div class="form-field">
    <#if form.mode == "view">
@@ -62,7 +63,7 @@
 <script type="text/javascript">
 
 YAHOO.util.Event.onDOMReady(function(){
-   new Alfresco.UserDataTable("${controlId}", "${fieldHtmlId}-h").setMessages(${messages});
+   new Alfresco.UserDataTable("${controlId}", "${fieldHtmlId}-h", "${dsUrl}").setMessages(${messages});
    			
     	var div = document.getElementById('ext-edit-btn');
     	var oImg=document.createElement("div");
@@ -76,15 +77,15 @@ YAHOO.util.Event.onDOMReady(function(){
     	Ext.widget('linkbutton', {
                 renderTo: 'oImg',
                 handler: function () { 
-                	console.log("TEST TEST TEST");
                 	var hid = document.getElementsByName("prop_pcmreqwf_id")[0];
-					if (!hid) alert("Test");
+//					if (!hid) alert("Test");
 					var pf = hid.value.substring(0,2);
 					var u = {
 						"PR":"pcm-req",
 						"PD":"pcm-ord",
 						"AV":"exp-brw",
-						"AP":"exp-use"
+						"AP":"exp-use",
+						"HR":"hr-sal"
 					}
                 	window.location = "${url.context}/page/"+u[pf]+"?id="+hid.value+"&tid=${taskId}";
                 }

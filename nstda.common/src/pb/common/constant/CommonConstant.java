@@ -52,12 +52,17 @@ public class CommonConstant {
 
 	public static final String GP_REPORT_PATH = "/META-INF/report";	
 	public static final String GP_REPORT_IMG_PATH = GP_REPORT_PATH+"/img";	
+	
+	public static final String GP_ODOO_ADMIN_PASSWORD = "odoo.admin.password";	
+	
+	
 	/*
 	 * Module
 	 */
 	public static final String MODULE_ADMIN = "ADMIN"; 
 	public static final String MODULE_PCM = "PCM"; 
 	public static final String MODULE_EXP = "EXP"; 
+	public static final String MODULE_HR = "HR"; 
 	
 	public static final String MODULE_PROP_FILE = "pb-module.properties";
 	
@@ -67,6 +72,7 @@ public class CommonConstant {
     	MODULES.put(MODULE_ADMIN, "Administrator");
     	MODULES.put(MODULE_PCM, "Procurement");
     	MODULES.put(MODULE_EXP, "Expenses");
+    	MODULES.put(MODULE_EXP, "HumanResource");
     }
     
 	/*
@@ -76,6 +82,23 @@ public class CommonConstant {
 	public static final String SUB_MODULE_PCM_ORD = MODULE_PCM + "_" + "ORD"; 
 	public static final String SUB_MODULE_EXP_BRW = MODULE_EXP + "_" + "BRW"; 
 	public static final String SUB_MODULE_EXP_USE = MODULE_EXP + "_" + "USE"; 
+	public static final String SUB_MODULE_HR_SAL = MODULE_HR + "_" + "SAL"; 
+	
+	public static final String SUB_MODULE_PREFIX_PCM_REQ = "PR";
+	public static final String SUB_MODULE_PREFIX_PCM_ORD = "PD";
+	public static final String SUB_MODULE_PREFIX_EXP_BRW = "AV";
+	public static final String SUB_MODULE_PREFIX_EXP_USE = "EX";
+	public static final String SUB_MODULE_PREFIX_HR_SAL = "SL";
+	
+	public static final Map<String, String> SUB_MODULE_TABLE_NAMES = new HashMap<String, String>();
+	
+    static {
+    	SUB_MODULE_TABLE_NAMES.put(SUB_MODULE_PREFIX_PCM_REQ, "pb2_pcm_req");
+    	SUB_MODULE_TABLE_NAMES.put(SUB_MODULE_PREFIX_PCM_ORD, "pb2_pcm_ord");
+    	SUB_MODULE_TABLE_NAMES.put(SUB_MODULE_PREFIX_EXP_BRW, "pb2_exp_brw");
+    	SUB_MODULE_TABLE_NAMES.put(SUB_MODULE_PREFIX_EXP_USE, "pb2_exp_use");
+    	SUB_MODULE_TABLE_NAMES.put(SUB_MODULE_PREFIX_HR_SAL, "pb2_hr_salary");
+    }
     
     public static final String GLOBAL_URI_PREFIX = "/pb";
     
@@ -91,10 +114,10 @@ public class CommonConstant {
     public static final String SENCHA_DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     
     public static final String ODOO_DATE_FORMAT = "yyyy-MM-dd";
-    public static final String ODOO_DATE_TIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+    public static final String ODOO_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
     
-    public static final String GRID_COLUMN_DATE_FORMAT = "dd/MM/yy";
-    public static final String GRID_COLUMN_DATE_TIME_FORMAT = "dd/MM/yy HH:mm";
+    public static final String GRID_COLUMN_DATE_FORMAT = "dd/MM/yyyy";
+    public static final String GRID_COLUMN_DATE_TIME_FORMAT = "dd/MM/yyyy HH:mm";
     public static final String SENCHA_DATE_FIELD_DATE_FORMAT = "dd/MM/yyyy";
     
     public static final String DATE_FORMAT_THAI_DAY = "ว";
@@ -216,4 +239,21 @@ public class CommonConstant {
     public static final String FUNC_FULL_NAME = "fullName()";
     public static final String FUNC_FIRST_NAME = "firstName()";
     public static final String FUNC_LAST_NAME = "lastName()";
+    
+    /*
+     * Error
+     */
+    public static final String FORM_ERR = "|PB_ERR|";
+    
+    /*
+     * Dummy
+     */
+    public static final String DUMMY_EMPLOYEE_CODE = "XXXXXX";
+
+    /*
+     * EXT
+     */
+    public static final String EXT_XMLRPC_URL = "/xmlrpc/2/object";
+    public static final String EXT_ERR_MSG_MISMATCHED = "PABIWEB_NUMBER_MISMATCHED : ";
+    
 }

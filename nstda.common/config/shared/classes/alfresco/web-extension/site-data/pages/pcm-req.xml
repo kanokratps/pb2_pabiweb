@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <page>
    <title>Procurement Request</title>
-   <title-id>Procurement Request</title-id>
+   <title-id>page.pcmReqHome.title</title-id>
    <description>Procurement Request Page</description>
    <description-id>page.pcmReqHome.description</description-id>
    <template-instance>pcm-req-template</template-instance>

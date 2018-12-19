@@ -4,6 +4,6 @@ alfresco = xmlrpclib.ServerProxy("http://admin:password@localhost:8080/alfresco/
 
 # C2 : Approve
 # X2 : Cancel
-result = alfresco.req.action("PR16000160","X2","001111");
+result = alfresco.req.action("PR16000074","X2","002648");
 
 print result 

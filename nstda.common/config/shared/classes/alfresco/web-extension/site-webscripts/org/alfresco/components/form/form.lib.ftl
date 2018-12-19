@@ -71,7 +71,7 @@
 </#macro>
 
 <#macro renderFormButtons formId>         
-   <div id="${formId}-buttons" class="form-buttons">
+   <!--div id="${formId}-buttons" class="form-buttons">
       <#if form.showSubmitButton?? && form.showSubmitButton>
          <input id="${formId}-submit" type="submit" value="${msg("form.button.submit.label")}" />&nbsp;
       </#if>
@@ -81,7 +81,7 @@
       <#if form.showCancelButton?? && form.showCancelButton>
          <input id="${formId}-cancel" type="button" value="${msg("form.button.cancel.label")}" />
       </#if>
-   </div>
+   </div-->
 </#macro>   
 
 <#macro renderField field>

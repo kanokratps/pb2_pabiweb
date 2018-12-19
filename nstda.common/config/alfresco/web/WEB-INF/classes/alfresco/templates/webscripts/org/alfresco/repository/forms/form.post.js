@@ -74,8 +74,8 @@ function main()
         else
         {
             // Doy+ {
-            if (msg.indexOf("|BG_ERR|") != -1) {
-            	var pos = msg.indexOf("|BG_ERR|");
+            if (msg.indexOf("|PB_ERR|") != -1) {
+            	var pos = msg.indexOf("|PB_ERR|");
             	msg = "AAA:"+pos;
             }
 			// Doy+ }
