@@ -121,6 +121,7 @@ Ext.define('PBPcm.controller.item.Form', {
 			'pcmItemDtlDlg': {
 				selectActivityGroup : me.selectActivityGroup,
 				selectActivity : me.selectActivity,
+				changeActivity : me.changeActivity,
 				assetStoreLoad : me.assetStoreLoad
 			},
 			'pcmReqItemTab grid [action=addItem]': {
@@ -509,7 +510,7 @@ Ext.define('PBPcm.controller.item.Form', {
 		var store = me.getCmbActGrpId().getStore();
 		store.getProxy().extraParams = {
 		    query : getLang()+' ',
-		    actId:rec[0].data.id
+		    actId:rec[0] ? rec[0].data.id : rec.data.id
 		}
 		store.load({
 			callback:function(recs) {
@@ -540,6 +541,19 @@ Ext.define('PBPcm.controller.item.Form', {
 	
 	assetStoreLoad:function(len) {
 		this.getCmbAssetRuleId().setDisabled(len<=1);
+	},
+	
+	changeActivity:function(combo, newV, oldV) {
+		var me = this;
+		
+		var store = me.getCmbActGrpId().getStore();
+		if (store.getCount()>0) {
+			store.getProxy().extraParams = {
+			    query : getLang()+' ',
+			    actId:0
+			}
+			store.load();
+		}
 	}
 
 });

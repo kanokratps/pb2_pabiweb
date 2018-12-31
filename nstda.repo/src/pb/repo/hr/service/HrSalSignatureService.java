@@ -191,7 +191,7 @@ public class HrSalSignatureService {
 			String fontPath = basePath+"/webapps/alfresco/WEB-INF/classes";
 		
 			Float fontSize = Float.parseFloat(fontModel.getFlag1());
-			Font font = FontFactory.getFont(fontPath+"/THSarabun Bold.ttf", BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED, fontSize, Font.BOLD);
+			Font font = FontFactory.getFont(fontPath+"/Garuda.ttf", BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED, fontSize, Font.NORMAL);
 			BaseFont baseFont = font.getBaseFont();
 			
 //			BaseFont baseFont = BaseFont.createFont(fontPath+"/THSarabun.ttf", BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);

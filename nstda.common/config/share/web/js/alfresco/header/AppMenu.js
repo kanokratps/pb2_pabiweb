@@ -153,10 +153,10 @@ define(["dojo/_base/declare",
             var url = this._menuUrl;
             if (url == null)
             {
-               if (this.id == "HEADER_PB") {
-            	   url = Alfresco.constants.PROXY_URI_RELATIVE + "pb/admin/menu/widgets";
-               } else {
+               if (this.id == "HEADER_PB_BUDGET") {
             	   url = Alfresco.constants.PROXY_URI_RELATIVE + "pb/admin/menu/widgets-budget";
+               } else {
+            	   url = Alfresco.constants.PROXY_URI_RELATIVE + "pb/admin/menu/widgets";
                }
                
                if (this.currentSite)

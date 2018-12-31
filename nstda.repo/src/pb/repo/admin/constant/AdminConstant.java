@@ -9,6 +9,9 @@ public class AdminConstant {
 
 //    	CHANGE_LOG.append("  - Workflow Path : Section : Start from first level\n");
 
+    	CHANGE_LOG.append("\nV.1.0.243 --- (25/12/2018)\n");
+    	CHANGE_LOG.append("  - PR,AV,EX : Item : Clear Activity Group Combo Box if Activity Combo Box Changed\n");
+    	
     	CHANGE_LOG.append("\nV.1.0.242 --- (18/12/2018)\n");
     	CHANGE_LOG.append("  - HR : Approver signature not show\n");
     	

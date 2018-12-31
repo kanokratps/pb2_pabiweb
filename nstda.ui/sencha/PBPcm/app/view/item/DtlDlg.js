@@ -78,7 +78,8 @@ Ext.define('PBPcm.view.item.DtlDlg', {
 		});
 		agstore.getProxy().api.read = ALF_CONTEXT+'/admin/main/activity/group/list';
 		agstore.getProxy().extraParams = {
-			query : getLang()+' '
+			query : getLang()+' ',
+			actId : me.rec ? me.rec.get("actId") : 0
 		}
 		agstore.load();
 		
@@ -186,6 +187,14 @@ Ext.define('PBPcm.view.item.DtlDlg', {
 							},
 							select : function(combo, rec){
 		    	       		    me.fireEvent("selectActivity",combo, rec);
+		    	       	    },
+							afterrender:function(cmb) {
+								Ext.defer(function(){
+									cmb.focus();
+								},100);
+		    	       	    },
+		    	       	    change:function(combo,newV,oldV) {
+		    	       	    	me.fireEvent("changeActivity",combo, newV, oldV);
 		    	       	    }
 						},
 						value:me.rec ? me.rec.get("actId") : null
@@ -224,11 +233,6 @@ Ext.define('PBPcm.view.item.DtlDlg', {
 								},
 								select : function(combo, rec){
 			    	       		    me.fireEvent("selectActivityGroup",combo, rec);
-			    	       	    },
-								afterrender:function(cmb) {
-									Ext.defer(function(){
-										cmb.focus();
-									},100);
 								}
 							},
 							flex:1

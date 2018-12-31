@@ -95,6 +95,7 @@ Ext.define('PBExpUse.controller.item.Form', {
 			'expUseItemDtlDlg': {
 				selectActivityGroup : me.selectActivityGroup,
 				selectActivity : me.selectActivity,
+				changeActivity : me.changeActivity,
 				selectCond1 : me.selectCond1,
 				cond1Load : me.cond1Load,
 				assetStoreLoad:me.assetStoreLoad
@@ -131,6 +132,8 @@ Ext.define('PBExpUse.controller.item.Form', {
 			
 			var store = me.getGrid().getStore();
 			store.each(function(rec){
+//				console.log("AG:"+rec.get("actGrpId")+","+me.getCmbActGrpId().getValue());
+//				console.log("A:"+rec.get("actId")+","+me.getCmbActId().getValue());
 				if (rec.get("actGrpId")!=me.getCmbActGrpId().getValue() || rec.get("actId")!=me.getCmbActId().getValue()) {
 //					console.log("add:"+rec.data.amount);
 					total += rec.data.amount;
@@ -138,7 +141,8 @@ Ext.define('PBExpUse.controller.item.Form', {
 			});
 			
 			total += me.getTxtAmount().getValue()
-			
+//			console.log("total:"+total);
+//			console.log("prTotal:"+me.getHidPrTotal().getValue());
 			if (total>me.getHidPrTotal().getValue()) {
 				PB.Dlg.error('',MODULE_EXP,{msg:PBExpUse.Label.i.totalExceedPR+" ("+Ext.util.Format.number(me.getHidPrTotal().getValue(), DEFAULT_MONEY_FORMAT)+")"});
 				result = false;
@@ -401,7 +405,7 @@ Ext.define('PBExpUse.controller.item.Form', {
 
 		var store = me.getCmbCondition1().getStore();
 		store.getProxy().extraParams = {
-			id:rec[0].data.id
+			id:rec[0] ? rec[0].data.id : rec.data.id
 		}
 		store.load();
 		
@@ -417,7 +421,7 @@ Ext.define('PBExpUse.controller.item.Form', {
 		store = me.getCmbActGrpId().getStore();
 		store.getProxy().extraParams = {
 			query:getLang()+" ",
-			actId:rec[0].data.id,
+			actId:rec[0] ? rec[0].data.id : rec.data.id,
 			emotion:me.getHidEmotion().getValue()
 //			,icharge:payType==3
 		}
@@ -474,5 +478,18 @@ Ext.define('PBExpUse.controller.item.Form', {
 	
 	assetStoreLoad:function(len) {
 		this.getCmbAssetRuleId().setDisabled(len<=1);
+	},
+	
+	changeActivity:function(combo, newV, oldV) {
+		var me = this;
+		
+		var store = me.getCmbActGrpId().getStore();
+		if (store.getCount()>0) {
+			store.getProxy().extraParams = {
+			    query : getLang()+' ',
+			    actId:0
+			}
+			store.load();
+		}
 	}
 });
