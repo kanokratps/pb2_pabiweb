@@ -9,6 +9,9 @@ public class AdminConstant {
 
 //    	CHANGE_LOG.append("  - Workflow Path : Section : Start from first level\n");
 
+    	CHANGE_LOG.append("\nV.1.0.244 --- (02/01/2019)\n");
+    	CHANGE_LOG.append("  - ResetScheduler : Change time from 01/01 to 01/10\n");
+    	
     	CHANGE_LOG.append("\nV.1.0.243 --- (25/12/2018)\n");
     	CHANGE_LOG.append("  - PR,AV,EX : Item : Clear Activity Group Combo Box if Activity Combo Box Changed\n");
     	

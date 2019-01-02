@@ -17,7 +17,7 @@ import com.github.dynamicextensionsalfresco.jobs.ScheduledQuartzJob;
  * New Quartz support coming to Dynamic extensions 1.3
  */
 @Component
-@ScheduledQuartzJob(name = "resetJob", cron="0 5 0 1 1 ?", group="pb") // real : 5 Minutes after New Year
+@ScheduledQuartzJob(name = "resetJob", cron="0 5 0 1 10 ?", group="pb") // real : 5 Minutes after New Fiscal Year
 //@ScheduledQuartzJob(name = "resetJob", cron="0 */5 * * * ?", group="pb") // test : every 5 Minutes
 public class ResetScheduleJob implements Job {
 	
